@@ -1,0 +1,86 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+/* CrushLift dark theme — always dark */
+:root {
+  --background: #0A0A0A;
+  --foreground: #F9FAFB;
+  --card: #141414;
+  --card-foreground: #F9FAFB;
+  --popover: #141414;
+  --popover-foreground: #F9FAFB;
+  --primary: #FF4500;
+  --primary-foreground: #FFFFFF;
+  --secondary: #1F1F1F;
+  --secondary-foreground: #F9FAFB;
+  --muted: #1F1F1F;
+  --muted-foreground: #6B7280;
+  --accent: #FF4500;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --border: #1F1F1F;
+  --input: #1F1F1F;
+  --ring: #FF4500;
+  --radius: 0.75rem;
+  --success: #22C55E;
+  --timer: #3B82F6;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* Mobile-first: max 430px centered on desktop */
+.mobile-container {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+}
+
+/* Bottom nav safe area */
+.has-bottom-nav {
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
