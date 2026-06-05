@@ -33,25 +33,25 @@
   --radius-2xl: calc(var(--radius) * 1.8);
 }
 
-/* CrushLift dark theme — always dark */
+/* CrushLift dark theme — near-black (Hevy-style) */
 :root {
-  --background: #0A0A0A;
-  --foreground: #F9FAFB;
-  --card: #141414;
-  --card-foreground: #F9FAFB;
-  --popover: #141414;
-  --popover-foreground: #F9FAFB;
+  --background: #0D0D0F;
+  --foreground: #F0F4FF;
+  --card: #1C1C1E;
+  --card-foreground: #F0F4FF;
+  --popover: #1C1C1E;
+  --popover-foreground: #F0F4FF;
   --primary: #FF4500;
   --primary-foreground: #FFFFFF;
-  --secondary: #1F1F1F;
-  --secondary-foreground: #F9FAFB;
-  --muted: #1F1F1F;
-  --muted-foreground: #6B7280;
+  --secondary: #252528;
+  --secondary-foreground: #F0F4FF;
+  --muted: #252528;
+  --muted-foreground: #9A9AAA;
   --accent: #FF4500;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
-  --border: #1F1F1F;
-  --input: #1F1F1F;
+  --border: #252528;
+  --input: #252528;
   --ring: #FF4500;
   --radius: 0.75rem;
   --success: #22C55E;
@@ -72,15 +72,38 @@
   }
 }
 
-/* Mobile-first: max 430px centered on desktop */
 .mobile-container {
-  max-width: 430px;
+  max-width: 900px;
   margin: 0 auto;
   min-height: 100dvh;
   position: relative;
+  padding-left: max(24px, env(safe-area-inset-left));
+  padding-right: max(24px, env(safe-area-inset-right));
 }
 
-/* Bottom nav safe area */
 .has-bottom-nav {
-  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  padding-bottom: 100px;
+}
+
+/* Bottom nav constrained to content width */
+nav.fixed {
+  max-width: 900px;
+}
+
+/* Desktop: full-width layout with sidebar */
+@media (min-width: 768px) {
+  .mobile-container {
+    max-width: none;
+    margin: 0;
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .has-bottom-nav {
+    padding-bottom: 32px;
+  }
+
+  nav.fixed {
+    max-width: none;
+  }
 }

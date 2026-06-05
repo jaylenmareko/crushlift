@@ -49,12 +49,12 @@ export default function PaywallModal({ open, onClose }: PaywallModalProps) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-[#141414] border-t border-[#1F1F1F] rounded-t-3xl z-50 px-5 pt-5 pb-10"
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[600px] bg-[#1C1C1E] border-t border-[#252528] rounded-t-3xl z-50 px-5 pt-5 pb-10"
           >
             {/* Handle */}
-            <div className="w-10 h-1 bg-[#2F2F2F] rounded-full mx-auto mb-5" />
+            <div className="w-10 h-1 bg-[#3A3A3C] rounded-full mx-auto mb-5" />
 
-            <button onClick={onClose} className="absolute top-5 right-5 text-[#6B7280]">
+            <button onClick={onClose} className="absolute top-5 right-5 text-[#9A9AAA]">
               <X className="w-5 h-5" />
             </button>
 
@@ -64,7 +64,7 @@ export default function PaywallModal({ open, onClose }: PaywallModalProps) {
             </div>
 
             <h2 className="text-2xl font-extrabold mb-1">Unlock CrushLift</h2>
-            <p className="text-[#6B7280] text-sm mb-6">Start your first workout and crush your goals.</p>
+            <p className="text-[#9A9AAA] text-sm mb-6">Start your first workout and crush your goals.</p>
 
             {/* Features */}
             <div className="flex flex-col gap-2.5 mb-6">
@@ -85,7 +85,7 @@ export default function PaywallModal({ open, onClose }: PaywallModalProps) {
                 className={`flex-1 py-3.5 rounded-2xl border text-sm font-semibold transition-all ${
                   period === 'monthly'
                     ? 'border-[#FF4500] bg-[#FF4500]/10 text-white'
-                    : 'border-[#1F1F1F] bg-[#1A1A1A] text-[#6B7280]'
+                    : 'border-[#252528] bg-[#252528] text-[#9A9AAA]'
                 }`}
               >
                 <div>Monthly</div>
@@ -96,7 +96,7 @@ export default function PaywallModal({ open, onClose }: PaywallModalProps) {
                 className={`flex-1 py-3.5 rounded-2xl border text-sm font-semibold transition-all relative ${
                   period === 'yearly'
                     ? 'border-[#FF4500] bg-[#FF4500]/10 text-white'
-                    : 'border-[#1F1F1F] bg-[#1A1A1A] text-[#6B7280]'
+                    : 'border-[#252528] bg-[#252528] text-[#9A9AAA]'
                 }`}
               >
                 {/* Best value badge */}
@@ -105,7 +105,7 @@ export default function PaywallModal({ open, onClose }: PaywallModalProps) {
                 </div>
                 <div>Yearly</div>
                 <div className="text-lg font-extrabold text-white mt-0.5">$59.99</div>
-                <div className="text-[10px] text-[#6B7280]">$5/mo billed annually</div>
+                <div className="text-[10px] text-[#9A9AAA]">$5/mo billed annually</div>
               </button>
             </div>
 
@@ -119,7 +119,7 @@ export default function PaywallModal({ open, onClose }: PaywallModalProps) {
               {loading ? 'Redirecting...' : `Get CrushLift · ${period === 'monthly' ? '$9.99/mo' : '$59.99/yr'}`}
             </motion.button>
 
-            <p className="text-center text-xs text-[#4B5563] mt-3">Cancel anytime. No commitment.</p>
+            <p className="text-center text-xs text-[#636366] mt-3">Cancel anytime. No commitment.</p>
           </motion.div>
         </>
       )}

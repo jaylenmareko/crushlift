@@ -17,7 +17,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) { router.push('/login'); return }
+      if (!user) return
       setEmail(user.email || '')
       supabase.from('profiles').select('subscription_status').eq('id', user.id).single()
         .then(({ data }) => setStatus(data?.subscription_status || null))
@@ -27,6 +27,10 @@ export default function ProfilePage() {
   async function handleLogout() {
     const supabase = createClient()
     await supabase.auth.signOut()
+    // Clear all user data from localStorage
+    ;['crushlift_guest_plan', 'crushlift_workout_history', 'crushlift_soreness_log',
+      'crushlift_cardio_log', 'crushlift_inprogress_workout'].forEach(k => localStorage.removeItem(k))
+    sessionStorage.clear()
     router.push('/')
   }
 
@@ -37,23 +41,33 @@ export default function ProfilePage() {
   const isSubscribed = status === 'active' || status === 'trialing'
 
   return (
-    <div className="mobile-container flex flex-col min-h-dvh bg-[#0A0A0A] has-bottom-nav">
+    <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav">
       <header className="px-5 pt-12 pb-6">
         <h1 className="text-2xl font-bold">Profile</h1>
       </header>
 
       <div className="flex-1 px-5 flex flex-col gap-4">
         {/* Account card */}
-        <div className="bg-[#141414] border border-[#1F1F1F] rounded-2xl p-4">
-          <p className="text-xs text-[#6B7280] font-medium uppercase tracking-wider mb-1">Account</p>
-          <p className="text-sm font-semibold truncate">{email}</p>
+        <div className="bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4">
+          <p className="text-xs text-[#9A9AAA] font-medium uppercase tracking-wider mb-1">Account</p>
+          {email ? (
+            <p className="text-sm font-semibold truncate">{email}</p>
+          ) : (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-[#9A9AAA]">Guest</p>
+              <div className="flex items-center gap-3">
+                <a href="/login" className="text-xs text-[#9A9AAA] font-semibold hover:text-white transition-colors">Sign in</a>
+                <a href="/signup" className="text-xs text-[#FF4500] font-semibold">Create account →</a>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Subscription card */}
-        <div className="bg-[#141414] border border-[#1F1F1F] rounded-2xl p-4">
+        <div className="bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-[#6B7280] font-medium uppercase tracking-wider mb-1">Plan</p>
+              <p className="text-xs text-[#9A9AAA] font-medium uppercase tracking-wider mb-1">Plan</p>
               <div className="flex items-center gap-2">
                 {isSubscribed && <Crown className="w-4 h-4 text-[#FF4500]" />}
                 <p className="text-sm font-semibold">
@@ -61,7 +75,7 @@ export default function ProfilePage() {
                 </p>
               </div>
               {status && (
-                <p className="text-xs text-[#6B7280] mt-0.5 capitalize">{status}</p>
+                <p className="text-xs text-[#9A9AAA] mt-0.5 capitalize">{status}</p>
               )}
             </div>
             {!isSubscribed && (
@@ -80,19 +94,19 @@ export default function ProfilePage() {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleNewPlan}
-          className="flex items-center gap-3 bg-[#141414] border border-[#1F1F1F] rounded-2xl p-4 text-left"
+          className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4 text-left"
         >
           <RefreshCw className="w-5 h-5 text-[#FF4500]" />
           <div>
             <p className="text-sm font-semibold">Generate New Plan</p>
-            <p className="text-xs text-[#6B7280]">Answer the questions again</p>
+            <p className="text-xs text-[#9A9AAA]">Answer the questions again</p>
           </div>
         </motion.button>
 
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleLogout}
-          className="flex items-center gap-3 bg-[#141414] border border-[#1F1F1F] rounded-2xl p-4 text-left"
+          className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4 text-left"
         >
           <LogOut className="w-5 h-5 text-red-400" />
           <p className="text-sm font-semibold text-red-400">Sign Out</p>

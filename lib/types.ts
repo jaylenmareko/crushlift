@@ -1,10 +1,31 @@
 export interface OnboardingData {
   goal: string
   goalCustom?: string
+  goalTarget?: string
+  liftGoals?: Array<{ lift: string; current: string; target: string }>
   experience: string
   daysPerWeek: number
+  sessionLength?: number
+  splitType?: string
+  trainingDays?: string[]
   equipment: string
   equipmentCustom?: string
+  sex?: string
+  weight?: number
+  height?: string
+  age?: number
+  injuryNotes?: string
+  cardio?: string
+  notes?: string
+}
+
+export interface CardioEntry {
+  id: string
+  date: string
+  type: string
+  distance?: string
+  duration?: string
+  intensity: 'easy' | 'moderate' | 'hard'
   notes?: string
 }
 
@@ -15,6 +36,7 @@ export interface PlanExercise {
   sets: number
   reps: string
   notes?: string
+  muscleGroup?: string
   youtubeVideoId?: string
   thumbnailUrl?: string
 }
@@ -27,10 +49,13 @@ export interface PlanDay {
 
 export interface Plan {
   id: string
-  userId: string
-  onboardingData: OnboardingData
+  user_id: string | null
+  userId?: string
+  onboardingData?: OnboardingData
+  onboarding_data?: OnboardingData
   days: PlanDay[]
-  createdAt: string
+  createdAt?: string
+  created_at?: string
 }
 
 export interface WorkoutSet {
@@ -52,6 +77,18 @@ export interface WorkoutSession {
   startedAt: string
   finishedAt?: string
   durationSeconds?: number
+}
+
+export interface WorkoutHistoryEntry {
+  id: string
+  date: string
+  dayName: string
+  dayNumber: number
+  durationSeconds?: number
+  exercises: Array<{
+    name: string
+    sets: Array<{ setNumber: number; weight: number | null; reps: number | null; completed: boolean }>
+  }>
 }
 
 export type SubscriptionStatus = 'active' | 'trialing' | 'canceled' | 'past_due' | null

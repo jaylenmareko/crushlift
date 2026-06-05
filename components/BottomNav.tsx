@@ -12,7 +12,7 @@ const TABS = [
 
 export default function BottomNav({ active }: { active: string }) {
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-[#0A0A0A]/95 border-t border-[#1F1F1F] z-30 backdrop-blur-md">
+    <nav className="md:hidden fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[900px] bg-[#0D0D0F]/95 border-t border-[#252528] z-30 backdrop-blur-md">
       <div className="flex items-center">
         {TABS.map(({ href, icon: Icon, label, key }) => {
           const isActive = active === key
@@ -21,7 +21,7 @@ export default function BottomNav({ active }: { active: string }) {
               key={key}
               href={href}
               className={`flex-1 flex flex-col items-center gap-1 py-3 transition-colors ${
-                isActive ? 'text-[#FF4500]' : 'text-[#4B5563] hover:text-[#6B7280]'
+                isActive ? 'text-[#FF4500]' : 'text-[#636366] hover:text-[#9A9AAA]'
               }`}
             >
               <Icon className="w-5 h-5" />

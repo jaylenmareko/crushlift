@@ -31,16 +31,23 @@ export default function GeneratingPage() {
     if (!raw) { router.push('/onboarding'); return }
     const onboarding = JSON.parse(raw)
 
+    // Pull all context from localStorage to enrich the AI prompt
+    const workoutHistory = JSON.parse(localStorage.getItem('crushlift_workout_history') || '[]')
+    const sorenessLog = JSON.parse(localStorage.getItem('crushlift_soreness_log') || '{}')
+    const cardioLog = JSON.parse(localStorage.getItem('crushlift_cardio_log') || '[]')
+
     fetch('/api/generate-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ onboarding }),
+      body: JSON.stringify({ onboarding, workoutHistory, sorenessLog, cardioLog }),
     })
       .then(r => r.json())
       .then(data => {
         if (data.error) { setError(data.error); return }
-        sessionStorage.setItem('crushlift_plan_id', data.plan.id)
         sessionStorage.removeItem('crushlift_onboarding')
+        if (data.guest) {
+          localStorage.setItem('crushlift_guest_plan', JSON.stringify(data.plan))
+        }
         router.push('/plan')
       })
       .catch(() => setError('Something went wrong. Try again.'))
@@ -48,7 +55,7 @@ export default function GeneratingPage() {
 
   if (error) {
     return (
-      <div className="mobile-container flex flex-col items-center justify-center min-h-dvh bg-[#0A0A0A] px-5 text-center">
+      <div className="mobile-container flex flex-col items-center justify-center min-h-dvh bg-[#0D0D0F] px-5 text-center">
         <p className="text-red-400 mb-4">{error}</p>
         <button onClick={() => router.push('/onboarding')} className="text-[#FF4500] underline text-sm">
           Go back
@@ -58,7 +65,7 @@ export default function GeneratingPage() {
   }
 
   return (
-    <div className="mobile-container flex flex-col items-center justify-center min-h-dvh bg-[#0A0A0A] px-5 text-center">
+    <div className="mobile-container flex flex-col items-center justify-center min-h-dvh bg-[#0D0D0F] px-5 text-center">
       {/* Animated icon */}
       <motion.div
         animate={{ rotate: 360 }}
@@ -78,7 +85,7 @@ export default function GeneratingPage() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.35 }}
-        className="text-[#6B7280] text-base"
+        className="text-[#9A9AAA] text-base"
       >
         {MESSAGES[msgIndex]}
       </motion.p>
