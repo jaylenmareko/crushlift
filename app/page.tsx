@@ -2,80 +2,72 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Dumbbell, ChevronRight } from 'lucide-react'
+import { Dumbbell } from 'lucide-react'
 
 export default function LandingPage() {
   return (
     <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] relative overflow-hidden">
-      {/* Subtle radial glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_45%_at_50%_10%,rgba(255,69,0,0.08)_0%,transparent_70%)] pointer-events-none" />
 
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 pt-10 pb-4 relative">
-        <div className="flex items-center gap-2">
-          <Dumbbell className="w-5 h-5 text-[#FF4500]" />
-          <span className="text-base font-bold tracking-tight">CrushLift</span>
-        </div>
-        <Link href="/login" className="text-sm text-[#636366] hover:text-white transition-colors font-medium">
-          Sign in
-        </Link>
-      </header>
+      {/* Background blobs */}
+      <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full bg-[#FF4500]/5 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 -right-32 w-72 h-72 rounded-full bg-[#FF4500]/4 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-16 -left-16 w-56 h-56 rounded-full bg-[#FF4500]/4 blur-3xl pointer-events-none" />
 
-      {/* Hero */}
-      <main className="flex-1 flex flex-col px-6 pt-12 pb-10 relative">
+      {/* Brand + tagline — upper half */}
+      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="flex-1 flex flex-col justify-center"
+          transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className="flex flex-col items-center gap-3"
         >
-          <p className="text-[11px] font-bold text-[#FF4500] uppercase tracking-[0.2em] mb-4">
-            AI-Powered
-          </p>
-
-          <h1 className="text-[3rem] font-extrabold leading-[1.0] tracking-tight mb-5">
-            Your plan.
-            <br />
-            Built for
-            <br />
-            <span className="text-[#FF4500]">you.</span>
-          </h1>
-
-          <p className="text-[#636366] text-base leading-relaxed max-w-xs">
-            Answer a few questions. Get a personalized workout plan with a demo video for every exercise.
-          </p>
-        </motion.div>
-
-        {/* CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <div className="relative w-full">
-            {/* Glow layer */}
-            <motion.div
-              animate={{ opacity: [0.4, 0.7, 0.4] }}
-              transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-              className="absolute inset-x-6 bottom-0 h-10 bg-[#FF4500] rounded-full blur-2xl pointer-events-none"
-            />
-            <Link href="/onboarding" className="block w-full">
-              <motion.button
-                animate={{ y: [0, -5, 0] }}
-                transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-                whileTap={{ scale: 0.97, y: 0 }}
-                className="relative w-full bg-[#FF4500] text-white font-bold text-base py-[20px] rounded-2xl flex items-center justify-center gap-2 shadow-[0_8px_40px_rgba(255,69,0,0.35)]"
-              >
-                Build My Plan — Free
-                <ChevronRight className="w-5 h-5" />
-              </motion.button>
-            </Link>
+          <div className="w-14 h-14 rounded-2xl bg-[#FF4500]/10 border border-[#FF4500]/15 flex items-center justify-center mb-2">
+            <Dumbbell className="w-7 h-7 text-[#FF4500]" />
           </div>
 
-          <p className="text-xs text-[#3A3A3C]">No account required to get started</p>
+          <h1 className="text-[3.25rem] font-black tracking-tight text-white leading-none">
+            TRAINMAXXING
+          </h1>
+
+          <p className="text-[#636366] text-base font-medium">
+            Train. Track. Improve.
+          </p>
         </motion.div>
-      </main>
+      </div>
+
+      {/* Buttons — bottom */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="px-6 pb-14 flex flex-col gap-3"
+      >
+        {/* Primary CTA with float */}
+        <div className="relative">
+          <motion.div
+            animate={{ opacity: [0.35, 0.6, 0.35] }}
+            transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+            className="absolute inset-x-8 bottom-1 h-8 bg-[#FF4500] rounded-full blur-2xl pointer-events-none"
+          />
+          <Link href="/onboarding">
+            <motion.button
+              animate={{ y: [0, -4, 0] }}
+              transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+              whileTap={{ scale: 0.97, y: 0 }}
+              className="relative w-full bg-[#FF4500] text-white font-bold text-[15px] tracking-wide py-[18px] rounded-full shadow-[0_8px_40px_rgba(255,69,0,0.3)]"
+            >
+              GET STARTED
+            </motion.button>
+          </Link>
+        </div>
+
+        <Link href="/login">
+          <button className="w-full bg-[#1C1C1E] border border-[#2C2C2E] text-[#9A9AAA] font-bold text-[15px] tracking-wide py-[18px] rounded-full hover:border-[#3A3A3C] hover:text-white transition-all">
+            I HAVE AN ACCOUNT
+          </button>
+        </Link>
+      </motion.div>
+
     </div>
   )
 }

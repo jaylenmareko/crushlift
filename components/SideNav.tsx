@@ -22,7 +22,7 @@ export default function SideNav() {
         <div className="w-7 h-7 rounded-lg bg-[#FF4500] flex items-center justify-center">
           <Dumbbell className="w-4 h-4 text-white" />
         </div>
-        <span className="text-sm font-bold tracking-tight">CrushLift</span>
+        <span className="text-sm font-bold tracking-tight">Trainmaxxing</span>
       </div>
 
       {/* Nav items */}

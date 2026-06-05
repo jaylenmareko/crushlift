@@ -63,7 +63,7 @@ export default function PaywallModal({ open, onClose }: PaywallModalProps) {
               <Zap className="w-7 h-7 text-[#FF4500]" />
             </div>
 
-            <h2 className="text-2xl font-extrabold mb-1">Unlock CrushLift</h2>
+            <h2 className="text-2xl font-extrabold mb-1">Unlock Trainmaxxing</h2>
             <p className="text-[#9A9AAA] text-sm mb-6">Start your first workout and crush your goals.</p>
 
             {/* Features */}
@@ -116,7 +116,7 @@ export default function PaywallModal({ open, onClose }: PaywallModalProps) {
               disabled={loading}
               className="w-full bg-[#FF4500] text-white font-bold text-base py-[18px] rounded-2xl disabled:opacity-50 shadow-[0_8px_32px_rgba(255,69,0,0.3)]"
             >
-              {loading ? 'Redirecting...' : `Get CrushLift · ${period === 'monthly' ? '$9.99/mo' : '$59.99/yr'}`}
+              {loading ? 'Redirecting...' : `Get Trainmaxxing · ${period === 'monthly' ? '$9.99/mo' : '$59.99/yr'}`}
             </motion.button>
 
             <p className="text-center text-xs text-[#636366] mt-3">Cancel anytime. No commitment.</p>

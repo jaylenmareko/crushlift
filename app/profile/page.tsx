@@ -71,7 +71,7 @@ export default function ProfilePage() {
               <div className="flex items-center gap-2">
                 {isSubscribed && <Crown className="w-4 h-4 text-[#FF4500]" />}
                 <p className="text-sm font-semibold">
-                  {isSubscribed ? 'CrushLift Pro' : 'No plan'}
+                  {isSubscribed ? 'Trainmaxxing Pro' : 'No plan'}
                 </p>
               </div>
               {status && (

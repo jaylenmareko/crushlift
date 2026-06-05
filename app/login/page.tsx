@@ -34,7 +34,7 @@ export default function LoginPage() {
       <div className="flex flex-col items-center justify-center flex-1 px-6 py-10">
         <div className="flex items-center gap-2 mb-10">
           <Dumbbell className="w-5 h-5 text-[#FF4500]" />
-          <span className="text-base font-bold tracking-tight">CrushLift</span>
+          <span className="text-base font-bold tracking-tight">Trainmaxxing</span>
         </div>
 
         <motion.div

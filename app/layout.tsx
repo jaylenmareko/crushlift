@@ -3,9 +3,9 @@ import './globals.css'
 import SideNav from '@/components/SideNav'
 
 export const metadata: Metadata = {
-  title: 'CrushLift — AI Workout Plans',
-  description: 'Answer 5 questions. Get a personalized workout plan with demo videos for every exercise.',
-  applicationName: 'CrushLift',
+  title: 'Trainmaxxing — AI Workout Plans',
+  description: 'Answer a few questions. Get a personalized workout plan with demo videos for every exercise.',
+  applicationName: 'Trainmaxxing',
 }
 
 export const viewport: Viewport = {
