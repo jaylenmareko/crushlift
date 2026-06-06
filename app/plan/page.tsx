@@ -111,7 +111,6 @@ export default function PlanPage() {
   const [selectedEntry, setSelectedEntry] = useState<WorkoutHistoryEntry | null>(null)
   const [completedToday, setCompletedToday] = useState(false)
   const [showPaywall, setShowPaywall] = useState(false)
-  const [subscribed, setSubscribed] = useState(false)
   const [thumbnails, setThumbnails] = useState<Record<string, string>>(() => {
     if (typeof window === 'undefined') return {}
     try {
@@ -166,15 +165,6 @@ export default function PlanPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
-      // Check subscription
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('subscription_status')
-        .eq('id', user.id)
-        .single()
-      const isSubscribed = profile?.subscription_status === 'active' || profile?.subscription_status === 'trialing'
-      setSubscribed(isSubscribed)
-
       // Load most recent plan from Supabase
       const { data: plans } = await supabase
         .from('plans')

@@ -110,6 +110,24 @@ function buildContext(
   lines.push('\nEQUIPMENT')
   lines.push(onboarding.equipmentCustom || onboarding.equipment)
 
+  // --- BODY COMPOSITION ---
+  if (onboarding.bodyComp) {
+    lines.push('\nBODY COMPOSITION FOCUS')
+    lines.push(onboarding.bodyComp)
+  }
+
+  // --- MUSCLE PRIORITY ---
+  if (onboarding.musclePriority?.length) {
+    lines.push('\nMUSCLE PRIORITY (emphasize these)')
+    lines.push(onboarding.musclePriority.join(', '))
+  }
+
+  // --- RECOVERY ---
+  if (onboarding.recovery) {
+    lines.push('\nRECOVERY CAPACITY')
+    lines.push(onboarding.recovery)
+  }
+
   // --- INJURIES ---
   if (onboarding.injuryNotes) {
     lines.push('\nINJURIES / LIMITATIONS')

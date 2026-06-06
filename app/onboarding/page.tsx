@@ -73,7 +73,7 @@ const BODY_COMP = [
 
 const MUSCLE_GROUPS = [
   { value: 'Chest', emoji: '🫁' },
-  { value: 'Back', emoji: '🔙' },
+  { value: 'Back', emoji: '🏋️' },
   { value: 'Shoulders', emoji: '🙆' },
   { value: 'Arms', emoji: '💪' },
   { value: 'Legs', emoji: '🦵' },

@@ -1,10 +1,33 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Dumbbell } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LandingPage() {
+  const router = useRouter()
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    // Guest with existing plan → skip landing
+    const hasGuestPlan = !!localStorage.getItem('crushlift_guest_plan')
+    if (hasGuestPlan) { router.replace('/plan'); return }
+
+    // Signed-in user → skip landing
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) { router.replace('/plan'); return }
+      setReady(true)
+    })
+  }, [router])
+
+  if (!ready) {
+    return <div className="mobile-container min-h-dvh bg-[#0D0D0F]" />
+  }
+
   return (
     <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] relative overflow-hidden">
 
@@ -13,7 +36,7 @@ export default function LandingPage() {
       <div className="absolute top-1/3 -right-32 w-72 h-72 rounded-full bg-[#FF4500]/4 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-16 -left-16 w-56 h-56 rounded-full bg-[#FF4500]/4 blur-3xl pointer-events-none" />
 
-      {/* Brand + tagline — upper half */}
+      {/* Brand */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -24,25 +47,22 @@ export default function LandingPage() {
           <div className="w-14 h-14 rounded-2xl bg-[#FF4500]/10 border border-[#FF4500]/15 flex items-center justify-center mb-2">
             <Dumbbell className="w-7 h-7 text-[#FF4500]" />
           </div>
-
           <h1 className="text-[3.25rem] font-black tracking-tight text-white leading-none">
             TRAINMAXXING
           </h1>
-
           <p className="text-[#636366] text-base font-medium">
             Train. Track. Improve.
           </p>
         </motion.div>
       </div>
 
-      {/* Buttons — bottom */}
+      {/* CTAs */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="px-6 pb-14 flex flex-col gap-3"
       >
-        {/* Primary CTA with float */}
         <div className="relative">
           <motion.div
             animate={{ opacity: [0.35, 0.6, 0.35] }}

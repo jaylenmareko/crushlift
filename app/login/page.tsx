@@ -100,7 +100,7 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-[#9A9AAA] mt-5">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-[#FF4500] font-semibold hover:text-[#FF6020] transition-colors">
+            <Link href="/onboarding" className="text-[#FF4500] font-semibold hover:text-[#FF6020] transition-colors">
               Sign up
             </Link>
           </p>
