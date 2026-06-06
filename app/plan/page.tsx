@@ -7,7 +7,7 @@ import { Play, MoreHorizontal, X, ChevronRight, ChevronLeft, Search, Loader2, Ca
 import { createClient } from '@/lib/supabase/client'
 import type { Plan, PlanDay, PlanExercise, WorkoutHistoryEntry } from '@/lib/types'
 import BottomNav from '@/components/BottomNav'
-import PaywallModal from '@/components/PaywallModal'
+
 
 const SORENESS_AREAS = [
   'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps',
@@ -110,7 +110,6 @@ export default function PlanPage() {
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryEntry[]>([])
   const [selectedEntry, setSelectedEntry] = useState<WorkoutHistoryEntry | null>(null)
   const [completedToday, setCompletedToday] = useState(false)
-  const [showPaywall, setShowPaywall] = useState(false)
   const [thumbnails, setThumbnails] = useState<Record<string, string>>(() => {
     if (typeof window === 'undefined') return {}
     try {
@@ -1365,8 +1364,6 @@ export default function PlanPage() {
           </>
         )}
       </AnimatePresence>
-
-      <PaywallModal open={showPaywall} onClose={() => setShowPaywall(false)} />
 
       {/* Calendar sheet */}
       <AnimatePresence>
