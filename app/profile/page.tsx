@@ -57,7 +57,7 @@ export default function ProfilePage() {
               <p className="text-sm text-[#9A9AAA]">Guest</p>
               <div className="flex items-center gap-3">
                 <a href="/login" className="text-xs text-[#9A9AAA] font-semibold hover:text-white transition-colors">Sign in</a>
-                <a href="/signup" className="text-xs text-[#FF4500] font-semibold">Create account →</a>
+                <a href="/onboarding" className="text-xs text-[#FF4500] font-semibold">Create account →</a>
               </div>
             </div>
           )}

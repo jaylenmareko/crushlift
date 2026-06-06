@@ -40,14 +40,6 @@ const GRADIENTS = [
 const WEEK_DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
-function getISOWeek(d: Date): number {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-  const day = date.getUTCDay() || 7
-  date.setUTCDate(date.getUTCDate() + 4 - day)
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
-  return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
-}
-
 function getWeekDays(d: Date): Date[] {
   const monday = new Date(d)
   monday.setDate(d.getDate() - ((d.getDay() + 6) % 7))
@@ -122,7 +114,6 @@ export default function PlanPage() {
 
   const today = new Date()
   const weekDays = getWeekDays(today)
-  const isoWeek = getISOWeek(today)
   const todayKey = today.toISOString().slice(0, 10)
   const DAY_NAMES = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
   const DAY_ORDER = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
