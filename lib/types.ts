@@ -10,6 +10,9 @@ export interface OnboardingData {
   trainingDays?: string[]
   equipment: string
   equipmentCustom?: string
+  bodyComp?: string
+  musclePriority?: string[]
+  recovery?: string
   sex?: string
   weight?: number
   height?: string
