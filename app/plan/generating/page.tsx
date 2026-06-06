@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Dumbbell } from 'lucide-react'
 
 const MESSAGES = [
@@ -79,16 +79,18 @@ export default function GeneratingPage() {
 
       <h2 className="text-2xl font-bold mb-3">Building your plan</h2>
 
-      <motion.p
-        key={msgIndex}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.35 }}
-        className="text-[#9A9AAA] text-base"
-      >
-        {MESSAGES[msgIndex]}
-      </motion.p>
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={msgIndex}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.3 }}
+          className="text-[#9A9AAA] text-base"
+        >
+          {MESSAGES[msgIndex]}
+        </motion.p>
+      </AnimatePresence>
 
       {/* Progress dots */}
       <div className="flex gap-1.5 mt-8">

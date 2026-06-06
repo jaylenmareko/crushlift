@@ -475,6 +475,7 @@ export default function PlanPage() {
         sets: [],
       })),
     }
+    sessionStorage.setItem('crushlift_last_workout', JSON.stringify(entry))
     const existing = JSON.parse(localStorage.getItem('crushlift_workout_history') || '[]')
     localStorage.setItem('crushlift_workout_history', JSON.stringify([entry, ...existing]))
 
@@ -490,13 +491,11 @@ export default function PlanPage() {
         finished_at: new Date().toISOString(),
       })
     }
-    router.push('/history')
+    router.push('/workout/complete')
   }
 
   function startWorkout() {
     if (!plan) return
-    // Paywall only for authenticated users without subscription
-    if (plan.user_id && !subscribed) { setShowPaywall(true); return }
     router.push(`/workout?planId=${plan.id}&day=${activeDay}`)
   }
 

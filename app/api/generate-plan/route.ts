@@ -188,8 +188,9 @@ export async function POST(req: NextRequest) {
 
   /* ---------------------------------------------------------
    * LIVE ANTHROPIC CALL — uncomment when API is funded
+   * and remove the DUMMY_PLAN fallback below
    * ---------------------------------------------------------
-  import Anthropic from '@anthropic-ai/sdk'
+  const Anthropic = (await import('@anthropic-ai/sdk')).default
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   const prompt = `You are a professional personal trainer. Build a personalized ${onboarding.daysPerWeek}-day/week workout plan.
@@ -236,7 +237,8 @@ Rules:
   }
    * --------------------------------------------------------- */
 
-  const parsed = DUMMY_PLAN
+  // TODO: remove once Anthropic API is funded
+  const parsed: { days: PlanDay[] } = DUMMY_PLAN
 
   if (user) {
     const { data: plan, error } = await supabase
