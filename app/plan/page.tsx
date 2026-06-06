@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, MoreHorizontal, X, ChevronRight, ChevronLeft, Search, Loader2, Calendar, SlidersHorizontal, Check } from 'lucide-react'
+import { Play, X, ChevronRight, ChevronLeft, Search, Loader2, Calendar, SlidersHorizontal, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Plan, PlanDay, PlanExercise, WorkoutHistoryEntry } from '@/lib/types'
 import BottomNav from '@/components/BottomNav'

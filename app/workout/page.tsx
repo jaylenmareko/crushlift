@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Check, ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Plan, PlanDay, PlanExercise, WorkoutSet, WorkoutHistoryEntry } from '@/lib/types'
