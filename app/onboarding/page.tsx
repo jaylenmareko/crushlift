@@ -655,50 +655,61 @@ export default function OnboardingPage() {
                 <h2 className="text-2xl font-black tracking-tight mb-7">
                   Create your account
                 </h2>
-                <div className="flex flex-col gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">First name</label>
-                    <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
-                      placeholder="e.g. Jaylen" autoComplete="given-name"
-                      className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Username</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#636366] text-sm font-semibold">@</span>
-                      <input type="text" value={username}
-                        onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                        placeholder="your_handle" autoComplete="username" maxLength={20}
-                        className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl pl-8 pr-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors" />
+                {(() => {
+                  const vFirst = !!firstName.trim()
+                  const vUser = /^[a-z0-9_]{3,20}$/.test(username)
+                  const vEmail = /\S+@\S+\.\S+/.test(email)
+                  const vPass = password.length >= 8
+                  const fieldBorder = (valid: boolean, hasValue: boolean) =>
+                    hasValue ? (valid ? 'border-[#22C55E]' : 'border-red-500/60') : 'border-[#252528]'
+                  return (
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">First name</label>
+                        <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
+                          placeholder="e.g. Jaylen" autoComplete="given-name"
+                          className={`w-full bg-[#1C1C1E] border ${fieldBorder(vFirst, !!firstName)} rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors`} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Username</label>
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#636366] text-sm font-semibold">@</span>
+                          <input type="text" value={username}
+                            onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                            placeholder="your_handle" autoComplete="username" maxLength={20}
+                            className={`w-full bg-[#1C1C1E] border ${fieldBorder(vUser, !!username)} rounded-2xl pl-8 pr-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors`} />
+                        </div>
+                        <p className={`text-[10px] mt-1.5 ${username && !vUser ? 'text-red-400' : 'text-[#48484A]'}`}>3–20 chars, lowercase, letters/numbers/underscores</p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Email</label>
+                        <input type="email" value={email} onChange={e => { setEmail(e.target.value); setSignupError('') }}
+                          placeholder="you@example.com" autoComplete="email"
+                          className={`w-full bg-[#1C1C1E] border ${fieldBorder(vEmail, !!email)} rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors`} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Password</label>
+                        <div className="relative">
+                          <input type={showPassword ? 'text' : 'password'} value={password}
+                            onChange={e => { setPassword(e.target.value); setSignupError('') }}
+                            placeholder="Min. 8 characters" autoComplete="new-password"
+                            className={`w-full bg-[#1C1C1E] border ${fieldBorder(vPass, !!password)} rounded-2xl px-4 py-4 pr-12 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors`} />
+                          <button type="button" onClick={() => setShowPassword(p => !p)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#636366] hover:text-[#9A9AAA] transition-colors">
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        {password && !vPass && <p className="text-[10px] text-red-400 mt-1.5">Must be at least 8 characters</p>}
+                      </div>
+                      {signupError && (
+                        <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                          className="text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3">
+                          {signupError}
+                        </motion.p>
+                      )}
                     </div>
-                    <p className="text-[10px] text-[#48484A] mt-1.5">3–20 chars, lowercase, letters/numbers/underscores</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Email</label>
-                    <input type="email" value={email} onChange={e => { setEmail(e.target.value); setSignupError('') }}
-                      placeholder="you@example.com" autoComplete="email"
-                      className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Password</label>
-                    <div className="relative">
-                      <input type={showPassword ? 'text' : 'password'} value={password}
-                        onChange={e => { setPassword(e.target.value); setSignupError('') }}
-                        placeholder="Min. 8 characters" autoComplete="new-password"
-                        className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-4 pr-12 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors" />
-                      <button type="button" onClick={() => setShowPassword(p => !p)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#636366] hover:text-[#9A9AAA] transition-colors">
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                  {signupError && (
-                    <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3">
-                      {signupError}
-                    </motion.p>
-                  )}
-                </div>
+                  )
+                })()}
               </div>
             )}
 
