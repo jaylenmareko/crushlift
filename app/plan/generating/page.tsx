@@ -59,19 +59,21 @@ export default function GeneratingPage() {
   }
 
   return (
-    <div className="mobile-container flex flex-col items-center justify-center min-h-dvh bg-[#0D0D0F] px-5 text-center">
+    <div className="mobile-container flex flex-col items-center justify-center min-h-dvh bg-[#0D0D0F] px-5 text-center relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#FF4500]/6 blur-[120px] pointer-events-none rounded-full" />
       {/* Animated icon */}
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-        className="mb-8"
+        className="mb-8 relative z-10"
       >
-        <div className="w-20 h-20 rounded-full bg-[#FF4500]/10 border border-[#FF4500]/30 flex items-center justify-center">
+        <div className="w-20 h-20 rounded-full bg-[#FF4500]/10 border border-[#FF4500]/30 flex items-center justify-center shadow-[0_0_40px_rgba(255,69,0,0.15)]">
           <Dumbbell className="w-9 h-9 text-[#FF4500]" />
         </div>
       </motion.div>
 
-      <h2 className="text-2xl font-bold mb-3">Building your plan</h2>
+      <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-2 relative z-10">AI-Powered</p>
+      <h2 className="text-[2rem] font-black uppercase tracking-tight leading-none mb-3 relative z-10">Building Your Plan</h2>
 
       <AnimatePresence mode="wait">
         <motion.p
@@ -80,14 +82,14 @@ export default function GeneratingPage() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.3 }}
-          className="text-[#9A9AAA] text-base"
+          className="text-[#9A9AAA] text-base relative z-10"
         >
           {MESSAGES[msgIndex]}
         </motion.p>
       </AnimatePresence>
 
       {/* Progress dots */}
-      <div className="flex gap-1.5 mt-8">
+      <div className="flex gap-1.5 mt-8 relative z-10">
         {[0, 1, 2].map(i => (
           <motion.div
             key={i}

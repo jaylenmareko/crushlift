@@ -85,9 +85,13 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav">
-      <header className="flex items-center justify-between px-5 pt-12 pb-6">
-        <h1 className="text-2xl font-bold">Profile</h1>
+    <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[280px] bg-[#FF4500]/5 blur-[100px] pointer-events-none rounded-full" />
+      <header className="flex items-center justify-between px-5 pt-12 pb-6 relative z-10">
+        <div>
+          <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-1">Trainmaxxing</p>
+          <h1 className="text-[2rem] font-black uppercase tracking-tight leading-none">Profile</h1>
+        </div>
         <button
           onClick={() => router.push('/settings')}
           className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA] hover:text-white transition-colors"
@@ -96,10 +100,10 @@ export default function ProfilePage() {
         </button>
       </header>
 
-      <div className="flex-1 px-5 flex flex-col gap-4 pb-6">
+      <div className="flex-1 px-5 flex flex-col gap-4 pb-6 relative z-10">
         {/* Account */}
         <div className="bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4">
-          <p className="text-xs text-[#9A9AAA] font-medium uppercase tracking-wider mb-1">Account</p>
+          <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-1">Account</p>
           {email ? (
             <p className="text-sm font-semibold truncate">{email}</p>
           ) : (
@@ -117,7 +121,7 @@ export default function ProfilePage() {
         <div className="bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-[#9A9AAA] font-medium uppercase tracking-wider mb-1">Plan</p>
+              <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-1">Plan</p>
               <div className="flex items-center gap-2">
                 {isSubscribed && <Crown className="w-4 h-4 text-[#FF4500]" />}
                 <p className="text-sm font-semibold">{isSubscribed ? 'Trainmaxxing Pro' : 'Free'}</p>
@@ -143,7 +147,7 @@ export default function ProfilePage() {
               <Trophy className="w-5 h-5 text-[#FF4500]" />
             </div>
             <div className="flex-1">
-              <p className="text-xs text-[#9A9AAA] font-medium uppercase tracking-wider mb-0.5">Power Rank</p>
+              <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-0.5">Power Rank</p>
               <p className="text-sm font-semibold text-[#636366]">Log a verified PR to earn your rank</p>
             </div>
           </div>
@@ -174,7 +178,7 @@ export default function ProfilePage() {
         {/* Memories */}
         <div className="mt-2">
           <div className="flex items-center gap-2 mb-3">
-            <p className="text-base font-bold">Memories</p>
+            <p className="text-lg font-black uppercase tracking-tight">Memories</p>
             {!memoriesLoading && (
               <span className="text-xs text-[#636366]">{sessions.length} workouts</span>
             )}

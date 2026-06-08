@@ -117,7 +117,7 @@ export default function WorkoutCompletePage() {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={() => router.push('/plan')}
-          className="w-full bg-[#FF4500] text-white font-bold text-base py-[18px] rounded-2xl flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.25)]"
+          className="w-full bg-[#FF4500] text-white font-black text-sm uppercase tracking-[0.12em] py-[20px] rounded-2xl flex items-center justify-center gap-2.5 shadow-[0_8px_48px_rgba(255,69,0,0.35)]"
         >
           Back to Plan
           <ChevronRight className="w-5 h-5" />

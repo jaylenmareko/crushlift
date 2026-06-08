@@ -435,13 +435,15 @@ export default function PlanPage() {
   const currentDay: PlanDay = plan.days[activeDay]
 
   return (
-    <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav">
+    <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[280px] bg-[#FF4500]/5 blur-[100px] pointer-events-none rounded-full" />
       {/* Header */}
-      <header className="px-5 pt-12 pb-4">
+      <header className="px-5 pt-12 pb-4 relative z-10">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-2xl font-bold">My Plan</h1>
-            <p className="text-[#9A9AAA] text-sm mt-0.5">{plan.days.length} days / week</p>
+            <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-1">Trainmaxxing</p>
+            <h1 className="text-[2rem] font-black uppercase tracking-tight leading-none">My Plan</h1>
+            <p className="text-[#9A9AAA] text-sm mt-1">{plan.days.length} days / week</p>
           </div>
           <div className="flex items-center gap-2">
           <motion.button
@@ -467,7 +469,7 @@ export default function PlanPage() {
             const isToday = isSameDay(d, today)
             return (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-[10px] font-semibold text-[#636366] uppercase">{WEEK_DAYS[i]}</span>
+                <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest">{WEEK_DAYS[i]}</span>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                   isToday ? 'bg-[#FF4500] shadow-[0_4px_12px_rgba(255,69,0,0.35)]' : ''
                 }`}>
@@ -487,9 +489,9 @@ export default function PlanPage() {
           <button
             key={i}
             onClick={() => setActiveDay(i)}
-            className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+            className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
               activeDay === i
-                ? 'bg-[#FF4500] text-white'
+                ? 'bg-[#FF4500] text-white shadow-[0_4px_16px_rgba(255,69,0,0.35)]'
                 : 'bg-[#1C1C1E] text-[#9A9AAA] border border-[#252528]'
             }`}
           >
@@ -500,8 +502,8 @@ export default function PlanPage() {
 
       {/* Day name */}
       <div className="px-5 mb-4">
-        <h2 className="text-lg font-bold">{currentDay.dayName}</h2>
-        <p className="text-xs text-[#9A9AAA]">{currentDay.exercises.length} exercises</p>
+        <h2 className="text-xl font-black uppercase tracking-tight">{currentDay.dayName}</h2>
+        <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mt-0.5">{currentDay.exercises.length} exercises</p>
       </div>
 
       {/* Exercises */}
@@ -586,7 +588,7 @@ export default function PlanPage() {
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={startWorkout}
-              className="w-full bg-[#FF4500] text-white font-bold text-base py-[18px] rounded-2xl flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.25)]"
+              className="w-full bg-[#FF4500] text-white font-black text-sm uppercase tracking-[0.12em] py-[20px] rounded-2xl flex items-center justify-center gap-2.5 shadow-[0_8px_48px_rgba(255,69,0,0.35)]"
             >
               Start Day {activeDay + 1}
               <ChevronRight className="w-5 h-5" />

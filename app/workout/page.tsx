@@ -212,15 +212,16 @@ function WorkoutContent() {
   const day: PlanDay = plan.days[safeDayIndex]
 
   return (
-    <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav">
+    <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[280px] bg-[#FF4500]/5 blur-[100px] pointer-events-none rounded-full" />
       {/* Header */}
-      <header className="flex items-center gap-3 px-5 pt-12 pb-4">
+      <header className="flex items-center gap-3 px-5 pt-12 pb-4 relative z-10">
         <button onClick={() => router.back()} className="text-[#9A9AAA]">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
-          <h1 className="text-lg font-bold">{day.dayName}</h1>
-          <p className="text-xs text-[#9A9AAA]">Day {day.dayNumber}</p>
+          <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-0.5">Day {day.dayNumber}</p>
+          <h1 className="text-xl font-black uppercase tracking-tight leading-none">{day.dayName}</h1>
         </div>
         {Object.values(sets).some(exSets => exSets.some(s => s.completed)) && (
           <span className="text-[10px] font-semibold text-[#22C55E] bg-[#22C55E]/10 border border-[#22C55E]/20 rounded-lg px-2 py-1">
@@ -263,7 +264,7 @@ function WorkoutContent() {
             {/* Column headers */}
             <div className="grid grid-cols-[32px_1fr_76px_76px_36px] gap-2 mb-1 px-1">
               {['SET', 'PREV', 'LBS', 'REPS', ''].map(h => (
-                <span key={h} className="text-[10px] text-[#48484A] font-bold tracking-widest text-center uppercase">{h}</span>
+                <span key={h} className="text-[10px] text-[#9A9AAA] font-bold tracking-widest text-center uppercase">{h}</span>
               ))}
             </div>
 
@@ -335,7 +336,7 @@ function WorkoutContent() {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={finishWorkout}
-          className="w-full bg-[#22C55E] text-white font-bold text-base py-[18px] rounded-2xl shadow-[0_8px_32px_rgba(34,197,94,0.2)]"
+          className="w-full bg-[#22C55E] text-white font-black text-sm uppercase tracking-[0.12em] py-[20px] rounded-2xl shadow-[0_8px_48px_rgba(34,197,94,0.3)]"
         >
           Finish Workout
         </motion.button>

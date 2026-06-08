@@ -90,13 +90,14 @@ export default function CompetePage() {
   const rankings = RANKINGS_DATA[selectedClass] ?? []
 
   return (
-    <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav">
-      <header className="px-5 pt-12 pb-6">
-        <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em] mb-1">Power Rank</p>
-        <h1 className="text-2xl font-bold">Compete</h1>
+    <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[280px] bg-[#FF4500]/5 blur-[100px] pointer-events-none rounded-full" />
+      <header className="px-5 pt-12 pb-6 relative z-10">
+        <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-1">Power Rank</p>
+        <h1 className="text-[2rem] font-black uppercase tracking-tight leading-none">Compete</h1>
       </header>
 
-      <div className="flex-1 px-5 flex flex-col gap-4 pb-4">
+      <div className="flex-1 px-5 flex flex-col gap-4 pb-4 relative z-10">
         <div className="bg-[#1C1C1E] border border-[#252528] rounded-2xl overflow-hidden flex flex-col">
           <div className="h-1 bg-gradient-to-r from-[#FF4500] via-[#8B5CF6] to-[#3B82F6]" />
 
