@@ -679,7 +679,7 @@ export default function OnboardingPage() {
                             placeholder="your_handle" autoComplete="username" maxLength={20}
                             className={`w-full bg-[#1C1C1E] border ${fieldBorder(vUser, !!username)} rounded-2xl pl-8 pr-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors`} />
                         </div>
-                        <p className={`text-[10px] mt-1.5 ${username && !vUser ? 'text-red-400' : 'text-[#48484A]'}`}>3–20 chars, lowercase, letters/numbers/underscores</p>
+                        <p className={`text-xs mt-1.5 ${username && !vUser ? 'text-red-400' : 'text-[#9A9AAA]'}`}>3–20 chars, lowercase, letters/numbers/underscores</p>
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Email</label>
@@ -699,7 +699,7 @@ export default function OnboardingPage() {
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
-                        {password && !vPass && <p className="text-[10px] text-red-400 mt-1.5">Must be at least 8 characters</p>}
+                        {password && !vPass && <p className="text-xs text-red-400 mt-1.5">Must be at least 8 characters</p>}
                       </div>
                       {signupError && (
                         <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
