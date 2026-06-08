@@ -13,9 +13,21 @@ App name: **Trainmaxxing** (repo: `crushlift`, was originally named CrushLift)
 - [ ] Friends system (search, add, challenge button)
 - [ ] Real data replacing dummy data on compete page
 
+## Completed (2026-06-08)
+- Equipment step converted to multi-select (checkbox style, joins as comma string in payload)
+- Per-field live validation on account step (green/red border, inline error hints)
+- Full visual redesign — energetic/spacey design language applied to all pages:
+  - Uppercase headings (`text-[2rem] font-black uppercase`), orange sublabels
+  - Ambient orange glow on every page
+  - Orange glow on selected card states
+  - Section labels → `text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest`
+  - CTA buttons → `font-black uppercase tracking-[0.12em]` + stronger shadow
+  - BottomNav: glowing orange top-line indicator on active tab, uppercase labels
+  - Onboarding: step label pill (`GOAL · 1/9`), thicker progress bar with glow, energetic transitions
+
 ## Stack
 - **Framework:** Next.js 16 App Router (Turbopack)
-- **Auth + DB:** Supabase (`cheanydnmvqdvsexxdav`) — credentials in `.env.local` (gitignored)
+- **Auth + DB:** Supabase (`rjqwjfzvhkdkdjldlnqs`) — credentials in `.env.local` (gitignored)
 - **Styling:** Tailwind CSS dark theme (`#0D0D0F` bg, `#FF4500` accent, `#1C1C1E` cards)
 - **Animations:** Framer Motion
 - **Icons:** Lucide React
@@ -102,4 +114,5 @@ Two separate systems:
 - Never touch production without asking
 - Never refactor unless asked
 - `.env.local` is gitignored — credentials never in repo
-- Supabase project ref: `cheanydnmvqdvsexxdav` (get keys from Supabase dashboard or ask Jaylen)
+- Supabase project ref: `rjqwjfzvhkdkdjldlnqs` (get keys from Supabase dashboard or ask Jaylen)
+- YouTube API key is blank — add `YOUTUBE_API_KEY` to `.env.local` to enable exercise demo videos (Google Cloud Console → YouTube Data API v3)
