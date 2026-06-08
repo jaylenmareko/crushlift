@@ -485,7 +485,7 @@ export default function OnboardingPage() {
 
                 <div className="flex items-center gap-2 mb-2">
                   <p className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider">Training days</p>
-                  <span className="text-xs text-[#636366]">Optional</span>
+                  <span className="text-xs font-semibold text-[#9A9AAA]">Optional</span>
                 </div>
                 <div className="flex gap-1.5">
                   {TRAINING_DAYS.map(d => {
@@ -566,7 +566,7 @@ export default function OnboardingPage() {
                   })}
                 </div>
                 {musclePriority.length === 0 && (
-                  <p className="text-xs text-[#636366] mt-4 text-center">Skip to keep it balanced across all muscle groups</p>
+                  <p className="text-xs text-[#9A9AAA] mt-4 text-center">Skip to keep it balanced across all muscle groups</p>
                 )}
               </div>
             )}
