@@ -244,39 +244,45 @@ export default function OnboardingPage() {
   const weightAlreadyEntered = !!(currentWeightGoal && (data.goal === 'lose_weight' || data.goal === 'build_muscle'))
 
   const variants = {
-    enter: (d: number) => ({ x: d > 0 ? 64 : -64, opacity: 0 }),
-    center: { x: 0, opacity: 1 },
-    exit: (d: number) => ({ x: d > 0 ? -64 : 64, opacity: 0 }),
+    enter: (d: number) => ({ x: d > 0 ? 80 : -80, opacity: 0, scale: 0.97 }),
+    center: { x: 0, opacity: 1, scale: 1 },
+    exit: (d: number) => ({ x: d > 0 ? -80 : 80, opacity: 0, scale: 0.97 }),
   }
 
   return (
-    <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F]">
+    <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] relative overflow-hidden">
+
+      {/* Ambient glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[300px] bg-[#FF4500]/5 blur-[100px] pointer-events-none rounded-full" />
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-5 pt-12 pb-5">
+      <div className="flex items-center justify-between px-5 pt-12 pb-4 relative z-10">
         <button
           onClick={step > 0 ? back : () => router.push('/')}
           className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA] hover:text-white transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <span className="text-xs font-semibold text-[#636366]">{step + 1} / {TOTAL_STEPS}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-black uppercase tracking-[0.15em] text-[#FF4500]">{STEPS[step].label}</span>
+          <span className="text-[11px] font-semibold text-[#3A3A3C]">{step + 1}/{TOTAL_STEPS}</span>
+        </div>
         <div className="w-9" />
       </div>
 
       {/* Progress bar */}
-      <div className="px-5 mb-6">
-        <div className="h-0.5 bg-[#252528] rounded-full overflow-hidden">
+      <div className="px-5 mb-8 relative z-10">
+        <div className="h-[3px] bg-[#1C1C1E] rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-[#FF4500] rounded-full"
+            className="h-full bg-[#FF4500] rounded-full shadow-[0_0_8px_rgba(255,69,0,0.6)]"
             animate={{ width: `${((step + 1) / TOTAL_STEPS) * 100}%` }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
           />
         </div>
       </div>
 
       {/* Step content */}
-      <div className="flex-1 flex flex-col px-5 overflow-y-auto">
+      <div className="flex-1 flex flex-col px-5 overflow-y-auto relative z-10">
         <AnimatePresence mode="wait" custom={dir}>
           <motion.div
             key={step}
@@ -292,7 +298,7 @@ export default function OnboardingPage() {
             {/* Step 0 — Goal */}
             {step === 0 && (
               <div className="flex flex-col flex-1">
-                <h2 className="text-2xl font-black tracking-tight mb-7">
+                <h2 className="text-[2rem] font-black uppercase tracking-tight leading-[1] mb-7">
                   What&apos;s your main goal?
                 </h2>
                 <div className="flex flex-col gap-2.5">
@@ -309,7 +315,7 @@ export default function OnboardingPage() {
                           setLiftGoals([{ lift: '', current: '', target: '' }])
                         }}
                         className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl border text-left transition-all ${
-                          selected ? 'border-[#FF4500] bg-[#FF4500]/10' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
+                          selected ? 'border-[#FF4500] bg-[#FF4500]/10 shadow-[0_0_20px_rgba(255,69,0,0.12)]' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
                         }`}
                       >
                         <span className="text-2xl leading-none">{g.emoji}</span>
@@ -346,13 +352,13 @@ export default function OnboardingPage() {
                       className="mt-5 flex gap-2.5"
                     >
                       <div className="flex-1">
-                        <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Current (lbs)</label>
+                        <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-2">Current (lbs)</label>
                         <input type="number" inputMode="decimal" value={currentWeightGoal}
                           onChange={e => setCurrentWeightGoal(e.target.value)} placeholder="e.g. 195"
                           className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors" />
                       </div>
                       <div className="flex-1">
-                        <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Target (lbs)</label>
+                        <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-2">Target (lbs)</label>
                         <input type="number" inputMode="decimal" value={targetWeight}
                           onChange={e => setTargetWeight(e.target.value)}
                           placeholder={data.goal === 'lose_weight' ? 'e.g. 165' : 'e.g. 220'}
@@ -366,7 +372,7 @@ export default function OnboardingPage() {
                       exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.18 }}
                       className="mt-5"
                     >
-                      <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-3">Lift goals</label>
+                      <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-3">Lift goals</label>
                       <div className="flex flex-col gap-2.5">
                         {liftGoals.map((g, i) => (
                           <div key={i} className="bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3 flex flex-col gap-2">
@@ -401,7 +407,7 @@ export default function OnboardingPage() {
             {/* Step 1 — Experience */}
             {step === 1 && (
               <div className="flex flex-col flex-1">
-                <h2 className="text-2xl font-black tracking-tight mb-7">
+                <h2 className="text-[2rem] font-black uppercase tracking-tight leading-[1] mb-7">
                   Your experience level?
                 </h2>
                 <div className="flex flex-col gap-2.5">
@@ -410,7 +416,7 @@ export default function OnboardingPage() {
                     return (
                       <button key={e.value} onClick={() => setData(d => ({ ...d, experience: e.value }))}
                         className={`flex items-center gap-4 px-4 py-4 rounded-2xl border text-left transition-all ${
-                          selected ? 'border-[#FF4500] bg-[#FF4500]/10' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
+                          selected ? 'border-[#FF4500] bg-[#FF4500]/10 shadow-[0_0_20px_rgba(255,69,0,0.12)]' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
                         }`}
                       >
                         <span className="text-2xl leading-none">{e.emoji}</span>
@@ -430,7 +436,7 @@ export default function OnboardingPage() {
             {/* Step 2 — Schedule */}
             {step === 2 && (
               <div className="flex flex-col flex-1">
-                <h2 className="text-2xl font-black tracking-tight mb-4">
+                <h2 className="text-[2rem] font-black uppercase tracking-tight leading-[1] mb-4">
                   How many days per week?
                 </h2>
 
@@ -440,7 +446,7 @@ export default function OnboardingPage() {
                     return (
                       <button key={d.value} onClick={() => setData(prev => ({ ...prev, daysPerWeek: d.value }))}
                         className={`flex items-center justify-center py-2 rounded-xl border transition-all ${
-                          selected ? 'border-[#FF4500] bg-[#FF4500]/10' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
+                          selected ? 'border-[#FF4500] bg-[#FF4500]/10 shadow-[0_0_20px_rgba(255,69,0,0.12)]' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
                         }`}
                       >
                         <span className={`text-xl font-black ${selected ? 'text-[#FF4500]' : 'text-white'}`}>{d.label}</span>
@@ -449,28 +455,28 @@ export default function OnboardingPage() {
                   })}
                 </div>
 
-                <p className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider mb-2">Session length</p>
+                <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-2">Session length</p>
                 <div className="flex gap-2 mb-4">
                   {SESSION_LENGTHS.map(s => {
                     const selected = data.sessionLength === s.value
                     return (
                       <button key={s.value} onClick={() => setData(d => ({ ...d, sessionLength: s.value }))}
                         className={`flex-1 py-4 rounded-2xl border text-base font-bold transition-all ${
-                          selected ? 'border-[#FF4500] bg-[#FF4500]/10 text-[#FF4500]' : 'border-[#252528] bg-[#1C1C1E] text-[#9A9AAA] hover:border-[#3A3A3C] hover:text-white'
+                          selected ? 'border-[#FF4500] bg-[#FF4500]/10 shadow-[0_0_20px_rgba(255,69,0,0.12)] text-[#FF4500]' : 'border-[#252528] bg-[#1C1C1E] text-[#9A9AAA] hover:border-[#3A3A3C] hover:text-white'
                         }`}
                       >{s.label}</button>
                     )
                   })}
                 </div>
 
-                <p className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider mb-2">Workout split</p>
+                <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-2">Workout split</p>
                 <div className="flex flex-col gap-1.5 mb-4">
                   {SPLITS.map(s => {
                     const selected = splitTypes.includes(s.value)
                     return (
                       <button key={s.value} onClick={() => setSplitTypes(prev => prev.includes(s.value) ? prev.filter(x => x !== s.value) : [...prev, s.value])}
                         className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl border text-left transition-all ${
-                          selected ? 'border-[#FF4500] bg-[#FF4500]/10' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
+                          selected ? 'border-[#FF4500] bg-[#FF4500]/10 shadow-[0_0_20px_rgba(255,69,0,0.12)]' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
                         }`}
                       >
                         <span className="text-lg leading-none">{s.emoji}</span>
@@ -484,7 +490,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="flex items-center gap-2 mb-2">
-                  <p className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider">Training days</p>
+                  <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest">Training days</p>
                   <span className="text-xs font-semibold text-[#9A9AAA]">Optional</span>
                 </div>
                 <div className="flex gap-1.5">
@@ -494,7 +500,7 @@ export default function OnboardingPage() {
                       <button key={d.value}
                         onClick={() => setTrainingDays(prev => prev.includes(d.value) ? prev.filter(x => x !== d.value) : [...prev, d.value])}
                         className={`flex-1 py-2 rounded-xl border text-xs font-bold transition-all ${
-                          selected ? 'border-[#FF4500] bg-[#FF4500]/10 text-[#FF4500]' : 'border-[#252528] bg-[#1C1C1E] text-[#9A9AAA] hover:border-[#3A3A3C] hover:text-white'
+                          selected ? 'border-[#FF4500] bg-[#FF4500]/10 shadow-[0_0_20px_rgba(255,69,0,0.12)] text-[#FF4500]' : 'border-[#252528] bg-[#1C1C1E] text-[#9A9AAA] hover:border-[#3A3A3C] hover:text-white'
                         }`}
                       >{d.label}</button>
                     )
@@ -506,7 +512,7 @@ export default function OnboardingPage() {
             {/* Step 3 — Equipment */}
             {step === 3 && (
               <div className="flex flex-col flex-1">
-                <h2 className="text-2xl font-black tracking-tight mb-2">
+                <h2 className="text-[2rem] font-black uppercase tracking-tight leading-[1] mb-2">
                   What&apos;s your equipment?
                 </h2>
                 <p className="text-sm font-semibold text-[#FF4500] mb-6">Select all that apply</p>
@@ -517,7 +523,7 @@ export default function OnboardingPage() {
                       <button key={eq.value}
                         onClick={() => toggleEquipment(eq.value)}
                         className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl border text-left transition-all ${
-                          selected ? 'border-[#FF4500] bg-[#FF4500]/10' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
+                          selected ? 'border-[#FF4500] bg-[#FF4500]/10 shadow-[0_0_20px_rgba(255,69,0,0.12)]' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
                         }`}
                       >
                         <span className="text-2xl leading-none">{eq.emoji}</span>
@@ -542,7 +548,7 @@ export default function OnboardingPage() {
             {/* Step 4 — Muscle Priority */}
             {step === 4 && (
               <div className="flex flex-col flex-1">
-                <h2 className="text-2xl font-black tracking-tight mb-1">
+                <h2 className="text-[2rem] font-black uppercase tracking-tight leading-[1] mb-1">
                   What to develop most?
                 </h2>
                 <p className="text-sm font-semibold text-[#FF4500] mb-6">Optional</p>
@@ -555,7 +561,7 @@ export default function OnboardingPage() {
                         whileTap={{ scale: 0.96 }}
                         onClick={() => toggleMuscle(m.value)}
                         className={`flex items-center gap-3 px-4 py-4 rounded-2xl border text-left transition-all ${
-                          selected ? 'border-[#FF4500] bg-[#FF4500]/10' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
+                          selected ? 'border-[#FF4500] bg-[#FF4500]/10 shadow-[0_0_20px_rgba(255,69,0,0.12)]' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
                         }`}
                       >
                         <span className="text-xl leading-none">{m.emoji}</span>
@@ -574,16 +580,16 @@ export default function OnboardingPage() {
             {/* Step 5 — Body */}
             {step === 5 && (
               <div className="flex flex-col flex-1">
-                <h2 className="text-2xl font-black tracking-tight mb-1">About you</h2>
+                <h2 className="text-[2rem] font-black uppercase tracking-tight leading-[1] mb-1">About you</h2>
                 <p className="text-sm font-semibold text-[#FF4500] mb-6">Optional</p>
                 <div className="flex flex-col gap-4">
                   <div>
-                    <p className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider mb-2">Biological sex</p>
+                    <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-2">Biological sex</p>
                     <div className="flex gap-2.5">
                       {[{ label: 'Male', emoji: '♂️' }, { label: 'Female', emoji: '♀️' }].map(({ label, emoji }) => (
                         <button key={label} onClick={() => setSex(label)}
                           className={`flex-1 py-3 rounded-xl border text-sm font-bold transition-all flex flex-col items-center gap-1 ${
-                            sex === label ? 'border-[#FF4500] bg-[#FF4500]/10 text-[#FF4500]' : 'border-[#252528] bg-[#1C1C1E] text-[#9A9AAA] hover:border-[#3A3A3C] hover:text-white'
+                            sex === label ? 'border-[#FF4500] bg-[#FF4500]/10 shadow-[0_0_20px_rgba(255,69,0,0.12)] text-[#FF4500]' : 'border-[#252528] bg-[#1C1C1E] text-[#9A9AAA] hover:border-[#3A3A3C] hover:text-white'
                           }`}
                         >
                           <span className="text-lg leading-none">{emoji}</span>
@@ -600,7 +606,7 @@ export default function OnboardingPage() {
                     </div>
                   ) : (
                     <div>
-                      <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">⚖️ Current weight (lbs)</label>
+                      <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-2">⚖️ Current weight (lbs)</label>
                       <input type="number" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)}
                         placeholder="e.g. 185"
                         className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors" />
@@ -609,12 +615,12 @@ export default function OnboardingPage() {
 
                   <div className="flex gap-2.5">
                     <div className="flex-1">
-                      <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">📏 Height</label>
+                      <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-2">📏 Height</label>
                       <input type="text" value={height} onChange={e => setHeight(e.target.value)} placeholder={`5'11"`}
                         className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors" />
                     </div>
                     <div className="flex-1">
-                      <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">🎂 Age</label>
+                      <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-2">🎂 Age</label>
                       <input type="number" inputMode="numeric" value={age} onChange={e => setAge(e.target.value)} placeholder="24"
                         className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors" />
                     </div>
@@ -626,7 +632,7 @@ export default function OnboardingPage() {
             {/* Step 6 — Injuries */}
             {step === 6 && (
               <div className="flex flex-col flex-1">
-                <h2 className="text-2xl font-black tracking-tight mb-1">
+                <h2 className="text-[2rem] font-black uppercase tracking-tight leading-[1] mb-1">
                   Injuries or limitations?
                 </h2>
                 <p className="text-sm font-semibold text-[#FF4500] mb-6">Optional</p>
@@ -640,7 +646,7 @@ export default function OnboardingPage() {
             {/* Step 7 — Notes */}
             {step === 7 && (
               <div className="flex flex-col flex-1">
-                <h2 className="text-2xl font-black tracking-tight mb-1">Anything else?</h2>
+                <h2 className="text-[2rem] font-black uppercase tracking-tight leading-[1] mb-1">Anything else?</h2>
                 <p className="text-sm font-semibold text-[#FF4500] mb-6">Optional</p>
                 <textarea ref={notesRef} value={notes} onChange={e => setNotes(e.target.value)}
                   placeholder={'e.g. "No burpees. I do cardio 3x/week. I want bigger arms."'}
@@ -652,7 +658,7 @@ export default function OnboardingPage() {
             {/* Step 8 — Account */}
             {step === 8 && (
               <div className="flex flex-col flex-1">
-                <h2 className="text-2xl font-black tracking-tight mb-7">
+                <h2 className="text-[2rem] font-black uppercase tracking-tight leading-[1] mb-7">
                   Create your account
                 </h2>
                 {(() => {
@@ -665,13 +671,13 @@ export default function OnboardingPage() {
                   return (
                     <div className="flex flex-col gap-3">
                       <div>
-                        <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">First name</label>
+                        <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-2">First name</label>
                         <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
                           placeholder="e.g. Jaylen" autoComplete="given-name"
                           className={`w-full bg-[#1C1C1E] border ${fieldBorder(vFirst, !!firstName)} rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors`} />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Username</label>
+                        <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-2">Username</label>
                         <div className="relative">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#636366] text-sm font-semibold">@</span>
                           <input type="text" value={username}
@@ -682,13 +688,13 @@ export default function OnboardingPage() {
                         <p className={`text-xs mt-1.5 ${username && !vUser ? 'text-red-400' : 'text-[#9A9AAA]'}`}>3–20 chars, lowercase, letters/numbers/underscores</p>
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Email</label>
+                        <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-2">Email</label>
                         <input type="email" value={email} onChange={e => { setEmail(e.target.value); setSignupError('') }}
                           placeholder="you@example.com" autoComplete="email"
                           className={`w-full bg-[#1C1C1E] border ${fieldBorder(vEmail, !!email)} rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors`} />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Password</label>
+                        <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-2">Password</label>
                         <div className="relative">
                           <input type={showPassword ? 'text' : 'password'} value={password}
                             onChange={e => { setPassword(e.target.value); setSignupError('') }}
@@ -718,12 +724,12 @@ export default function OnboardingPage() {
       </div>
 
       {/* Bottom CTA */}
-      <div className="px-5 pb-10 pt-4 flex flex-col gap-3">
+      <div className="px-5 pb-12 pt-5 flex flex-col gap-3 relative z-10">
         <motion.button
           onClick={step < TOTAL_STEPS - 1 ? next : handleSubmit}
           disabled={!ok || loading}
           whileTap={{ scale: 0.97 }}
-          className="w-full bg-[#FF4500] text-white font-bold text-base py-[18px] rounded-2xl flex items-center justify-center gap-2 disabled:opacity-30 shadow-[0_8px_32px_rgba(255,69,0,0.25)] transition-opacity"
+          className="w-full bg-[#FF4500] text-white font-black text-sm uppercase tracking-[0.12em] py-[20px] rounded-2xl flex items-center justify-center gap-2.5 disabled:opacity-30 shadow-[0_8px_48px_rgba(255,69,0,0.35)] transition-opacity"
         >
           {loading
             ? 'Creating account...'
