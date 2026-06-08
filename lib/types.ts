@@ -6,29 +6,17 @@ export interface OnboardingData {
   experience: string
   daysPerWeek: number
   sessionLength?: number
-  splitType?: string
+  splitType?: string[]
   trainingDays?: string[]
   equipment: string
   equipmentCustom?: string
-  bodyComp?: string
   musclePriority?: string[]
-  recovery?: string
   sex?: string
   weight?: number
   height?: string
   age?: number
   injuryNotes?: string
   cardio?: string
-  notes?: string
-}
-
-export interface CardioEntry {
-  id: string
-  date: string
-  type: string
-  distance?: string
-  duration?: string
-  intensity: 'easy' | 'moderate' | 'hard'
   notes?: string
 }
 

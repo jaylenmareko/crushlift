@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { OnboardingData, PlanDay, WorkoutHistoryEntry, CardioEntry } from '@/lib/types'
+import type { OnboardingData, PlanDay, WorkoutHistoryEntry } from '@/lib/types'
 
 // TODO: remove DUMMY_PLAN and uncomment Anthropic call once API is funded
 const DUMMY_PLAN: { days: PlanDay[] } = {
@@ -59,15 +59,11 @@ const DUMMY_PLAN: { days: PlanDay[] } = {
 interface RequestBody {
   onboarding: OnboardingData
   workoutHistory?: WorkoutHistoryEntry[]
-  sorenessLog?: Record<string, Record<string, number>>
-  cardioLog?: CardioEntry[]
 }
 
 function buildContext(
   onboarding: OnboardingData,
-  workoutHistory: WorkoutHistoryEntry[],
-  sorenessLog: Record<string, Record<string, number>>,
-  cardioLog: CardioEntry[]
+  workoutHistory: WorkoutHistoryEntry[]
 ): string {
   const lines: string[] = []
 
@@ -110,22 +106,10 @@ function buildContext(
   lines.push('\nEQUIPMENT')
   lines.push(onboarding.equipmentCustom || onboarding.equipment)
 
-  // --- BODY COMPOSITION ---
-  if (onboarding.bodyComp) {
-    lines.push('\nBODY COMPOSITION FOCUS')
-    lines.push(onboarding.bodyComp)
-  }
-
   // --- MUSCLE PRIORITY ---
   if (onboarding.musclePriority?.length) {
     lines.push('\nMUSCLE PRIORITY (emphasize these)')
     lines.push(onboarding.musclePriority.join(', '))
-  }
-
-  // --- RECOVERY ---
-  if (onboarding.recovery) {
-    lines.push('\nRECOVERY CAPACITY')
-    lines.push(onboarding.recovery)
   }
 
   // --- INJURIES ---
@@ -160,33 +144,6 @@ function buildContext(
     })
   }
 
-  // --- RECENT SORENESS ---
-  const sorenessEntries = Object.entries(sorenessLog)
-    .sort(([a], [b]) => b.localeCompare(a))
-    .slice(0, 3)
-  if (sorenessEntries.length) {
-    lines.push('\nRECENT SORENESS')
-    sorenessEntries.forEach(([date, areas]) => {
-      const d = new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      const soreList = Object.entries(areas)
-        .filter(([, v]) => v > 0)
-        .map(([area, v]) => `${area} (${['', 'mild', 'moderate', 'sore'][v]})`)
-        .join(', ')
-      if (soreList) lines.push(`• ${d}: ${soreList}`)
-    })
-  }
-
-  // --- RECENT CARDIO LOG ---
-  const recentCardio = cardioLog.slice(0, 5)
-  if (recentCardio.length) {
-    lines.push('\nRECENT CARDIO')
-    recentCardio.forEach(c => {
-      const date = new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      const detail = [c.distance, c.duration, c.intensity].filter(Boolean).join(', ')
-      lines.push(`• ${date}: ${c.type}${detail ? ` — ${detail}` : ''}`)
-    })
-  }
-
   return lines.join('\n')
 }
 
@@ -195,14 +152,12 @@ export async function POST(req: NextRequest) {
   const {
     onboarding,
     workoutHistory = [],
-    sorenessLog = {},
-    cardioLog = [],
   } = body
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const context = buildContext(onboarding, workoutHistory, sorenessLog, cardioLog)
+  const context = buildContext(onboarding, workoutHistory)
 
   /* ---------------------------------------------------------
    * LIVE ANTHROPIC CALL — uncomment when API is funded

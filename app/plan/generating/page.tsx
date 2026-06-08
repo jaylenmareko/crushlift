@@ -27,27 +27,21 @@ export default function GeneratingPage() {
   }, [])
 
   useEffect(() => {
-    const raw = sessionStorage.getItem('crushlift_onboarding')
+    const raw = sessionStorage.getItem('trainmaxxing_onboarding')
     if (!raw) { router.push('/onboarding'); return }
     const onboarding = JSON.parse(raw)
 
-    // Pull all context from localStorage to enrich the AI prompt
-    const workoutHistory = JSON.parse(localStorage.getItem('crushlift_workout_history') || '[]')
-    const sorenessLog = JSON.parse(localStorage.getItem('crushlift_soreness_log') || '{}')
-    const cardioLog = JSON.parse(localStorage.getItem('crushlift_cardio_log') || '[]')
+    const workoutHistory = JSON.parse(localStorage.getItem('trainmaxxing_workout_history') || '[]')
 
     fetch('/api/generate-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ onboarding, workoutHistory, sorenessLog, cardioLog }),
+      body: JSON.stringify({ onboarding, workoutHistory }),
     })
       .then(r => r.json())
       .then(data => {
         if (data.error) { setError(data.error); return }
-        sessionStorage.removeItem('crushlift_onboarding')
-        if (data.guest) {
-          localStorage.setItem('crushlift_guest_plan', JSON.stringify(data.plan))
-        }
+        sessionStorage.removeItem('trainmaxxing_onboarding')
         router.push('/plan')
       })
       .catch(() => setError('Something went wrong. Try again.'))

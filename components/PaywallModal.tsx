@@ -11,10 +11,10 @@ interface PaywallModalProps {
 
 const FEATURES = [
   'Start and log workouts',
-  'Demo video for every exercise',
-  'AI adjusts your plan over time',
-  'Track your progress',
-  'Unlimited plan generations',
+  'Track your progress over time',
+  'AI adjusts your plan as you improve',
+  'Unlimited plan regenerations',
+  'AI form analysis on every exercise',
 ]
 
 export default function PaywallModal({ open, onClose }: PaywallModalProps) {

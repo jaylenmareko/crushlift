@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { Check, ChevronLeft } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Check, ChevronLeft, Video } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Plan, PlanDay, PlanExercise, WorkoutSet, WorkoutHistoryEntry } from '@/lib/types'
 import BottomNav from '@/components/BottomNav'
+import FormAnalysisModal from '@/components/FormAnalysisModal'
 
 const REST_SECONDS = 90
 
@@ -21,13 +22,16 @@ function WorkoutContent() {
   const [prevBests, setPrevBests] = useState<Record<string, { weight: number | null, reps: number | null }>>({})
   const [restTimer, setRestTimer] = useState<number | null>(null)
   const [restingFor, setRestingFor] = useState<string | null>(null)
+  const [planLoaded, setPlanLoaded] = useState(false)
+  const [formTarget, setFormTarget] = useState<PlanExercise | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const startedAtRef = useRef<string>(new Date().toISOString())
 
   // Persist in-progress sets on every change
   useEffect(() => {
     if (!plan || Object.keys(sets).length === 0) return
     const today = new Date().toISOString().slice(0, 10)
-    localStorage.setItem('crushlift_inprogress_workout', JSON.stringify({
+    localStorage.setItem('trainmaxxing_inprogress_workout', JSON.stringify({
       planId: plan.id ?? null,
       dayIndex,
       date: today,
@@ -39,10 +43,10 @@ function WorkoutContent() {
     function initSets(data: Plan) {
       const safeIndex = Math.min(dayIndex, data.days.length - 1)
       setPlan(data)
+      setPlanLoaded(true)
       const day: PlanDay = data.days[safeIndex]
 
-      // Build previous-best map from workout history
-      const history: WorkoutHistoryEntry[] = JSON.parse(localStorage.getItem('crushlift_workout_history') || '[]')
+      const history: WorkoutHistoryEntry[] = JSON.parse(localStorage.getItem('trainmaxxing_workout_history') || '[]')
       const bests: Record<string, { weight: number | null, reps: number | null }> = {}
       day.exercises.forEach((ex: PlanExercise) => {
         for (const session of history) {
@@ -55,9 +59,8 @@ function WorkoutContent() {
       })
       setPrevBests(bests)
 
-      // Restore in-progress sets if same plan + day + today
       const today = new Date().toISOString().slice(0, 10)
-      const savedRaw = localStorage.getItem('crushlift_inprogress_workout')
+      const savedRaw = localStorage.getItem('trainmaxxing_inprogress_workout')
       if (savedRaw) {
         try {
           const saved = JSON.parse(savedRaw)
@@ -81,28 +84,22 @@ function WorkoutContent() {
       setSets(initialSets)
     }
 
-    // Always try localStorage first (works with or without planId)
-    const guestRaw = localStorage.getItem('crushlift_guest_plan')
-    if (guestRaw) {
-      try {
-        const guest = JSON.parse(guestRaw)
-        if (!planId || guest.id === planId) { initSets(guest); return }
-      } catch {}
-    }
+    if (!planId) { setPlanLoaded(true); return }
 
-    // No planId and no localStorage — nothing to load
-    if (!planId) return
-
-    // Fall back to Supabase
     const supabase = createClient()
     supabase.from('plans').select('*').eq('id', planId).single().then(({ data }) => {
       if (data) initSets(data)
+      else setPlanLoaded(true)
     })
   }, [planId, dayIndex])
 
   useEffect(() => {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [])
+
+  useEffect(() => {
+    if (planLoaded && !plan) router.replace('/plan')
+  }, [planLoaded, plan, router])
 
   function startRest(exerciseId: string) {
     if (timerRef.current) clearInterval(timerRef.current)
@@ -140,7 +137,7 @@ function WorkoutContent() {
 
   async function finishWorkout() {
     if (!plan) return
-    localStorage.removeItem('crushlift_inprogress_workout')
+    localStorage.removeItem('trainmaxxing_inprogress_workout')
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     const safeIdx = Math.min(dayIndex, plan.days.length - 1)
@@ -157,7 +154,7 @@ function WorkoutContent() {
     }))
 
     // Save snapshot for completion screen (works for both guest and auth)
-    sessionStorage.setItem('crushlift_last_workout', JSON.stringify({
+    sessionStorage.setItem('trainmaxxing_last_workout', JSON.stringify({
       id: crypto.randomUUID(),
       date: new Date().toISOString(),
       dayName: day.dayName,
@@ -173,8 +170,8 @@ function WorkoutContent() {
         dayNumber: day.dayNumber,
         exercises,
       }
-      const existing = JSON.parse(localStorage.getItem('crushlift_workout_history') || '[]')
-      localStorage.setItem('crushlift_workout_history', JSON.stringify([entry, ...existing]))
+      const existing = JSON.parse(localStorage.getItem('trainmaxxing_workout_history') || '[]')
+      localStorage.setItem('trainmaxxing_workout_history', JSON.stringify([entry, ...existing]))
       router.push('/workout/complete')
       return
     }
@@ -184,7 +181,7 @@ function WorkoutContent() {
       plan_id: plan.id,
       day_number: day.dayNumber,
       day_name: day.dayName,
-      started_at: new Date(Date.now() - 3600000).toISOString(),
+      started_at: startedAtRef.current,
       finished_at: new Date().toISOString(),
     }).select().single()
 
@@ -206,14 +203,8 @@ function WorkoutContent() {
   }
 
   if (!plan) return (
-    <div className="mobile-container flex flex-col items-center justify-center min-h-dvh bg-[#0D0D0F] gap-4 px-8 text-center">
-      <p className="text-[#9A9AAA] text-sm">No active workout.</p>
-      <button
-        onClick={() => router.push('/plan')}
-        className="text-sm font-semibold text-[#FF4500]"
-      >
-        Go to My Plan →
-      </button>
+    <div className="mobile-container flex items-center justify-center min-h-dvh bg-[#0D0D0F]">
+      <div className="w-8 h-8 border-2 border-[#FF4500] border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -245,7 +236,7 @@ function WorkoutContent() {
           <div key={ex.id} className="bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-4">
               <h3 className="font-bold text-sm text-white flex-1">{ex.name}</h3>
-              <span className="text-xs font-bold text-[#FF4500] bg-[#FF4500]/10 border border-[#FF4500]/20 rounded-md px-2 py-1 leading-none flex-shrink-0">
+              <span className="text-xs font-bold text-[#9A9AAA] bg-[#252528] border border-[#3A3A3C] rounded-md px-2 py-1 leading-none flex-shrink-0">
                 {ex.sets}×{ex.reps}
               </span>
               <button
@@ -259,6 +250,13 @@ function WorkoutContent() {
                 {restingFor === ex.id && restTimer !== null
                   ? `${Math.floor(restTimer / 60)}:${String(restTimer % 60).padStart(2, '0')}`
                   : 'Rest'}
+              </button>
+              <button
+                onClick={() => setFormTarget(ex)}
+                className="text-[10px] font-bold px-2 py-1 rounded-lg border border-[#252528] bg-[#252528] text-[#636366] hover:text-[#FF4500] hover:border-[#FF4500]/30 transition-all flex-shrink-0 flex items-center gap-1"
+              >
+                <Video className="w-3 h-3" />
+                Form
               </button>
             </div>
 
@@ -344,6 +342,15 @@ function WorkoutContent() {
       </div>
 
       <BottomNav active="workout" />
+
+      <AnimatePresence>
+        {formTarget && (
+          <FormAnalysisModal
+            exerciseName={formTarget.name}
+            onClose={() => setFormTarget(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

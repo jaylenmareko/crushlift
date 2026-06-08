@@ -7,26 +7,8 @@ import { Play, X, ChevronRight, ChevronLeft, Search, Loader2, Calendar, SlidersH
 import { createClient } from '@/lib/supabase/client'
 import type { Plan, PlanDay, PlanExercise, WorkoutHistoryEntry } from '@/lib/types'
 import BottomNav from '@/components/BottomNav'
+import PaywallModal from '@/components/PaywallModal'
 
-
-const SORENESS_AREAS = [
-  'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps',
-  'Core', 'Quads', 'Hamstrings', 'Glutes', 'Calves',
-]
-
-const SORENESS_LEVELS = [
-  { label: '', color: '' },
-  { label: 'Mild', color: 'amber' },
-  { label: 'Moderate', color: 'orange' },
-  { label: 'Sore', color: 'red' },
-]
-
-const SORENESS_STYLES: Record<string, string> = {
-  '': 'border-[#252528] bg-[#1C1C1E] text-[#636366]',
-  amber: 'border-amber-500/40 bg-amber-500/10 text-amber-400',
-  orange: 'border-orange-500/40 bg-orange-500/10 text-orange-400',
-  red: 'border-red-500/40 bg-red-500/10 text-red-400',
-}
 
 const GRADIENTS = [
   'from-[#FF4500] to-[#FF6B35]',
@@ -39,6 +21,8 @@ const GRADIENTS = [
 
 const WEEK_DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+const DAY_NAMES = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
+const DAY_ORDER = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
 
 function getWeekDays(d: Date): Date[] {
   const monday = new Date(d)
@@ -88,15 +72,6 @@ export default function PlanPage() {
   const [editEquipment, setEditEquipment] = useState('full_gym')
   const [editEquipCustom, setEditEquipCustom] = useState('')
   const [regenerating, setRegenerating] = useState(false)
-  const [showLogCardio, setShowLogCardio] = useState(false)
-  const [cardioType, setCardioType] = useState('')
-  const [cardioDistance, setCardioDistance] = useState('')
-  const [cardioDuration, setCardioDuration] = useState('')
-  const [cardioIntensity, setCardioIntensity] = useState<'easy' | 'moderate' | 'hard' | ''>('')
-  const [cardioNotes, setCardioNotes] = useState('')
-  const [soreAreas, setSoreAreas] = useState<Record<string, number>>({})
-  const [sorenessLogged, setSorenessLogged] = useState(false)
-  const [sorenessExpanded, setSorenessExpanded] = useState(true)
   const [showCalendar, setShowCalendar] = useState(false)
   const [calMonth, setCalMonth] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() })
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryEntry[]>([])
@@ -105,19 +80,17 @@ export default function PlanPage() {
   const [thumbnails, setThumbnails] = useState<Record<string, string>>(() => {
     if (typeof window === 'undefined') return {}
     try {
-      return JSON.parse(sessionStorage.getItem('crushlift_thumbnails') || '{}')
+      return JSON.parse(sessionStorage.getItem('trainmaxxing_thumbnails') || '{}')
     } catch { return {} }
   })
   const [inProgressSets, setInProgressSets] = useState<Record<string, { completed: boolean }[]>>({})
   const [confirmDone, setConfirmDone] = useState(false)
-  const [sorenessConfirmed, setSorenessConfirmed] = useState(false)
+  const [isSubscribed, setIsSubscribed] = useState(false)
+  const [showPaywall, setShowPaywall] = useState(false)
 
   const today = new Date()
   const weekDays = getWeekDays(today)
   const todayKey = today.toISOString().slice(0, 10)
-  const DAY_NAMES = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
-  const DAY_ORDER = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
-
   const trainingDays: string[] = (plan?.onboarding_data?.trainingDays ?? plan?.onboardingData?.trainingDays) || []
 
   function getEntryForDate(d: Date): WorkoutHistoryEntry | undefined {
@@ -141,7 +114,7 @@ export default function PlanPage() {
     }
 
     // No training days set — use last logged workout to find next day
-    const history: WorkoutHistoryEntry[] = JSON.parse(localStorage.getItem('crushlift_workout_history') || '[]')
+    const history: WorkoutHistoryEntry[] = JSON.parse(localStorage.getItem('trainmaxxing_workout_history') || '[]')
     const lastLogged = history.find(e => p.days.some(d => d.dayNumber === e.dayNumber))
     if (lastLogged) {
       const lastDayIndex = p.days.findIndex(d => d.dayNumber === lastLogged.dayNumber)
@@ -155,6 +128,15 @@ export default function PlanPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
+      // Check subscription
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('subscription_status')
+        .eq('id', user.id)
+        .single()
+      const status = profile?.subscription_status
+      setIsSubscribed(status === 'active' || status === 'trialing')
+
       // Load most recent plan from Supabase
       const { data: plans } = await supabase
         .from('plans')
@@ -171,23 +153,18 @@ export default function PlanPage() {
       }
     }
 
-    // Anonymous or no Supabase plan: try localStorage guest plan
-    const guestRaw = localStorage.getItem('crushlift_guest_plan')
-    if (guestRaw) {
-      try {
-        const p = JSON.parse(guestRaw)
-        setPlan(p)
-        setActiveDay(getInitialDay(p))
-      } catch {}
-    }
     setLoading(false)
   }, [])
 
   useEffect(() => { loadPlan() }, [loadPlan])
 
   useEffect(() => {
+    if (!loading && !plan) router.replace('/onboarding')
+  }, [loading, plan, router])
+
+  useEffect(() => {
     if (!plan) return
-    const history: WorkoutHistoryEntry[] = JSON.parse(localStorage.getItem('crushlift_workout_history') || '[]')
+    const history: WorkoutHistoryEntry[] = JSON.parse(localStorage.getItem('trainmaxxing_workout_history') || '[]')
     const done = history.some(e =>
       e.date.slice(0, 10) === todayKey &&
       e.dayNumber === plan.days[activeDay]?.dayNumber
@@ -195,40 +172,17 @@ export default function PlanPage() {
     setCompletedToday(done)
   }, [plan, activeDay, todayKey])
 
-  useEffect(() => {
-    const todayKey = new Date().toISOString().slice(0, 10)
-    const raw = localStorage.getItem('crushlift_soreness_log')
-    const log = raw ? JSON.parse(raw) : {}
-    if (log[todayKey]) {
-      setSoreAreas(log[todayKey])
-      setSorenessLogged(true)
-    }
-  }, [])
-
-  function tapSoreArea(area: string) {
-    setSoreAreas(prev => ({ ...prev, [area]: ((prev[area] || 0) + 1) % 4 }))
-  }
-
-  function saveSoreness() {
-    const todayKey = new Date().toISOString().slice(0, 10)
-    const raw = localStorage.getItem('crushlift_soreness_log')
-    const log = raw ? JSON.parse(raw) : {}
-    log[todayKey] = soreAreas
-    localStorage.setItem('crushlift_soreness_log', JSON.stringify(log))
-    setSorenessLogged(true)
-  }
-
   useEffect(() => { setConfirmDone(false) }, [activeDay])
 
   useEffect(() => {
     if (Object.keys(thumbnails).length > 0)
-      sessionStorage.setItem('crushlift_thumbnails', JSON.stringify(thumbnails))
+      sessionStorage.setItem('trainmaxxing_thumbnails', JSON.stringify(thumbnails))
   }, [thumbnails])
 
   // Load in-progress workout sets for the active day
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10)
-    const savedRaw = localStorage.getItem('crushlift_inprogress_workout')
+    const savedRaw = localStorage.getItem('trainmaxxing_inprogress_workout')
     if (!savedRaw) { setInProgressSets({}); return }
     try {
       const saved = JSON.parse(savedRaw)
@@ -259,7 +213,7 @@ export default function PlanPage() {
   useEffect(() => {
     if (!showCalendar) return
     // Guest: read from localStorage
-    const raw = localStorage.getItem('crushlift_workout_history')
+    const raw = localStorage.getItem('trainmaxxing_workout_history')
     const local: WorkoutHistoryEntry[] = raw ? JSON.parse(raw) : []
     // Auth: merge with Supabase
     const supabase = createClient()
@@ -343,7 +297,7 @@ export default function PlanPage() {
       const supabase = createClient()
       supabase.from('plans').update({ days: updated.days }).eq('id', updated.id)
     } else {
-      localStorage.setItem('crushlift_guest_plan', JSON.stringify(updated))
+      localStorage.setItem('trainmaxxing_guest_plan', JSON.stringify(updated))
     }
   }
 
@@ -376,30 +330,12 @@ export default function PlanPage() {
     persistPlan(updated)
   }
 
-  function saveCardio() {
-    if (!cardioType.trim() || !cardioIntensity) return
-    const entry = {
-      id: crypto.randomUUID(),
-      date: new Date().toISOString(),
-      type: cardioType.trim(),
-      distance: cardioDistance || undefined,
-      duration: cardioDuration || undefined,
-      intensity: cardioIntensity,
-      notes: cardioNotes || undefined,
-    }
-    const raw = localStorage.getItem('crushlift_cardio_log')
-    const log = raw ? JSON.parse(raw) : []
-    localStorage.setItem('crushlift_cardio_log', JSON.stringify([entry, ...log]))
-    setCardioType(''); setCardioDistance(''); setCardioDuration(''); setCardioIntensity(''); setCardioNotes('')
-    setShowLogCardio(false)
-  }
-
   function openEditPlan() {
     const od = plan?.onboarding_data ?? plan?.onboardingData
     setEditDays(od?.daysPerWeek ?? 4)
     setEditSession(od?.sessionLength ?? 60)
     setEditSplit(od?.splitType ?? 'ppl')
-    const knownEquipment = ['full_gym', 'dumbbells', 'no_equipment']
+    const knownEquipment = ['full_gym', 'barbell_home', 'dumbbells', 'bands', 'no_equipment']
     const eq = od?.equipment ?? 'full_gym'
     if (knownEquipment.includes(eq)) {
       setEditEquipment(eq)
@@ -413,6 +349,7 @@ export default function PlanPage() {
 
   async function regeneratePlan() {
     if (!plan) return
+    if (!isSubscribed) { setShowPaywall(true); return }
     setRegenerating(true)
     const od = plan.onboarding_data ?? plan.onboardingData ?? {}
     const updatedOnboarding = {
@@ -423,14 +360,12 @@ export default function PlanPage() {
       equipment: editEquipment || editEquipCustom,
       equipmentCustom: editEquipCustom || undefined,
     }
-    const workoutHistory = JSON.parse(localStorage.getItem('crushlift_workout_history') || '[]')
-    const sorenessLog = JSON.parse(localStorage.getItem('crushlift_soreness_log') || '{}')
-    const cardioLog = JSON.parse(localStorage.getItem('crushlift_cardio_log') || '[]')
+    const historyData = JSON.parse(localStorage.getItem('trainmaxxing_workout_history') || '[]')
 
     const res = await fetch('/api/generate-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ onboarding: updatedOnboarding, workoutHistory, sorenessLog, cardioLog }),
+      body: JSON.stringify({ onboarding: updatedOnboarding, workoutHistory: historyData }),
     })
     const data = await res.json()
     if (data.plan) {
@@ -444,6 +379,7 @@ export default function PlanPage() {
 
   async function markAsDone() {
     if (!plan) return
+    if (!isSubscribed) { setShowPaywall(true); return }
     const day = plan.days[activeDay]
     const entry = {
       id: crypto.randomUUID(),
@@ -455,9 +391,9 @@ export default function PlanPage() {
         sets: [],
       })),
     }
-    sessionStorage.setItem('crushlift_last_workout', JSON.stringify(entry))
-    const existing = JSON.parse(localStorage.getItem('crushlift_workout_history') || '[]')
-    localStorage.setItem('crushlift_workout_history', JSON.stringify([entry, ...existing]))
+    sessionStorage.setItem('trainmaxxing_last_workout', JSON.stringify(entry))
+    const existing = JSON.parse(localStorage.getItem('trainmaxxing_workout_history') || '[]')
+    localStorage.setItem('trainmaxxing_workout_history', JSON.stringify([entry, ...existing]))
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -476,6 +412,7 @@ export default function PlanPage() {
 
   function startWorkout() {
     if (!plan) return
+    if (!isSubscribed) { setShowPaywall(true); return }
     router.push(`/workout?planId=${plan.id}&day=${activeDay}`)
   }
 
@@ -489,24 +426,8 @@ export default function PlanPage() {
 
   if (!plan) {
     return (
-      <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav">
-        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#FF4500]/10 border border-[#FF4500]/20 flex items-center justify-center mb-6">
-            <Play className="w-7 h-7 text-[#FF4500] ml-0.5" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">No plan yet</h2>
-          <p className="text-[#9A9AAA] text-sm mb-8 leading-relaxed">
-            Answer 5 quick questions and get a personalized workout plan with demo videos for every exercise.
-          </p>
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => router.push('/onboarding')}
-            className="w-full max-w-xs bg-[#FF4500] text-white font-bold py-4 rounded-2xl shadow-[0_8px_32px_rgba(255,69,0,0.25)]"
-          >
-            Build My Plan
-          </motion.button>
-        </div>
-        <BottomNav active="plan" />
+      <div className="mobile-container flex items-center justify-center min-h-dvh bg-[#0D0D0F]">
+        <div className="w-8 h-8 border-2 border-[#FF4500] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -559,112 +480,6 @@ export default function PlanPage() {
           })}
         </div>
       </header>
-
-      {/* Soreness card */}
-      <div className="px-5 mb-4">
-        <div className="bg-[#1C1C1E] border border-[#252528] rounded-2xl overflow-hidden">
-          {/* Always-visible header row — tap to expand/collapse */}
-          <button
-            onClick={() => setSorenessExpanded(p => !p)}
-            className="w-full flex items-center justify-between px-4 py-3 text-left"
-          >
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="text-xs font-semibold text-[#9A9AAA]">
-                {today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </span>
-              {sorenessLogged && Object.entries(soreAreas).filter(([, v]) => v > 0).length === 0 && (
-                <span className="text-xs text-[#636366]">Feeling good</span>
-              )}
-              {Object.entries(soreAreas)
-                .filter(([, v]) => v > 0)
-                .map(([area, level]) => (
-                  <span
-                    key={area}
-                    className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg border ${SORENESS_STYLES[SORENESS_LEVELS[level].color]}`}
-                  >
-                    {area}
-                  </span>
-                ))}
-              {!sorenessLogged && Object.values(soreAreas).every(v => !v) && (
-                <span className="text-xs text-[#636366]">How are you feeling?</span>
-              )}
-            </div>
-            <ChevronRight className={`w-4 h-4 text-[#636366] flex-shrink-0 transition-transform duration-200 ${sorenessExpanded ? 'rotate-90' : ''}`} />
-          </button>
-
-          {/* Expandable body */}
-          <AnimatePresence>
-            {sorenessExpanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="px-4 pb-4 border-t border-[#252528] pt-3">
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {SORENESS_AREAS.map(area => {
-                      const level = soreAreas[area] || 0
-                      const { color } = SORENESS_LEVELS[level]
-                      return (
-                        <motion.button
-                          key={area}
-                          whileTap={{ scale: 0.92 }}
-                          onClick={() => tapSoreArea(area)}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 ${SORENESS_STYLES[color]}`}
-                        >
-                          {level > 0 && (
-                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                              color === 'amber' ? 'bg-amber-400'
-                              : color === 'orange' ? 'bg-orange-400'
-                              : 'bg-red-400'
-                            }`} />
-                          )}
-                          {area}
-                        </motion.button>
-                      )
-                    })}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] text-[#636366]">Once mild · twice moderate · 3× sore</p>
-                    <motion.button
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => {
-                        saveSoreness()
-                        setSorenessConfirmed(true)
-                        setTimeout(() => setSorenessConfirmed(false), 2000)
-                      }}
-                      className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
-                        sorenessConfirmed
-                          ? 'bg-[#22C55E] text-white'
-                          : 'bg-[#FF4500] text-white'
-                      }`}
-                    >
-                      {sorenessConfirmed ? 'Logged ✓' : 'Log it'}
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* Log Cardio button */}
-      <div className="px-5 mb-4">
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={() => setShowLogCardio(true)}
-          className="w-full flex items-center justify-between bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-3 text-left hover:border-[#3A3A3C] transition-all"
-        >
-          <div>
-            <p className="text-sm font-semibold text-white">Log Cardio</p>
-            <p className="text-xs text-[#636366] mt-0.5">Helps the AI build your lifting plan around your activity</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-[#636366] flex-shrink-0" />
-        </motion.button>
-      </div>
 
       {/* Day tabs */}
       <div className="flex gap-2 px-5 mb-5 overflow-x-auto no-scrollbar">
@@ -724,7 +539,7 @@ export default function PlanPage() {
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-white leading-tight">{ex.name}</p>
-                    <span className="text-xs font-bold text-[#FF4500] bg-[#FF4500]/10 border border-[#FF4500]/20 rounded-md px-2 py-1 mt-1.5 inline-block leading-none">
+                    <span className="text-xs font-bold text-[#9A9AAA] bg-[#252528] border border-[#3A3A3C] rounded-md px-2 py-1 mt-1.5 inline-block leading-none">
                       {ex.sets}×{ex.reps}
                     </span>
                   </div>
@@ -1021,121 +836,6 @@ export default function PlanPage() {
         )}
       </AnimatePresence>
 
-      {/* Paywall */}
-      {/* Log Cardio sheet */}
-      <AnimatePresence>
-        {showLogCardio && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowLogCardio(false)} className="fixed inset-0 bg-black/70 z-40" />
-            <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[900px] bg-[#141414] border-t border-[#252528] rounded-t-3xl z-50 flex flex-col max-h-[90vh]"
-            >
-              <div className="flex-shrink-0">
-                <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-[#3A3A3C]" /></div>
-                <div className="flex items-center justify-between px-5 pt-2 pb-4">
-                  <div>
-                    <p className="text-[10px] text-[#636366] font-semibold uppercase tracking-wider mb-0.5">
-                      {today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                    </p>
-                    <p className="font-bold text-base">Log Cardio</p>
-                    <p className="text-xs text-[#636366] mt-0.5">So your lifting plan adjusts around your full activity</p>
-                  </div>
-                  <button onClick={() => setShowLogCardio(false)} className="w-8 h-8 rounded-full bg-[#252528] flex items-center justify-center text-[#9A9AAA] flex-shrink-0">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto px-5 pb-10">
-                <div className="flex flex-col gap-5">
-                  {/* Activity type */}
-                  <div>
-                    <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Activity</label>
-                    <input
-                      type="text"
-                      value={cardioType}
-                      onChange={e => setCardioType(e.target.value)}
-                      placeholder='e.g. "Run", "Cycling", "Basketball"'
-                      className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors"
-                    />
-                  </div>
-
-                  {/* Distance + Duration */}
-                  <div className="flex gap-2.5">
-                    <div className="flex-1">
-                      <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Distance</label>
-                      <input
-                        type="text"
-                        value={cardioDistance}
-                        onChange={e => setCardioDistance(e.target.value)}
-                        placeholder='e.g. "3 miles"'
-                        className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Duration</label>
-                      <input
-                        type="text"
-                        value={cardioDuration}
-                        onChange={e => setCardioDuration(e.target.value)}
-                        placeholder='e.g. "28 min"'
-                        className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Intensity */}
-                  <div>
-                    <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Intensity</label>
-                    <div className="flex gap-2.5">
-                      {(['easy', 'moderate', 'hard'] as const).map(level => (
-                        <button
-                          key={level}
-                          onClick={() => setCardioIntensity(level)}
-                          className={`flex-1 py-3 rounded-xl border text-sm font-bold capitalize transition-all ${
-                            cardioIntensity === level
-                              ? level === 'easy' ? 'border-green-500/40 bg-green-500/10 text-green-400'
-                                : level === 'moderate' ? 'border-amber-500/40 bg-amber-500/10 text-amber-400'
-                                : 'border-red-500/40 bg-red-500/10 text-red-400'
-                              : 'border-[#252528] bg-[#1C1C1E] text-[#9A9AAA] hover:border-[#3A3A3C]'
-                          }`}
-                        >
-                          {level}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Notes */}
-                  <div>
-                    <label className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider block mb-2">Notes <span className="text-[#636366] normal-case font-normal">(optional)</span></label>
-                    <input
-                      type="text"
-                      value={cardioNotes}
-                      onChange={e => setCardioNotes(e.target.value)}
-                      placeholder='e.g. "Felt good, easy pace"'
-                      className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors"
-                    />
-                  </div>
-
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={saveCardio}
-                    disabled={!cardioType.trim() || !cardioIntensity}
-                    className="w-full bg-[#FF4500] text-white font-bold py-[18px] rounded-2xl shadow-[0_8px_32px_rgba(255,69,0,0.25)] disabled:opacity-30"
-                  >
-                    Save
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
       {/* Edit plan sheet */}
       <AnimatePresence>
         {showEditPlan && (
@@ -1245,9 +945,11 @@ export default function PlanPage() {
                   <p className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider mb-3">Equipment</p>
                   <div className="flex flex-col gap-2">
                     {[
-                      { v: 'full_gym', l: 'Full Gym', d: 'Barbells, cables, machines' },
-                      { v: 'dumbbells', l: 'Dumbbells Only', d: 'Home setup, limited gear' },
-                      { v: 'no_equipment', l: 'No Equipment', d: 'Bodyweight only' },
+                      { v: 'full_gym', l: 'Full Gym', d: 'Barbells, cables, machines — everything' },
+                      { v: 'barbell_home', l: 'Barbell + Dumbbells', d: 'Home setup with free weights' },
+                      { v: 'dumbbells', l: 'Dumbbells Only', d: 'Adjustable or fixed dumbbells' },
+                      { v: 'bands', l: 'Resistance Bands', d: 'Portable and travel-friendly' },
+                      { v: 'no_equipment', l: 'Bodyweight Only', d: 'No equipment, anywhere' },
                     ].map(({ v, l, d }) => (
                       <button
                         key={v}
@@ -1355,6 +1057,8 @@ export default function PlanPage() {
           </>
         )}
       </AnimatePresence>
+
+      <PaywallModal open={showPaywall} onClose={() => setShowPaywall(false)} />
 
       {/* Calendar sheet */}
       <AnimatePresence>

@@ -15,7 +15,7 @@ export default function WorkoutCompletePage() {
     const today = new Date().toISOString().slice(0, 10)
 
     // Prefer the just-finished snapshot saved right before routing here
-    const lastRaw = sessionStorage.getItem('crushlift_last_workout')
+    const lastRaw = sessionStorage.getItem('trainmaxxing_last_workout')
     if (lastRaw) {
       try {
         const last = JSON.parse(lastRaw)
@@ -27,7 +27,7 @@ export default function WorkoutCompletePage() {
     }
 
     // Fall back to most recent localStorage entry (guest users)
-    const raw = localStorage.getItem('crushlift_workout_history')
+    const raw = localStorage.getItem('trainmaxxing_workout_history')
     if (!raw) { router.push('/plan'); return }
     const history: WorkoutHistoryEntry[] = JSON.parse(raw)
     if (history.length === 0 || history[0].date.slice(0, 10) !== today) {
@@ -124,11 +124,11 @@ export default function WorkoutCompletePage() {
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.97 }}
-          onClick={() => router.push('/history')}
+          onClick={() => router.push('/profile')}
           className="w-full bg-[#1C1C1E] border border-[#252528] text-[#9A9AAA] font-semibold text-sm py-[18px] rounded-2xl flex items-center justify-center gap-2 hover:text-white hover:border-[#3A3A3C] transition-all"
         >
           <BarChart2 className="w-4 h-4" />
-          View History
+          View Memories
         </motion.button>
       </motion.div>
 
