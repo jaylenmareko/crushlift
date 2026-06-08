@@ -545,7 +545,7 @@ export default function OnboardingPage() {
                 <h2 className="text-2xl font-black tracking-tight mb-1">
                   What to develop most?
                 </h2>
-                <p className="text-xs text-[#636366] mb-7">Optional</p>
+                <p className="text-sm font-semibold text-[#FF4500] mb-6">Optional</p>
                 <div className="grid grid-cols-2 gap-2.5">
                   {MUSCLE_GROUPS.map(m => {
                     const selected = musclePriority.includes(m.value)
@@ -575,7 +575,7 @@ export default function OnboardingPage() {
             {step === 5 && (
               <div className="flex flex-col flex-1">
                 <h2 className="text-2xl font-black tracking-tight mb-1">About you</h2>
-                <p className="text-xs text-[#636366] mb-7">Optional</p>
+                <p className="text-sm font-semibold text-[#FF4500] mb-6">Optional</p>
                 <div className="flex flex-col gap-4">
                   <div>
                     <p className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider mb-2">Biological sex</p>
@@ -629,7 +629,7 @@ export default function OnboardingPage() {
                 <h2 className="text-2xl font-black tracking-tight mb-1">
                   Injuries or limitations?
                 </h2>
-                <p className="text-xs text-[#636366] mb-7">Optional</p>
+                <p className="text-sm font-semibold text-[#FF4500] mb-6">Optional</p>
                 <textarea ref={injuryRef} value={injuryNotes} onChange={e => setInjuryNotes(e.target.value)}
                   placeholder={'e.g. "Bad knees, avoid squats. Lower back issues. No running."'}
                   style={{ minHeight: '100px', overflow: 'hidden' }}
@@ -641,7 +641,7 @@ export default function OnboardingPage() {
             {step === 7 && (
               <div className="flex flex-col flex-1">
                 <h2 className="text-2xl font-black tracking-tight mb-1">Anything else?</h2>
-                <p className="text-xs text-[#636366] mb-7">Optional</p>
+                <p className="text-sm font-semibold text-[#FF4500] mb-6">Optional</p>
                 <textarea ref={notesRef} value={notes} onChange={e => setNotes(e.target.value)}
                   placeholder={'e.g. "No burpees. I do cardio 3x/week. I want bigger arms."'}
                   style={{ minHeight: '100px', overflow: 'hidden' }}
