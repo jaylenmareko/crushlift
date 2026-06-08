@@ -100,6 +100,7 @@ export default function OnboardingPage() {
   const [splitTypes, setSplitTypes] = useState<string[]>([])
   const [trainingDays, setTrainingDays] = useState<string[]>([])
   const [equipCustom, setEquipCustom] = useState('')
+  const [equipmentSelections, setEquipmentSelections] = useState<string[]>([])
   const [musclePriority, setMusclePriority] = useState<string[]>([])
   const [sex, setSex] = useState('')
   const [weight, setWeight] = useState('')
@@ -147,6 +148,13 @@ export default function OnboardingPage() {
   function next() { setDir(1); setStep(s => s + 1) }
   function back() { setDir(-1); setStep(s => s - 1) }
 
+  function toggleEquipment(v: string) {
+    setEquipmentSelections(prev =>
+      prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]
+    )
+    setEquipCustom('')
+  }
+
   function toggleMuscle(m: string) {
     setMusclePriority(prev =>
       prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
@@ -180,7 +188,7 @@ export default function OnboardingPage() {
       sessionLength: data.sessionLength || undefined,
       splitType: splitTypes.length ? splitTypes : undefined,
       trainingDays: trainingDays.length ? trainingDays : undefined,
-      equipment: data.equipment || equipCustom || '',
+      equipment: equipmentSelections.length ? equipmentSelections.join(', ') : equipCustom || '',
       equipmentCustom: equipCustom || undefined,
       musclePriority: musclePriority.length ? musclePriority : undefined,
       sex: sex || undefined,
@@ -205,7 +213,7 @@ export default function OnboardingPage() {
       }
       case 1: return !!data.experience
       case 2: return !!data.daysPerWeek && !!data.sessionLength && splitTypes.length > 0
-      case 3: return !!(data.equipment || equipCustom)
+      case 3: return equipmentSelections.length > 0 || !!equipCustom
       case TOTAL_STEPS - 1: return !!firstName.trim() && /^[a-z0-9_]{3,20}$/.test(username) && /\S+@\S+\.\S+/.test(email) && password.length >= 8
       default: return true
     }
@@ -498,22 +506,26 @@ export default function OnboardingPage() {
             {/* Step 3 — Equipment */}
             {step === 3 && (
               <div className="flex flex-col flex-1">
-                <h2 className="text-2xl font-black tracking-tight mb-7">
+                <h2 className="text-2xl font-black tracking-tight mb-1">
                   What&apos;s your equipment?
                 </h2>
+                <p className="text-xs text-[#636366] mb-7">Select all that apply</p>
                 <div className="flex flex-col gap-2.5">
                   {EQUIPMENT.map(eq => {
-                    const selected = data.equipment === eq.value
+                    const selected = equipmentSelections.includes(eq.value)
                     return (
                       <button key={eq.value}
-                        onClick={() => { setData(d => ({ ...d, equipment: eq.value })); setEquipCustom('') }}
+                        onClick={() => toggleEquipment(eq.value)}
                         className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl border text-left transition-all ${
                           selected ? 'border-[#FF4500] bg-[#FF4500]/10' : 'border-[#252528] bg-[#1C1C1E] hover:border-[#3A3A3C]'
                         }`}
                       >
                         <span className="text-2xl leading-none">{eq.emoji}</span>
-                        <p className="flex-1 font-bold text-sm text-white">{eq.label}</p>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                        <div className="flex-1">
+                          <p className={`font-bold text-sm ${selected ? 'text-[#FF4500]' : 'text-white'}`}>{eq.label}</p>
+                          <p className="text-xs text-[#636366] mt-0.5">{eq.desc}</p>
+                        </div>
+                        <div className={`w-5 h-5 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                           selected ? 'border-[#FF4500] bg-[#FF4500]' : 'border-[#3A3A3C]'
                         }`}>
                           {selected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
@@ -522,7 +534,7 @@ export default function OnboardingPage() {
                     )
                   })}
                   <textarea ref={equipCustomRef} value={equipCustom}
-                    onChange={e => { setEquipCustom(e.target.value); setData(d => ({ ...d, equipment: undefined })) }}
+                    onChange={e => { setEquipCustom(e.target.value); setEquipmentSelections([]) }}
                     placeholder="I have specific equipment..."
                     style={{ minHeight: '52px', overflow: 'hidden' }}
                     className="w-full bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-3.5 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors resize-none leading-relaxed mt-1" />
