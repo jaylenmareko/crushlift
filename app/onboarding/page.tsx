@@ -506,10 +506,10 @@ export default function OnboardingPage() {
             {/* Step 3 — Equipment */}
             {step === 3 && (
               <div className="flex flex-col flex-1">
-                <h2 className="text-2xl font-black tracking-tight mb-1">
+                <h2 className="text-2xl font-black tracking-tight mb-2">
                   What&apos;s your equipment?
                 </h2>
-                <p className="text-xs text-[#636366] mb-7">Select all that apply</p>
+                <p className="text-sm font-semibold text-[#FF4500] mb-6">Select all that apply</p>
                 <div className="flex flex-col gap-2.5">
                   {EQUIPMENT.map(eq => {
                     const selected = equipmentSelections.includes(eq.value)
@@ -521,10 +521,7 @@ export default function OnboardingPage() {
                         }`}
                       >
                         <span className="text-2xl leading-none">{eq.emoji}</span>
-                        <div className="flex-1">
-                          <p className={`font-bold text-sm ${selected ? 'text-[#FF4500]' : 'text-white'}`}>{eq.label}</p>
-                          <p className="text-xs text-[#636366] mt-0.5">{eq.desc}</p>
-                        </div>
+                        <p className={`flex-1 font-bold text-sm ${selected ? 'text-[#FF4500]' : 'text-white'}`}>{eq.label}</p>
                         <div className={`w-5 h-5 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                           selected ? 'border-[#FF4500] bg-[#FF4500]' : 'border-[#3A3A3C]'
                         }`}>
