@@ -234,7 +234,13 @@ export default function OnboardingPage() {
       return
     }
     if (authData.user) {
-      await supabase.from('profiles').upsert({ id: authData.user.id, email: email.trim(), username: username.trim(), first_name: firstName.trim() })
+      await supabase.from('profiles').upsert({
+        id: authData.user.id,
+        email: email.trim(),
+        username: username.trim(),
+        first_name: firstName.trim(),
+        weight: weight ? parseFloat(weight) : null,
+      })
     }
     sessionStorage.setItem('trainmaxxing_onboarding', JSON.stringify(buildPayload()))
     router.push('/plan/generating')

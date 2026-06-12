@@ -267,6 +267,7 @@ function WorkoutContent() {
                 <span key={h} className="text-[10px] text-[#9A9AAA] font-bold tracking-widest text-center uppercase">{h}</span>
               ))}
             </div>
+            <p className="text-[9px] text-[#48484A] px-1 mb-1.5">Include the bar (45 lbs) in your total</p>
 
             {/* Sets */}
             <div className="flex flex-col gap-1.5">
