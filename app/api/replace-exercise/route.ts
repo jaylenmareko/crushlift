@@ -173,51 +173,110 @@ const ALTERNATIVES: Record<string, PlanExercise[]> = {
   ],
 }
 
-export async function POST(req: NextRequest) {
-  const { exerciseName } = await req.json()
+function getFallbackAlternatives(exerciseName: string): PlanExercise[] {
   const key = (exerciseName || '').toLowerCase().trim()
 
   // Exact match first
   if (ALTERNATIVES[key]) {
-    return NextResponse.json({ alternatives: ALTERNATIVES[key] })
+    return ALTERNATIVES[key]
   }
 
   // Partial match — find any key that contains the exercise name or vice versa
   const partialKey = Object.keys(ALTERNATIVES).find(k => k.includes(key) || key.includes(k))
   if (partialKey) {
-    return NextResponse.json({ alternatives: ALTERNATIVES[partialKey] })
+    return ALTERNATIVES[partialKey]
   }
 
   // Smart fallback based on muscle group keywords in the name
   const name = key.toLowerCase()
-  let fallback: PlanExercise[]
 
   if (name.includes('curl') || name.includes('bicep')) {
-    fallback = ALTERNATIVES['dumbbell curl']
+    return ALTERNATIVES['dumbbell curl']
   } else if (name.includes('tricep') || name.includes('push') || name.includes('dip')) {
-    fallback = ALTERNATIVES['tricep rope pushdown']
+    return ALTERNATIVES['tricep rope pushdown']
   } else if (name.includes('press') && (name.includes('bench') || name.includes('chest'))) {
-    fallback = ALTERNATIVES['barbell bench press']
+    return ALTERNATIVES['barbell bench press']
   } else if (name.includes('shoulder') || name.includes('press') || name.includes('delt')) {
-    fallback = ALTERNATIVES['overhead press']
+    return ALTERNATIVES['overhead press']
   } else if (name.includes('row') || name.includes('pull') || name.includes('back') || name.includes('lat')) {
-    fallback = ALTERNATIVES['barbell row']
+    return ALTERNATIVES['barbell row']
   } else if (name.includes('squat') || name.includes('lunge') || name.includes('leg')) {
-    fallback = ALTERNATIVES['barbell back squat']
+    return ALTERNATIVES['barbell back squat']
   } else if (name.includes('deadlift') || name.includes('hamstring')) {
-    fallback = ALTERNATIVES['romanian deadlift']
+    return ALTERNATIVES['romanian deadlift']
   } else if (name.includes('calf')) {
-    fallback = ALTERNATIVES['standing calf raise']
-  } else {
-    // True generic fallback with real exercise names
-    fallback = [
-      { id: 'alt-1', name: 'Dumbbell Press', sets: 3, reps: '10-12', muscleGroup: 'General' },
-      { id: 'alt-2', name: 'Cable Row', sets: 3, reps: '12-15', muscleGroup: 'General' },
-      { id: 'alt-3', name: 'Machine Press', sets: 3, reps: '12-15', muscleGroup: 'General' },
-      { id: 'alt-4', name: 'Dumbbell Fly', sets: 3, reps: '12-15', muscleGroup: 'General' },
-      { id: 'alt-5', name: 'Bodyweight Squat', sets: 3, reps: '15-20', muscleGroup: 'General' },
-    ]
+    return ALTERNATIVES['standing calf raise']
   }
 
-  return NextResponse.json({ alternatives: fallback })
+  // True generic fallback with real exercise names
+  return [
+    { id: 'alt-1', name: 'Dumbbell Press', sets: 3, reps: '10-12', muscleGroup: 'General' },
+    { id: 'alt-2', name: 'Cable Row', sets: 3, reps: '12-15', muscleGroup: 'General' },
+    { id: 'alt-3', name: 'Machine Press', sets: 3, reps: '12-15', muscleGroup: 'General' },
+    { id: 'alt-4', name: 'Dumbbell Fly', sets: 3, reps: '12-15', muscleGroup: 'General' },
+    { id: 'alt-5', name: 'Bodyweight Squat', sets: 3, reps: '15-20', muscleGroup: 'General' },
+  ]
+}
+
+export async function POST(req: NextRequest) {
+  const { exerciseName, equipment, goal, injuries, customRequest } = await req.json() as {
+    exerciseName: string
+    equipment?: string
+    goal?: string
+    injuries?: string
+    customRequest?: string
+  }
+
+  const fallback = getFallbackAlternatives(exerciseName)
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ alternatives: fallback })
+  }
+
+  try {
+    const Anthropic = (await import('@anthropic-ai/sdk')).default
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+    const contextLines = [
+      `Exercise to replace: ${exerciseName}`,
+      equipment && `Available equipment: ${equipment}`,
+      goal && `Training goal: ${goal}`,
+      injuries && `Injuries / limitations to work around: ${injuries}`,
+      customRequest && `Additional request from the user: ${customRequest}`,
+    ].filter(Boolean).join('\n')
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 512,
+      messages: [{
+        role: 'user',
+        content: `You are a personal trainer. Suggest 5 alternative exercises to replace this one in a lifter's program.
+
+${contextLines}
+
+Only suggest exercises the lifter can actually perform with their available equipment, and avoid anything that would aggravate their noted injuries/limitations.
+
+Return ONLY valid JSON (no markdown, no explanation):
+{
+  "alternatives": [
+    { "id": "alt-1", "name": "Exercise Name", "sets": 3, "reps": "8-12", "muscleGroup": "Chest" }
+  ]
+}`,
+      }],
+    })
+
+    const text = message.content[0].type === 'text' ? message.content[0].text : ''
+    let parsed: { alternatives: PlanExercise[] }
+    try {
+      parsed = JSON.parse(text)
+    } catch {
+      const match = text.match(/\{[\s\S]*\}/)
+      if (!match) return NextResponse.json({ alternatives: fallback })
+      parsed = JSON.parse(match[0])
+    }
+    if (!parsed.alternatives?.length) return NextResponse.json({ alternatives: fallback })
+    return NextResponse.json(parsed)
+  } catch {
+    return NextResponse.json({ alternatives: fallback })
+  }
 }

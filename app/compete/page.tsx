@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Swords, Lock, Trophy, TrendingUp, ChevronRight, ChevronLeft, Scale } from 'lucide-react'
+import { Swords, Lock, Trophy, TrendingUp, ChevronRight, ChevronLeft, ChevronDown, Scale, X, Check, Video, ShieldCheck, ShieldAlert } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
+import PRVerifyModal from '@/components/PRVerifyModal'
+import PlateCheckModal from '@/components/PlateCheckModal'
+import RepsWeightModal from '@/components/RepsWeightModal'
+import AddedWeightPhotoModal from '@/components/AddedWeightPhotoModal'
 import { createClient } from '@/lib/supabase/client'
 
 function getWeightClass(w: number) {
@@ -18,13 +22,19 @@ function getWeightClass(w: number) {
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const TIERS = [
-  { name: 'Legend', color: '#FF4500', threshold: 405 },
-  { name: 'Master', color: '#EC4899', threshold: 315 },
-  { name: 'Elite',  color: '#8B5CF6', threshold: 255 },
+  { name: 'Legend', color: '#FFC107', threshold: 405 },
+  { name: 'Master', color: '#8B5CF6', threshold: 315 },
+  { name: 'Elite',  color: '#EF4444', threshold: 255 },
   { name: 'Lifter', color: '#3B82F6', threshold: 185 },
   { name: 'Bronze', color: '#22C55E', threshold: 135 },
   { name: 'Iron',   color: '#636366', threshold: 95  },
 ]
+
+// Iron's gray (#636366) is too low-contrast for text/icons on dark cards, and also matches the
+// "locked/unearned" gray (#9A9AAA) — brighten it further so an earned Iron belt is visibly distinct
+function displayColor(color: string) {
+  return color === '#636366' ? '#D1D5DB' : color
+}
 
 
 const WEIGHT_CLASSES = [
@@ -36,11 +46,46 @@ const WEIGHT_CLASSES = [
   { label: '220+',    full: 'Super Heavy  ·  220+ lbs' },
 ]
 
-const USER_TIER = 'Lifter' // Iron → Bronze → Lifter → Elite → Master → Legend
+const USER_TIER = 'Lifter' // battle-rank tier, used on Rankings & Battles tab
 const USER_CLASS_INDEX = 2
-const USER_BEST_LIFT = { name: 'Bench Press', weight: 205 }
-const NEXT_TIER = 'Elite'
-const NEXT_TIER_THRESHOLD = 255
+
+const UNRANKED = { name: 'Unranked', color: '#48484A', threshold: 0 }
+
+// Belt maintenance — log a qualifying PR within this window or drop a tier
+const DECAY_DAYS = 60
+const WARNING_DAYS = 7
+
+// Per-lift PRs — each Big 6 lift earns its own belt independently
+const USER_LIFTS_DEFAULT: { name: string; best: number; bestReps: number | null; lastPrAt: string | null; type: 'barbell' | 'bodyweight' }[] = [
+  { name: 'Bench Press',    best: 205, bestReps: null, lastPrAt: '2026-05-20', type: 'barbell' },
+  { name: 'Squat',          best: 155, bestReps: null, lastPrAt: '2026-04-18', type: 'barbell' },
+  { name: 'Deadlift',       best: 225, bestReps: null, lastPrAt: '2026-03-01', type: 'barbell' },
+  { name: 'Overhead Press', best: 95,  bestReps: null, lastPrAt: '2026-06-05', type: 'barbell' },
+  { name: 'Power Clean',    best: 115, bestReps: null, lastPrAt: '2026-06-10', type: 'barbell' },
+  { name: 'Pull-up',        best: 0,   bestReps: null, lastPrAt: null,         type: 'bodyweight' },
+]
+
+// Highest tier index whose threshold the weight clears (0 = Legend, best). -1 = below Iron.
+function getTierIndex(weight: number) {
+  for (let i = 0; i < TIERS.length; i++) {
+    if (weight >= TIERS[i].threshold) return i
+  }
+  return -1
+}
+
+function daysSince(dateStr: string) {
+  const ms = Date.now() - new Date(dateStr).getTime()
+  return Math.floor(ms / (1000 * 60 * 60 * 24))
+}
+
+function shortDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' })
+}
+
+function decayDate(lastPrAt: string) {
+  const d = new Date(new Date(lastPrAt).getTime() + DECAY_DAYS * 86400000)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
 
 const RANKINGS_DATA: Record<number, { pos: number; name: string; record: string; tier: string; you: boolean }[]> = {
   0: [
@@ -99,11 +144,21 @@ export default function CompetePage() {
   const [competeTab, setCompeteTab] = useState<CompeteTab>('rankings')
   const [selectedClass, setSelectedClass] = useState(USER_CLASS_INDEX)
   const [dir, setDir]               = useState<1 | -1>(1)
-  const [ladderOpen, setLadderOpen] = useState(false)
+  const [expandedLift, setExpandedLift] = useState<string | null>(null)
+  const [weightModalOpen, setWeightModalOpen] = useState(false)
+  const [prModalOpen, setPrModalOpen] = useState(false)
+  const [prStep, setPrStep] = useState<'select' | 'plates' | 'reps' | 'weight-photo' | 'record' | 'verify'>('select')
+  const [prLift, setPrLift] = useState<string | null>(null)
+  const [prWeight, setPrWeight] = useState<number | null>(null)
+  const [prReps, setPrReps] = useState<number | null>(null)
+  const [prVerified, setPrVerified] = useState(false)
+  const [prPlatePhoto, setPrPlatePhoto] = useState<string | null>(null)
+  const [userLifts, setUserLifts] = useState(USER_LIFTS_DEFAULT)
   const [userWeight, setUserWeight] = useState<number | null>(null)
   const [weightInput, setWeightInput] = useState('')
   const [weightLoading, setWeightLoading] = useState(true)
   const [savingWeight, setSavingWeight] = useState(false)
+  const [weightError, setWeightError] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -115,27 +170,76 @@ export default function CompetePage() {
         setSelectedClass(getWeightClass(data.weight).index)
       }
       setWeightLoading(false)
+    }).catch(() => {
+      setWeightLoading(false)
     })
   }, [])
 
   async function saveWeight() {
     if (!weightInput || isNaN(parseFloat(weightInput))) return
     setSavingWeight(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
+    setWeightError(null)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setWeightError('Not signed in.'); return }
       const w = parseFloat(weightInput)
-      await supabase.from('profiles').update({ weight: w }).eq('id', user.id)
+      const { error } = await supabase.from('profiles').update({ weight: w }).eq('id', user.id)
+      if (error) { setWeightError(error.message); return }
       setUserWeight(w)
       setSelectedClass(getWeightClass(w).index)
+      setWeightModalOpen(false)
+    } catch (err) {
+      setWeightError(err instanceof Error ? err.message : 'Something went wrong.')
+    } finally {
+      setSavingWeight(false)
     }
-    setSavingWeight(false)
+  }
+
+  function logPr(liftName: string, weight: number | null, reps: number | null, verified: boolean) {
+    const today = new Date().toISOString().slice(0, 10)
+    setUserLifts(prev => prev.map(l => l.name === liftName
+      ? {
+          ...l,
+          best: weight !== null && weight > l.best ? weight : l.best,
+          bestReps: reps !== null && (l.bestReps === null || reps > l.bestReps) ? reps : l.bestReps,
+          lastPrAt: today,
+        }
+      : l
+    ))
+    setPrModalOpen(false)
+    setPrStep('select')
+    setPrLift(null)
+    setPrWeight(null)
+    setPrReps(null)
+    setPrVerified(verified)
+    setPrPlatePhoto(null)
   }
 
   const userTierData  = TIERS.find(t => t.name === USER_TIER)!
-  const nextTierData  = TIERS.find(t => t.name === NEXT_TIER)!
-  const progress      = Math.round((USER_BEST_LIFT.weight / NEXT_TIER_THRESHOLD) * 100)
   const rankings      = RANKINGS_DATA[selectedClass] ?? []
+
+  // Per-lift belt data — applies decay: no qualifying PR within DECAY_DAYS drops a tier
+  const liftData = userLifts.map(l => {
+    const baseTierIdx = getTierIndex(l.best)
+    const daysAgo  = l.lastPrAt ? daysSince(l.lastPrAt) : null
+    const daysLeft = daysAgo !== null ? DECAY_DAYS - daysAgo : null
+    const demoted  = baseTierIdx !== -1 && daysLeft !== null && daysLeft < 0
+    const atRisk   = !demoted && baseTierIdx !== -1 && daysLeft !== null && daysLeft <= WARNING_DAYS
+
+    const tierIdx = demoted ? baseTierIdx + 1 : baseTierIdx
+    const tier = tierIdx === -1 || tierIdx >= TIERS.length ? UNRANKED : TIERS[tierIdx]
+    const nextIdx = tierIdx === -1 ? TIERS.length - 1 : tierIdx - 1
+    const next = nextIdx >= 0 ? TIERS[nextIdx] : null
+    const droppedFrom = demoted ? TIERS[baseTierIdx].name : null
+
+    return { ...l, tier, tierIdx, next, daysAgo, daysLeft, demoted, atRisk, droppedFrom }
+  })
+  const bestLift = liftData.reduce((a, b) => {
+    const ai = a.tierIdx === -1 ? Infinity : a.tierIdx
+    const bi = b.tierIdx === -1 ? Infinity : b.tierIdx
+    return bi < ai ? b : a
+  })
 
   function enter(v: View) { setDir(1);  setView(v) }
   function back()          { setDir(-1); setView('home') }
@@ -211,20 +315,18 @@ export default function CompetePage() {
                 <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#3B82F6] to-[#FF4500]" />
                 <div className="p-5 flex items-center gap-4">
                   <div
-                    className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center flex-shrink-0 border-2"
-                    style={{ backgroundColor: `${userTierData.color}20`, borderColor: userTierData.color }}
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 border-2"
+                    style={{ backgroundColor: `${bestLift.tier.color}20`, borderColor: displayColor(bestLift.tier.color) }}
                   >
-                    <Trophy className="w-6 h-6" style={{ color: userTierData.color }} />
-                    <span className="text-[8px] font-black mt-0.5 uppercase tracking-wider" style={{ color: userTierData.color }}>{USER_TIER}</span>
+                    <Trophy className="w-7 h-7" style={{ color: displayColor(bestLift.tier.color) }} />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mb-0.5">Belts</p>
-                    <p className="text-lg font-black text-white leading-none">You're a {USER_TIER}</p>
-                    <p className="text-xs text-[#636366] mt-1">{getWeightClass(userWeight!).full}</p>
-                    <div className="mt-2 h-1 bg-[#252528] rounded-full overflow-hidden w-full">
-                      <div className="h-full rounded-full" style={{ width: `${progress}%`, backgroundColor: nextTierData.color }} />
+                    <p className="text-lg font-black text-white leading-none">Belts</p>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      {liftData.map(l => (
+                        <div key={l.name} className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: displayColor(l.tier.color) }} />
+                      ))}
                     </div>
-                    <p className="text-[10px] text-[#48484A] mt-1">{progress}% to {NEXT_TIER}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-[#3A3A3C] flex-shrink-0" />
                 </div>
@@ -276,129 +378,144 @@ export default function CompetePage() {
 
             <div className="flex-1 px-5 flex flex-col gap-3 pb-4 overflow-y-auto">
 
-              {/* Current belt hero */}
+              {/* Weight class hero */}
               <div
                 className="rounded-2xl p-4 flex items-center gap-4 border"
-                style={{ backgroundColor: `${userTierData.color}10`, borderColor: `${userTierData.color}30` }}
+                style={{ backgroundColor: `${bestLift.tier.color}10`, borderColor: `${bestLift.tier.color}30` }}
               >
                 <div
-                  className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center flex-shrink-0 border-2"
-                  style={{ backgroundColor: `${userTierData.color}20`, borderColor: userTierData.color }}
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 border-2"
+                  style={{ backgroundColor: `${bestLift.tier.color}20`, borderColor: displayColor(bestLift.tier.color) }}
                 >
-                  <Trophy className="w-7 h-7" style={{ color: userTierData.color }} />
-                  <span className="text-[9px] font-black mt-1 uppercase tracking-wider" style={{ color: userTierData.color }}>{USER_TIER}</span>
+                  <Scale className="w-6 h-6" style={{ color: displayColor(bestLift.tier.color) }} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[10px] text-[#636366] uppercase tracking-widest font-bold mb-0.5">Your Belt</p>
-                  <p className="text-sm font-bold text-white">{getWeightClass(userWeight!).full}</p>
+                  <p className="text-[10px] text-[#636366] uppercase tracking-widest font-bold mb-0.5">Weight Class</p>
+                  <p className="text-base font-bold text-white">{getWeightClass(userWeight!).full}</p>
                 </div>
+                <button
+                  onClick={() => { setWeightInput(String(userWeight)); setWeightError(null); setWeightModalOpen(true) }}
+                  className="text-xs font-bold text-[#FF4500] flex-shrink-0"
+                >
+                  Change
+                </button>
               </div>
 
-              {/* Progress + Log */}
-              {/* Belt ladder — visual button */}
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setLadderOpen(o => !o)}
-                className="w-full text-left bg-[#1C1C1E] border border-[#252528] rounded-2xl overflow-hidden"
-              >
-                {/* Color bar showing all belt colors */}
-                <div className="flex h-2">
-                  {TIERS.slice().reverse().map(t => (
-                    <div key={t.name} className="flex-1 h-full" style={{ backgroundColor: t.color }} />
-                  ))}
-                </div>
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="text-base font-black text-white">Your Belt Ladder</p>
-                      <p className="text-xs font-bold mt-0.5" style={{ color: ladderOpen ? '#636366' : '#FF4500' }}>{ladderOpen ? 'Tap to collapse' : 'Tap to see all belts & weights'}</p>
-                    </div>
-                    <div
-                      className="w-8 h-8 rounded-full bg-[#FF4500]/15 border border-[#FF4500]/30 flex items-center justify-center flex-shrink-0"
-                    >
-                      <motion.div animate={{ rotate: ladderOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                        <ChevronRight className="w-4 h-4 text-[#FF4500] rotate-90" />
-                      </motion.div>
-                    </div>
-                  </div>
-                  {/* Belt color dots preview */}
-                  <div className="flex items-center gap-2">
-                    {TIERS.slice().reverse().map((tier) => {
-                      const isEarned = TIERS.findIndex(t => t.name === USER_TIER) >= TIERS.findIndex(t => t.name === tier.name)
-                      const isCurrent = tier.name === USER_TIER
-                      return (
-                        <div key={tier.name} className="flex flex-col items-center gap-1">
-                          <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isCurrent ? 'scale-125' : ''}`}
-                            style={{
-                              backgroundColor: isEarned ? `${tier.color}30` : 'transparent',
-                              borderColor: isEarned ? tier.color : '#3A3A3C',
-                            }}
-                          >
-                            {isCurrent && <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tier.color }} />}
-                          </div>
-                          <span className="text-[7px] font-bold uppercase" style={{ color: isEarned ? tier.color : '#3A3A3C' }}>{tier.name}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </motion.button>
-
-              {/* Expanded ladder */}
-              <AnimatePresence>
-                {ladderOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden bg-[#161618] border border-[#252528] rounded-2xl"
-                  >
-                    <div className="flex items-center gap-4 px-4 py-4 border-b border-[#252528]">
-                      <div
-                        className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center flex-shrink-0 border-2"
-                        style={{ backgroundColor: `${userTierData.color}20`, borderColor: userTierData.color }}
+              {/* Per-lift belt ladders */}
+              <p className="text-[11px] font-bold text-[#636366] uppercase tracking-widest px-1 mt-1">Belts by Lift</p>
+              <div className="flex flex-col gap-2">
+                {liftData.map(l => {
+                  const isOpen = expandedLift === l.name
+                  const hasLog = l.best > 0 || (l.bestReps !== null && l.bestReps > 0)
+                  return (
+                    <div key={l.name} className="bg-[#1C1C1E] border border-[#252528] rounded-2xl overflow-hidden">
+                      <motion.button
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          if (hasLog) {
+                            setExpandedLift(o => o === l.name ? null : l.name)
+                          } else {
+                            setPrLift(l.name)
+                            setPrWeight(null)
+                            setPrReps(null)
+                            setPrVerified(false)
+                            setPrPlatePhoto(null)
+                            setPrStep(l.type === 'bodyweight' ? 'reps' : 'plates')
+                            setPrModalOpen(true)
+                          }
+                        }}
+                        className="w-full text-left p-4 flex items-center gap-3"
                       >
-                        <Trophy className="w-5 h-5" style={{ color: userTierData.color }} />
-                        <span className="text-[8px] font-black mt-0.5 uppercase tracking-wider" style={{ color: userTierData.color }}>{USER_TIER}</span>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-[#636366] uppercase tracking-widest font-bold mb-0.5">Your Belt</p>
-                        <p className="text-lg font-black text-white leading-none">{USER_TIER}</p>
-                        <p className="text-xs text-[#636366] mt-0.5">{getWeightClass(userWeight!).full}</p>
-                        <p className="text-[10px] text-[#48484A] mt-0.5">Best: {USER_BEST_LIFT.name} · {USER_BEST_LIFT.weight} lbs</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col p-2 gap-1">
-                      {TIERS.map((tier, i) => {
-                        const isCurrent = tier.name === USER_TIER
-                        const isEarned  = TIERS.findIndex(t => t.name === USER_TIER) >= i
-                        return (
-                          <div key={tier.name}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${isCurrent ? '' : 'border-transparent'} ${!isEarned ? 'opacity-40' : ''}`}
-                            style={isCurrent ? { backgroundColor: `${tier.color}12`, borderColor: `${tier.color}40` } : {}}
+                        <div
+                          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 border-2"
+                          style={{ backgroundColor: `${l.tier.color}20`, borderColor: displayColor(l.tier.color) }}
+                        >
+                          <Trophy className="w-5 h-5" style={{ color: displayColor(l.tier.color) }} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-white">{l.name}</p>
+                          {hasLog ? (
+                            <>
+                              <span
+                                className="inline-flex items-center mt-1 text-xs font-black px-2 py-0.5 rounded-md"
+                                style={{ color: displayColor(l.tier.color), backgroundColor: `${l.tier.color}25` }}
+                              >
+                                {l.tier.name} · {l.bestReps ? `${l.bestReps} ${l.bestReps === 1 ? 'rep' : 'reps'}${l.best ? ` + ${l.best} lbs` : ''}` : `${l.best} lbs`}
+                              </span>
+                              {l.demoted ? (
+                                <p className="text-[11px] font-bold mt-1 text-[#F59E0B]">Dropped from {l.droppedFrom} belt to {l.tier.name} belt, log a PR to climb back</p>
+                              ) : l.atRisk ? (
+                                <p className="text-[11px] font-bold mt-1 text-[#F59E0B]">⚠ {l.daysLeft} {l.daysLeft === 1 ? 'day' : 'days'} left — log a PR to defend and maintain {l.tier.name} belt</p>
+                              ) : l.daysLeft !== null ? (
+                                <p className="text-[11px] font-semibold text-[#9A9AAA] mt-1">Defend belt by {decayDate(l.lastPrAt!)} ({l.daysLeft} days left)</p>
+                              ) : null}
+                            </>
+                          ) : (
+                            <p className="text-xs font-bold mt-0.5 text-[#FF4500]">Log a PR to earn this belt →</p>
+                          )}
+                        </div>
+                        {hasLog && (
+                          <motion.div
+                            animate={{ rotate: isOpen ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="w-7 h-7 rounded-full bg-[#252528] border border-[#3A3A3C] flex items-center justify-center flex-shrink-0"
                           >
-                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: isEarned ? tier.color : '#3A3A3C' }} />
-                            <span className="text-sm font-bold flex-1" style={{ color: isEarned ? tier.color : '#48484A' }}>{tier.name}</span>
-                            <span className="text-xs tabular-nums font-semibold" style={{ color: isEarned ? tier.color : '#48484A' }}>{tier.threshold}+ lbs</span>
-                            {isCurrent
-                              ? <span className="text-[10px] font-black px-2 py-0.5 rounded-md ml-1" style={{ color: tier.color, backgroundColor: `${tier.color}20` }}>YOURS</span>
-                              : isEarned
-                                ? <span className="text-[10px] font-bold text-[#636366] ml-1">✓</span>
-                                : <Lock className="w-3 h-3 text-[#3A3A3C] ml-1" />
-                            }
-                          </div>
-                        )
-                      })}
+                            <ChevronDown className="w-4 h-4 text-[#9A9AAA]" />
+                          </motion.div>
+                        )}
+                      </motion.button>
+
+                      <AnimatePresence>
+                        {isOpen && hasLog && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden border-t border-[#252528]"
+                          >
+                            {l.lastPrAt && (
+                              <p className="text-[11px] font-semibold text-[#9A9AAA] px-3 pt-2.5">
+                                Last verified: {shortDate(l.lastPrAt)}
+                              </p>
+                            )}
+                            <div className="flex flex-col p-2 gap-1">
+                              {TIERS.map((tier, i) => {
+                                const isCurrent = i === l.tierIdx
+                                const isEarned  = l.tierIdx !== -1 && i >= l.tierIdx
+                                const rangeLabel = i === 0
+                                  ? `${tier.threshold}+ lbs`
+                                  : `${tier.threshold}–${TIERS[i - 1].threshold - 1} lbs`
+                                return (
+                                  <div key={tier.name}
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${isCurrent ? '' : 'border-transparent'}`}
+                                    style={isCurrent ? { backgroundColor: `${tier.color}12`, borderColor: `${displayColor(tier.color)}40` } : {}}
+                                  >
+                                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: isEarned ? displayColor(tier.color) : '#636366' }} />
+                                    <span className="text-sm font-bold flex-1" style={{ color: isEarned ? displayColor(tier.color) : '#9A9AAA' }}>{tier.name}</span>
+                                    <span className="text-xs tabular-nums font-semibold" style={{ color: isEarned ? displayColor(tier.color) : '#9A9AAA' }}>{rangeLabel}</span>
+                                    {isCurrent
+                                      ? <span className="text-[10px] font-black px-2 py-0.5 rounded-md ml-1" style={{ color: displayColor(tier.color), backgroundColor: `${tier.color}20` }}>YOURS</span>
+                                      : !isEarned
+                                        ? <Lock className="w-3 h-3 text-[#636366] ml-1" />
+                                        : null
+                                    }
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  )
+                })}
+              </div>
 
             </div>
             <div className="px-5 pb-6 pt-3">
               <motion.button whileTap={{ scale: 0.97 }}
+                onClick={() => { setPrStep('select'); setPrLift(null); setPrModalOpen(true) }}
                 className="w-full bg-[#FF4500] text-white font-bold py-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.25)]"
               >
                 <Trophy className="w-4 h-4" />
@@ -473,7 +590,7 @@ export default function CompetePage() {
                       </div>
                       <div className="overflow-y-auto max-h-[320px] p-2 flex flex-col gap-1">
                         {rankings.map((entry, i) => {
-                          const tierColor = TIERS.find(t => t.name === entry.tier)?.color ?? '#636366'
+                          const tierColor = displayColor(TIERS.find(t => t.name === entry.tier)?.color ?? '#636366')
                           return (
                             <motion.div key={entry.pos}
                               initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
@@ -540,6 +657,245 @@ export default function CompetePage() {
           </motion.div>
         )}
 
+      </AnimatePresence>
+
+      {/* Change weight class modal */}
+      <AnimatePresence>
+        {weightModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-5"
+            onClick={() => setWeightModalOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.97 }}
+              transition={{ duration: 0.18 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-sm bg-[#1C1C1E] border border-[#252528] rounded-3xl p-5"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-black text-white">Update Bodyweight</h2>
+                <button onClick={() => setWeightModalOpen(false)} className="text-[#636366]">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-xs text-[#636366] mb-3">This updates your weight class for belts and rankings.</p>
+              <div className="flex items-center bg-[#161618] border border-[#252528] rounded-2xl px-4 py-4 gap-3 mb-3">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={weightInput}
+                  onChange={e => setWeightInput(e.target.value)}
+                  placeholder="Enter your weight"
+                  className="flex-1 bg-transparent text-white text-lg font-bold focus:outline-none placeholder:text-[#48484A]"
+                />
+                <span className="text-sm font-bold text-[#636366]">lbs</span>
+              </div>
+              {weightError && (
+                <p className="text-xs text-red-400 mb-3">{weightError}</p>
+              )}
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={saveWeight}
+                disabled={!weightInput || savingWeight}
+                className="w-full bg-[#FF4500] text-white font-bold py-3.5 rounded-2xl text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {savingWeight ? 'Saving...' : 'Save'}
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Log a PR modal */}
+      <AnimatePresence>
+        {prModalOpen && prStep !== 'plates' && prStep !== 'verify' && prStep !== 'reps' && prStep !== 'weight-photo' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-5"
+            onClick={() => setPrModalOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.97 }}
+              transition={{ duration: 0.18 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-sm bg-[#1C1C1E] border border-[#252528] rounded-3xl p-5"
+            >
+              {prStep === 'select' ? (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-black text-white">Log a PR</h2>
+                    <button onClick={() => setPrModalOpen(false)} className="text-[#636366]">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="flex flex-col gap-2 mb-4 max-h-[50vh] overflow-y-auto">
+                    {liftData.map(l => (
+                      <button
+                        key={l.name}
+                        onClick={() => setPrLift(l.name)}
+                        className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+                          prLift === l.name ? 'border-[#FF4500] bg-[#FF4500]/10' : 'border-[#252528] bg-[#161618]'
+                        }`}
+                      >
+                        <div
+                          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 border-2"
+                          style={{ backgroundColor: `${l.tier.color}20`, borderColor: displayColor(l.tier.color) }}
+                        >
+                          <Trophy className="w-4 h-4" style={{ color: displayColor(l.tier.color) }} />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="text-sm font-bold text-white">{l.name}</p>
+                          <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">
+                            {l.bestReps ? `Current: ${l.bestReps} ${l.bestReps === 1 ? 'rep' : 'reps'}${l.best ? ` + ${l.best} lbs` : ''}` : l.best > 0 ? `Current: ${l.best} lbs` : 'No PR logged'}
+                          </p>
+                        </div>
+                        {prLift === l.name && <Check className="w-4 h-4 text-[#FF4500] flex-shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    disabled={!prLift}
+                    onClick={() => {
+                      setPrWeight(null)
+                      setPrReps(null)
+                      setPrVerified(false)
+                      setPrPlatePhoto(null)
+                      const lift = liftData.find(x => x.name === prLift)
+                      setPrStep(lift?.type === 'bodyweight' ? 'reps' : 'plates')
+                    }}
+                    className="w-full bg-[#FF4500] text-white font-bold py-3.5 rounded-2xl text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Continue
+                  </motion.button>
+                </>
+              ) : prStep === 'record' ? (
+                <>
+                  <div className="flex items-center gap-3 mb-4">
+                    <button onClick={() => {
+                      const lift = liftData.find(x => x.name === prLift)
+                      if (lift?.type === 'bodyweight') {
+                        setPrStep(prWeight && prWeight > 0 ? 'weight-photo' : 'reps')
+                      } else {
+                        setPrStep('plates')
+                      }
+                    }} className="text-[#9A9AAA]"><ChevronLeft className="w-5 h-5" /></button>
+                    <h2 className="text-lg font-black text-white flex-1">{prLift}</h2>
+                    <button onClick={() => setPrModalOpen(false)} className="text-[#636366]">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  {prReps !== null ? (
+                    prWeight ? (
+                      <div className="rounded-2xl border p-3 flex items-center gap-3 mb-4" style={{ backgroundColor: prVerified ? '#22C55E10' : '#F59E0B10', borderColor: prVerified ? '#22C55E30' : '#F59E0B30' }}>
+                        {prVerified ? <ShieldCheck className="w-5 h-5 text-[#22C55E] flex-shrink-0" /> : <ShieldAlert className="w-5 h-5 text-[#F59E0B] flex-shrink-0" />}
+                        <div>
+                          <p className="text-sm font-black text-white">
+                            {prReps} {prReps === 1 ? 'rep' : 'reps'} + {prWeight} lbs
+                          </p>
+                          <p className="text-[10px]" style={{ color: prVerified ? '#22C55E' : '#F59E0B' }}>{prVerified ? 'Added weight verified' : 'Unverified weight'}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-[#252528] bg-[#161618] p-3 flex items-center gap-3 mb-4">
+                        <div>
+                          <p className="text-sm font-black text-white">
+                            {prReps} {prReps === 1 ? 'rep' : 'reps'} (bodyweight)
+                          </p>
+                          <p className="text-[10px] text-[#9A9AAA]">Logging this PR</p>
+                        </div>
+                      </div>
+                    )
+                  ) : prWeight !== null && (
+                    <div className="rounded-2xl border p-3 flex items-center gap-3 mb-4" style={{ backgroundColor: prVerified ? '#22C55E10' : '#F59E0B10', borderColor: prVerified ? '#22C55E30' : '#F59E0B30' }}>
+                      {prVerified ? <ShieldCheck className="w-5 h-5 text-[#22C55E] flex-shrink-0" /> : <ShieldAlert className="w-5 h-5 text-[#F59E0B] flex-shrink-0" />}
+                      <div>
+                        <p className="text-sm font-black text-white">{prWeight} lbs</p>
+                        <p className="text-[10px]" style={{ color: prVerified ? '#22C55E' : '#F59E0B' }}>{prVerified ? 'Plates verified' : 'Unverified weight'}</p>
+                      </div>
+                    </div>
+                  )}
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setPrStep('verify')}
+                    className="w-full bg-[#FF4500] text-white font-black py-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.25)]"
+                  >
+                    <Video className="w-4 h-4" />
+                    Start Recording
+                  </motion.button>
+                </>
+              ) : null}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {prModalOpen && prStep === 'verify' && prLift && (
+          <PRVerifyModal
+            exerciseName={prLift}
+            weight={prWeight ?? 0}
+            reps={prReps ?? undefined}
+            platePhoto={prPlatePhoto}
+            onClose={() => setPrStep('record')}
+            onDone={verified => logPr(prLift, prWeight, prReps, verified)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {prModalOpen && prStep === 'plates' && prLift && (
+          <PlateCheckModal
+            liftName={prLift}
+            onClose={() => setPrModalOpen(false)}
+            onDone={(weight, verified, photo) => {
+              setPrWeight(weight)
+              setPrVerified(verified)
+              setPrPlatePhoto(photo)
+              setPrStep('record')
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {prModalOpen && prStep === 'reps' && prLift && (
+          <RepsWeightModal
+            liftName={prLift}
+            onClose={() => setPrModalOpen(false)}
+            onDone={(reps, weight) => {
+              setPrReps(reps)
+              setPrWeight(weight)
+              setPrVerified(false)
+              setPrPlatePhoto(null)
+              setPrStep(weight > 0 ? 'weight-photo' : 'record')
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {prModalOpen && prStep === 'weight-photo' && prLift && prWeight !== null && (
+          <AddedWeightPhotoModal
+            liftName={prLift}
+            weight={prWeight}
+            onClose={() => setPrModalOpen(false)}
+            onDone={(verified, photo) => {
+              setPrVerified(verified)
+              setPrPlatePhoto(photo)
+              setPrStep('record')
+            }}
+          />
+        )}
       </AnimatePresence>
     </div>
   )

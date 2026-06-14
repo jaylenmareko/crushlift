@@ -267,6 +267,7 @@ export default function PlanPage() {
         exerciseName: exercise.name,
         equipment: plan?.onboarding_data?.equipment ?? plan?.onboardingData?.equipment,
         goal: plan?.onboarding_data?.goal ?? plan?.onboardingData?.goal,
+        injuries: plan?.onboarding_data?.injuryNotes ?? plan?.onboardingData?.injuryNotes,
       }),
     })
     const data = await res.json()

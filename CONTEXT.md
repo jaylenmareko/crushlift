@@ -13,6 +13,13 @@ App name: **Trainmaxxing** (repo: `crushlift`, was originally named CrushLift)
 - [ ] Friends system (search, add, challenge button)
 - [ ] Real data replacing dummy data on compete page
 
+## Completed (2026-06-14)
+- Per-lift belt tier colors revised (Legend gold, Master purple, Elite red, Iron lightened for contrast)
+- Replaced "Form Check" PR flow with purpose-built PR-verify modal (`PRVerifyModal` + `api/verify-pr`) — confirms rep completion, not technique
+- Bodyweight lifts (Pull-up) get a reps + added-weight input flow (`RepsWeightModal`)
+- `replace-exercise` now uses live Claude call with onboarding equipment/goal/injuries context, falls back to static table
+- PR verification loophole-closing chain: plate photo (`PlateCheckModal` + `api/verify-plates`) or added-weight photo (`AddedWeightPhotoModal` + `api/verify-added-weight`) is cross-checked against the lift video in `api/verify-pr` — see `reference/ai-verification.md`
+
 ## Completed (2026-06-08)
 - Equipment step converted to multi-select (checkbox style, joins as comma string in payload)
 - Per-field live validation on account step (green/red border, inline error hints)
@@ -87,7 +94,7 @@ Two separate systems:
 - Rankings only within your weight class
 - Belt threshold tables still need to be defined per lift per class
 
-**Big 6 lifts:** Bench Press, Squat, Deadlift, Overhead Press, Barbell Row, Pull-up
+**Big 6 lifts:** Bench Press, Squat, Deadlift, Overhead Press, Power Clean, Pull-up
 
 ## Onboarding Flow (9 steps)
 1. Goal (lose weight / build muscle / get stronger / general fitness)
