@@ -4,10 +4,13 @@
 MVP Build — core flows built, PR verification chain complete, media storage live. Now wiring real data and completing the compete system.
 
 ## Done criteria
-- [ ] Power Rank logic (belt thresholds per lift per weight class, PR detection in workout page, rank stored in profiles)
+- [x] Power Rank — per-lift belt thresholds (StrengthLevel-calibrated, Pull-up rep-based)
+- [ ] Power Rank — PR detection in workout page
+- [ ] Power Rank — rank stored in profiles
 - [ ] 1v1 Battle flow (challenge, respond, Claude verification, W/L record update)
 - [ ] Friends system (search by username, add/remove, challenge button)
-- [ ] Real data replacing dummy data on compete page (live Supabase queries)
+- [x] Compete page belts — read from real `pr_verifications` data (verified-only)
+- [ ] Compete page Rankings & Battles tabs — still `RANKINGS_DATA` / `DUMMY_BATTLES`
 
 ## Next stage
 Beta — real users, real PRs, iterate on verification accuracy
@@ -45,6 +48,7 @@ Beta — real users, real PRs, iterate on verification accuracy
 - `reference/env.md` — load only when setting up env or onboarding new service
 
 ## Current priority
-1. Power Rank — belt thresholds table, PR detection in workout page, rank stored in profiles
-2. 1v1 Battle flow
-3. Friends system
+1. Power Rank — PR detection in workout page, rank stored in profiles
+2. Compete page — replace `RANKINGS_DATA` / `DUMMY_BATTLES` with real data
+3. 1v1 Battle flow
+4. Friends system
