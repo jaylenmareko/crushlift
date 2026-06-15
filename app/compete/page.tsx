@@ -21,14 +21,28 @@ function getWeightClass(w: number) {
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
+// Belt identity (name + color), best → worst. Thresholds are per-lift (see below).
 const TIERS = [
-  { name: 'Legend', color: '#FFC107', threshold: 405 },
-  { name: 'Master', color: '#8B5CF6', threshold: 315 },
-  { name: 'Elite',  color: '#EF4444', threshold: 255 },
-  { name: 'Lifter', color: '#3B82F6', threshold: 185 },
-  { name: 'Bronze', color: '#22C55E', threshold: 135 },
-  { name: 'Iron',   color: '#636366', threshold: 95  },
+  { name: 'Legend', color: '#FFC107' },
+  { name: 'Master', color: '#8B5CF6' },
+  { name: 'Elite',  color: '#EF4444' },
+  { name: 'Lifter', color: '#3B82F6' },
+  { name: 'Bronze', color: '#22C55E' },
+  { name: 'Iron',   color: '#636366' },
 ]
+
+// Per-lift 1RM belt thresholds (lbs). Index aligns with TIERS [Legend, Master, Elite, Lifter, Bronze, Iron].
+// Calibrated to ~180lb male bodyweight from StrengthLevel standards; Legend ≈ world-class, snapped to milestones.
+const WEIGHT_THRESHOLDS: Record<string, number[]> = {
+  'Bench Press':    [405, 350, 285, 220, 165, 120],
+  'Squat':          [525, 460, 375, 290, 220, 160],
+  'Deadlift':       [605, 525, 430, 340, 260, 195],
+  'Overhead Press': [275, 240, 190, 145, 105,  75],
+  'Power Clean':    [375, 325, 265, 205, 155, 115],
+}
+
+// Pull-up is bodyweight → belt earned by rep count. Index aligns with TIERS.
+const PULLUP_REP_THRESHOLDS = [30, 22, 15, 10, 5, 1]
 
 // Iron's gray (#636366) is too low-contrast for text/icons on dark cards, and also matches the
 // "locked/unearned" gray (#9A9AAA) — brighten it further so an earned Iron belt is visibly distinct
@@ -55,20 +69,25 @@ const UNRANKED = { name: 'Unranked', color: '#48484A', threshold: 0 }
 const DECAY_DAYS = 60
 const WARNING_DAYS = 7
 
-// Per-lift PRs — each Big 6 lift earns its own belt independently
-const USER_LIFTS_DEFAULT: { name: string; best: number; bestReps: number | null; lastPrAt: string | null; type: 'barbell' | 'bodyweight' }[] = [
-  { name: 'Bench Press',    best: 205, bestReps: null, lastPrAt: '2026-05-20', type: 'barbell' },
-  { name: 'Squat',          best: 155, bestReps: null, lastPrAt: '2026-04-18', type: 'barbell' },
-  { name: 'Deadlift',       best: 225, bestReps: null, lastPrAt: '2026-03-01', type: 'barbell' },
-  { name: 'Overhead Press', best: 95,  bestReps: null, lastPrAt: '2026-06-05', type: 'barbell' },
-  { name: 'Power Clean',    best: 115, bestReps: null, lastPrAt: '2026-06-10', type: 'barbell' },
-  { name: 'Pull-up',        best: 0,   bestReps: null, lastPrAt: null,         type: 'bodyweight' },
+// The Big 6 — each earns its own belt independently. Real bests load from pr_verifications at mount.
+const BIG_SIX: { name: string; best: number; bestReps: number | null; lastPrAt: string | null; type: 'barbell' | 'bodyweight' }[] = [
+  { name: 'Bench Press',    best: 0, bestReps: null, lastPrAt: null, type: 'barbell' },
+  { name: 'Squat',          best: 0, bestReps: null, lastPrAt: null, type: 'barbell' },
+  { name: 'Deadlift',       best: 0, bestReps: null, lastPrAt: null, type: 'barbell' },
+  { name: 'Overhead Press', best: 0, bestReps: null, lastPrAt: null, type: 'barbell' },
+  { name: 'Power Clean',    best: 0, bestReps: null, lastPrAt: null, type: 'barbell' },
+  { name: 'Pull-up',        best: 0, bestReps: null, lastPrAt: null, type: 'bodyweight' },
 ]
 
-// Highest tier index whose threshold the weight clears (0 = Legend, best). -1 = below Iron.
-function getTierIndex(weight: number) {
-  for (let i = 0; i < TIERS.length; i++) {
-    if (weight >= TIERS[i].threshold) return i
+// Highest tier index a lift's best clears (0 = Legend, best). -1 = below Iron.
+// Pull-up is rep-based; every other lift uses 1RM weight.
+function getTierIndex(lift: { name: string; best: number; bestReps: number | null }) {
+  const repBased = lift.name === 'Pull-up'
+  const thresholds = repBased ? PULLUP_REP_THRESHOLDS : WEIGHT_THRESHOLDS[lift.name]
+  if (!thresholds) return -1
+  const value = repBased ? (lift.bestReps ?? 0) : lift.best
+  for (let i = 0; i < thresholds.length; i++) {
+    if (value >= thresholds[i]) return i
   }
   return -1
 }
@@ -153,7 +172,7 @@ export default function CompetePage() {
   const [prReps, setPrReps] = useState<number | null>(null)
   const [prVerified, setPrVerified] = useState(false)
   const [prPlatePhotos, setPrPlatePhotos] = useState<{ left: string | null; right: string | null; front: string | null } | null>(null)
-  const [userLifts, setUserLifts] = useState(USER_LIFTS_DEFAULT)
+  const [userLifts, setUserLifts] = useState(BIG_SIX)
   const [userWeight, setUserWeight] = useState<number | null>(null)
   const [weightInput, setWeightInput] = useState('')
   const [weightLoading, setWeightLoading] = useState(true)
@@ -168,6 +187,26 @@ export default function CompetePage() {
       if (data?.weight) {
         setUserWeight(data.weight)
         setSelectedClass(getWeightClass(data.weight).index)
+      }
+      // Belts read from the user's best VERIFIED PR per lift
+      const { data: prs } = await supabase
+        .from('pr_verifications')
+        .select('exercise_name, declared_weight, declared_reps, created_at')
+        .eq('user_id', user.id)
+        .eq('verified', true)
+      if (prs && prs.length) {
+        const byLift = new Map<string, { best: number; bestReps: number | null; lastPrAt: string | null }>()
+        for (const pr of prs) {
+          const cur = byLift.get(pr.exercise_name) ?? { best: 0, bestReps: null, lastPrAt: null }
+          if ((pr.declared_weight ?? 0) > cur.best) cur.best = pr.declared_weight ?? 0
+          if (pr.declared_reps != null && (cur.bestReps == null || pr.declared_reps > cur.bestReps)) cur.bestReps = pr.declared_reps
+          if (!cur.lastPrAt || new Date(pr.created_at) > new Date(cur.lastPrAt)) cur.lastPrAt = pr.created_at
+          byLift.set(pr.exercise_name, cur)
+        }
+        setUserLifts(BIG_SIX.map(l => {
+          const m = byLift.get(l.name)
+          return m ? { ...l, best: m.best, bestReps: m.bestReps, lastPrAt: m.lastPrAt } : l
+        }))
       }
       setWeightLoading(false)
     }).catch(() => {
@@ -184,8 +223,14 @@ export default function CompetePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setWeightError('Not signed in.'); return }
       const w = parseFloat(weightInput)
-      const { error } = await supabase.from('profiles').update({ weight: w }).eq('id', user.id)
-      if (error) { setWeightError(error.message); return }
+      // upsert (not update): a profiles row may not exist yet — onboarding doesn't reliably create one.
+      // update().eq() would silently match 0 rows and never persist. .select() confirms the write landed.
+      const { data: saved, error } = await supabase
+        .from('profiles')
+        .upsert({ id: user.id, weight: w }, { onConflict: 'id' })
+        .select('id')
+        .single()
+      if (error || !saved) { setWeightError(error?.message ?? 'Could not save weight.'); return }
       setUserWeight(w)
       setSelectedClass(getWeightClass(w).index)
       setWeightModalOpen(false)
@@ -197,16 +242,19 @@ export default function CompetePage() {
   }
 
   function logPr(liftName: string, weight: number | null, reps: number | null, verified: boolean) {
-    const today = new Date().toISOString().slice(0, 10)
-    setUserLifts(prev => prev.map(l => l.name === liftName
-      ? {
-          ...l,
-          best: weight !== null && weight > l.best ? weight : l.best,
-          bestReps: reps !== null && (l.bestReps === null || reps > l.bestReps) ? reps : l.bestReps,
-          lastPrAt: today,
-        }
-      : l
-    ))
+    // Only verified PRs count toward a belt — unverified lifts are recorded in the DB but don't rank
+    if (verified) {
+      const today = new Date().toISOString().slice(0, 10)
+      setUserLifts(prev => prev.map(l => l.name === liftName
+        ? {
+            ...l,
+            best: weight !== null && weight > l.best ? weight : l.best,
+            bestReps: reps !== null && (l.bestReps === null || reps > l.bestReps) ? reps : l.bestReps,
+            lastPrAt: today,
+          }
+        : l
+      ))
+    }
     setPrModalOpen(false)
     setPrStep('select')
     setPrLift(null)
@@ -221,7 +269,7 @@ export default function CompetePage() {
 
   // Per-lift belt data — applies decay: no qualifying PR within DECAY_DAYS drops a tier
   const liftData = userLifts.map(l => {
-    const baseTierIdx = getTierIndex(l.best)
+    const baseTierIdx = getTierIndex(l)
     const daysAgo  = l.lastPrAt ? daysSince(l.lastPrAt) : null
     const daysLeft = daysAgo !== null ? DECAY_DAYS - daysAgo : null
     const demoted  = baseTierIdx !== -1 && daysLeft !== null && daysLeft < 0
@@ -486,9 +534,11 @@ export default function CompetePage() {
                               {TIERS.map((tier, i) => {
                                 const isCurrent = i === l.tierIdx
                                 const isEarned  = l.tierIdx !== -1 && i >= l.tierIdx
+                                const thresholds = l.name === 'Pull-up' ? PULLUP_REP_THRESHOLDS : (WEIGHT_THRESHOLDS[l.name] ?? [])
+                                const unit = l.name === 'Pull-up' ? 'reps' : 'lbs'
                                 const rangeLabel = i === 0
-                                  ? `${tier.threshold}+ lbs`
-                                  : `${tier.threshold}–${TIERS[i - 1].threshold - 1} lbs`
+                                  ? `${thresholds[i]}+ ${unit}`
+                                  : `${thresholds[i]}–${thresholds[i - 1] - 1} ${unit}`
                                 return (
                                   <div key={tier.name}
                                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${isCurrent ? '' : 'border-transparent'}`}

@@ -226,7 +226,8 @@ export default function OnboardingPage() {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { first_name: firstName.trim() } },
+      // username + first_name live in auth user metadata — the profiles table has no columns for them
+      options: { data: { first_name: firstName.trim(), username: username.trim() } },
     })
     if (authError) {
       setSignupError(authError.message)
@@ -234,13 +235,17 @@ export default function OnboardingPage() {
       return
     }
     if (authData.user) {
-      await supabase.from('profiles').upsert({
+      // profiles columns: id, email, weight (+ stripe). upsert so the row is actually created.
+      const { error: profileError } = await supabase.from('profiles').upsert({
         id: authData.user.id,
         email: email.trim(),
-        username: username.trim(),
-        first_name: firstName.trim(),
         weight: weight ? parseFloat(weight) : null,
-      })
+      }, { onConflict: 'id' })
+      if (profileError) {
+        setSignupError(profileError.message)
+        setLoading(false)
+        return
+      }
     }
     sessionStorage.setItem('trainmaxxing_onboarding', JSON.stringify(buildPayload()))
     router.push('/plan/generating')
