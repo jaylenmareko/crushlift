@@ -546,17 +546,30 @@ Three separate verification steps depending on lift type:
 
 ## Belt System
 
+Belt **colors** are shared; **thresholds are per-lift**. Calibrated to ~180 lb male bodyweight
+using StrengthLevel standards (Beginner→Iron, Novice→Bronze, Intermediate→Lifter, Advanced→Elite,
+SL-Elite→Master, world-class→Legend). Lives in `app/compete/page.tsx` as `WEIGHT_THRESHOLDS` +
+`PULLUP_REP_THRESHOLDS`. Index order is always [Legend, Master, Elite, Lifter, Bronze, Iron].
+
 ```
-Tiers (best to worst):
-  Legend  #FFC107  405+ lbs
-  Master  #8B5CF6  315+ lbs
-  Elite   #EF4444  255+ lbs
-  Lifter  #3B82F6  185+ lbs
-  Bronze  #22C55E  135+ lbs
-  Iron    #636366  95+ lbs  (display as #D1D5DB)
+Colors:  Legend #FFC107 · Master #8B5CF6 · Elite #EF4444 · Lifter #3B82F6 · Bronze #22C55E · Iron #636366 (display #D1D5DB)
+
+Per-lift 1RM thresholds (lbs):       Legend Master Elite Lifter Bronze Iron
+  Bench Press                          405    350   285   220    165   120
+  Squat                                525    460   375   290    220   160
+  Deadlift                             605    525   430   340    260   195
+  Overhead Press                       275    240   190   145    105    75
+  Power Clean                          375    325   265   205    155   115
+
+Pull-up (bodyweight → rep count):      30     22    15    10      5     1   reps
 ```
 
+**Future upgrade (per weight class):** thresholds are currently single-set (180 lb reference). To scale
+by bodyweight without a 216-cell table, apply a DOTS/Wilks coefficient to the lifted weight before
+comparing — that converts "per weight class" into one formula. Not yet implemented.
+
 - **Per-lift and independent** — each of the Big 6 has its own belt
+- **Verified PRs only** — belts read the best `verified = true` row per lift from `pr_verifications`. Unverified lifts are still recorded (ML data) but never earn a belt.
 - **One-way** (karate-style) — nobody can take it from you
 - **Decay:** No qualifying PR within 60 days = drop one tier. Warning kicks in at 7 days remaining.
 - **Decay display:** "Dropped from Elite to Lifter belt, log a PR to climb back" (amber, `#F59E0B`)
@@ -587,17 +600,26 @@ Super Heavy:   220+ lbs
 
 ## Supabase Schema
 
+Verified against the live DB 2026-06-15. `profiles` does NOT have `username`/`first_name`/`created_at`.
+
 ```
-profiles         — id, email, username, first_name, weight, created_at
+profiles         — id, email, weight, stripe_customer_id, subscription_status, subscription_period_end
+                   (username + first_name are NOT here — they live in auth user metadata)
 plans            — id, user_id, onboarding_data (jsonb), days (jsonb), created_at
-workout_sessions — id, user_id, plan_id, day_number, day_name, started_at, finished_at
-workout_sets     — id, session_id, exercise_name, set_number, weight_lbs, reps, completed
+workout_sessions — id, user_id, plan_id, day_number, day_name, started_at, finished_at  (unverified — table empty)
+workout_sets     — id, session_id, exercise_name, set_number, weight_lbs, reps, completed  (unverified — table empty)
 pr_verifications — id, user_id, exercise_name, declared_weight, declared_reps, verified,
-                   confidence, ai_note, plate_photos (jsonb), lift_video_url, created_at
+                   confidence, ai_note, plate_photos (jsonb), lift_video_url, added_weight_photo_url, created_at
 ```
 
 `pr_verifications` has RLS: user can only insert/select their own rows.
+`profiles` has RLS allowing a user to insert/update their own row (verified). There is **no DB trigger** that
+auto-creates a profiles row on signup — onboarding must upsert one (`{ id, email, weight }`, keyed on `id`).
+Never use `.update().eq('id', uid)` to set profile fields: if the row doesn't exist it silently writes nothing. Always upsert.
 `pr-media` storage has RLS: upload path must start with `auth.uid()`.
+
+**TODO (schema):** add `username` + `first_name` columns to `profiles` (needed for the Friends search-by-username
+feature). Until then they persist only in auth metadata. SQL: `alter table profiles add column username text unique, add column first_name text;`
 
 ---
 
@@ -676,7 +698,12 @@ artifacts/
 - MediaRecorder video (webm/mp4 auto-detect, user-controlled stop)
 
 ### TODO (priority order)
-1. **Power Rank logic** — belt thresholds table per lift per weight class, PR detection in workout page, rank stored in `profiles`
+1. **Power Rank logic** — _in progress_
+   - [x] Per-lift belt thresholds (`WEIGHT_THRESHOLDS` + `PULLUP_REP_THRESHOLDS`, StrengthLevel-based)
+   - [x] Belts read real best **verified** PR per lift from `pr_verifications` (no more dummy data)
+   - [ ] PR detection in workout page (auto-offer "Log PR" when a set beats your current best)
+   - [ ] Persist computed rank/belt to `profiles` (needed so leaderboards can show others' ranks without querying their PRs — requires a profiles schema column)
+   - [ ] Per-weight-class scaling via DOTS coefficient (see Belt System note)
 2. **1v1 Battle flow** — challenge system, Claude verification of challenged lift, W/L record update
 3. **Friends system** — search by username, add/remove, challenge button
 4. **Real data on compete page** — replace dummy rankings + battles with Supabase queries
