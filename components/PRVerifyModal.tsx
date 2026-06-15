@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { X, Video, Square, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { X, Video, Square, Loader2, CheckCircle2, AlertTriangle, SwitchCamera } from 'lucide-react'
 
 type Stage = 'preview' | 'recording' | 'analyzing' | 'result'
 
@@ -36,11 +36,12 @@ export default function PRVerifyModal({ exerciseName, weight, reps, platePhoto, 
   const [countdown, setCountdown] = useState(RECORD_SECONDS)
   const [result, setResult] = useState<VerifyResult | null>(null)
   const [camError, setCamError] = useState(false)
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
 
   useEffect(() => {
     let active = true
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      .getUserMedia({ video: { facingMode }, audio: false })
       .then(stream => {
         if (!active) { stream.getTracks().forEach(t => t.stop()); return }
         streamRef.current = stream
@@ -54,7 +55,7 @@ export default function PRVerifyModal({ exerciseName, weight, reps, platePhoto, 
       active = false
       stopCamera()
     }
-  }, [])
+  }, [facingMode])
 
   function stopCamera() {
     streamRef.current?.getTracks().forEach(t => t.stop())
@@ -191,6 +192,15 @@ export default function PRVerifyModal({ exerciseName, weight, reps, platePhoto, 
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                     <span className="text-xs font-bold text-white">{countdown}s</span>
                   </div>
+                )}
+
+                {stage === 'preview' && (
+                  <button
+                    onClick={() => setFacingMode(m => m === 'environment' ? 'user' : 'environment')}
+                    className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white"
+                  >
+                    <SwitchCamera className="w-4 h-4" />
+                  </button>
                 )}
 
                 {stage === 'preview' && (

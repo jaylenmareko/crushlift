@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { X, Camera, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { X, Camera, Loader2, CheckCircle2, AlertTriangle, SwitchCamera } from 'lucide-react'
 
 type Stage = 'capture' | 'analyzing' | 'result'
 
@@ -29,12 +29,13 @@ export default function AddedWeightPhotoModal({ liftName, weight, onDone, onClos
   const [photo, setPhoto] = useState<string | null>(null)
   const [result, setResult] = useState<VerifyResult | null>(null)
   const [camError, setCamError] = useState(false)
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
 
   useEffect(() => {
     if (stage !== 'capture') return
     let active = true
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      .getUserMedia({ video: { facingMode }, audio: false })
       .then(stream => {
         if (!active) { stream.getTracks().forEach(t => t.stop()); return }
         streamRef.current = stream
@@ -49,7 +50,7 @@ export default function AddedWeightPhotoModal({ liftName, weight, onDone, onClos
       streamRef.current?.getTracks().forEach(t => t.stop())
       streamRef.current = null
     }
-  }, [stage])
+  }, [stage, facingMode])
 
   function capturePhoto() {
     const video = videoRef.current
@@ -140,6 +141,12 @@ export default function AddedWeightPhotoModal({ liftName, weight, onDone, onClos
                   <div className="relative bg-[#1C1C1E] rounded-2xl overflow-hidden aspect-[3/4]">
                     <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
                     <canvas ref={canvasRef} className="hidden" />
+                    <button
+                      onClick={() => setFacingMode(m => m === 'environment' ? 'user' : 'environment')}
+                      className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white"
+                    >
+                      <SwitchCamera className="w-4 h-4" />
+                    </button>
                     <div className="absolute bottom-3 inset-x-3">
                       <div className="bg-black/60 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
                         <p className="text-xs text-white/80">Show the weight attached to your dip belt or chain — make sure the numbers are readable</p>

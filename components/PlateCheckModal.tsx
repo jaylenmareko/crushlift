@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { X, Camera, Loader2, CheckCircle2, AlertTriangle, Minus, Plus } from 'lucide-react'
+import { X, Camera, Loader2, CheckCircle2, AlertTriangle, Minus, Plus, SwitchCamera } from 'lucide-react'
 
 type Stage = 'select' | 'capture' | 'analyzing' | 'result'
 
@@ -34,6 +34,7 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
   const [photo, setPhoto] = useState<string | null>(null)
   const [result, setResult] = useState<VerifyResult | null>(null)
   const [camError, setCamError] = useState(false)
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
 
   const total = BAR_WEIGHT + 2 * PLATE_SIZES.reduce((sum, s) => sum + s * plateCounts[s], 0)
 
@@ -41,7 +42,7 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
     if (stage !== 'capture') return
     let active = true
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      .getUserMedia({ video: { facingMode }, audio: false })
       .then(stream => {
         if (!active) { stream.getTracks().forEach(t => t.stop()); return }
         streamRef.current = stream
@@ -56,7 +57,7 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
       streamRef.current?.getTracks().forEach(t => t.stop())
       streamRef.current = null
     }
-  }, [stage])
+  }, [stage, facingMode])
 
   function adjustPlate(size: number, delta: number) {
     setPlateCounts(prev => ({ ...prev, [size]: Math.max(0, prev[size] + delta) }))
@@ -185,6 +186,12 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                   <div className="relative bg-[#1C1C1E] rounded-2xl overflow-hidden aspect-[3/4]">
                     <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
                     <canvas ref={canvasRef} className="hidden" />
+                    <button
+                      onClick={() => setFacingMode(m => m === 'environment' ? 'user' : 'environment')}
+                      className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white"
+                    >
+                      <SwitchCamera className="w-4 h-4" />
+                    </button>
                     <div className="absolute bottom-3 inset-x-3">
                       <div className="bg-black/60 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
                         <p className="text-xs text-white/80">Show the full loaded bar — make sure the plate numbers are readable</p>
