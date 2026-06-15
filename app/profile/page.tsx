@@ -148,7 +148,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1">
               <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-0.5">Power Rank</p>
-              <p className="text-sm font-semibold text-[#636366]">Log a verified PR to earn your rank</p>
+              <p className="text-sm font-semibold text-[#9A9AAA]">Log a verified PR to earn your rank</p>
             </div>
           </div>
         </div>
@@ -180,7 +180,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-2 mb-3">
             <p className="text-lg font-black uppercase tracking-tight">Memories</p>
             {!memoriesLoading && (
-              <span className="text-xs text-[#636366]">{sessions.length} workouts</span>
+              <span className="text-xs font-semibold text-[#9A9AAA]">{sessions.length} workouts</span>
             )}
           </div>
 
@@ -192,7 +192,7 @@ export default function ProfilePage() {
             <div className="flex flex-col items-center justify-center py-10 text-center bg-[#1C1C1E] border border-[#252528] rounded-2xl">
               <Dumbbell className="w-10 h-10 text-[#3A3A3C] mb-3" />
               <p className="text-sm text-[#9A9AAA]">No workouts logged yet.</p>
-              <p className="text-xs text-[#636366] mt-1">Finish a workout to see it here.</p>
+              <p className="text-xs font-semibold text-[#9A9AAA] mt-1">Finish a workout to see it here.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -220,7 +220,7 @@ export default function ProfilePage() {
                           <span className="flex items-center gap-1 text-xs text-[#9A9AAA]">
                             <Calendar className="w-3 h-3" />{formatDate(s.date)}
                           </span>
-                          {sets > 0 && <span className="text-xs text-[#636366]">{sets} sets</span>}
+                          {sets > 0 && <span className="text-xs font-semibold text-[#9A9AAA]">{sets} sets</span>}
                         </div>
                       </div>
                       {s.exercises.length > 0 && (
@@ -241,7 +241,7 @@ export default function ProfilePage() {
                             </div>
                             {ex.sets.filter(set => set.completed).map((set, si) => (
                               <div key={si} className="flex items-center gap-4 px-1 py-1 border-t border-[#252528]">
-                                <span className="text-xs text-[#636366] w-8">{set.setNumber}</span>
+                                <span className="text-xs font-semibold text-[#9A9AAA] w-8">{set.setNumber}</span>
                                 <span className="text-sm font-semibold flex-1">{set.weight != null ? `${set.weight} lbs` : '—'}</span>
                                 <span className="text-sm font-semibold flex-1 text-[#FF4500]">{set.reps != null ? set.reps : '—'}</span>
                               </div>

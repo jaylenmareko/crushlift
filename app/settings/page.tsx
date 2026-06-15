@@ -76,7 +76,7 @@ export default function SettingsPage() {
       <div className="flex-1 px-5 flex flex-col gap-6 pb-10">
         {sections.map(section => (
           <div key={section.title}>
-            <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mb-2 px-1">
+            <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-2 px-1">
               {section.title}
             </p>
             <div className="bg-[#1C1C1E] border border-[#252528] rounded-2xl overflow-hidden">
@@ -91,7 +91,7 @@ export default function SettingsPage() {
                   <span className="text-sm font-medium text-white">{item.label}</span>
                   <div className="flex items-center gap-2">
                     {item.hint && (
-                      <span className="text-xs text-[#636366]">{item.hint}</span>
+                      <span className="text-xs font-semibold text-[#9A9AAA]">{item.hint}</span>
                     )}
                     <ChevronRight className="w-4 h-4 text-[#3A3A3C]" />
                   </div>

@@ -652,7 +652,7 @@ export default function PlanPage() {
               {/* Header */}
               <div className="flex items-center justify-between px-5 pt-2 pb-4">
                 <div>
-                  <p className="text-xs text-[#636366] uppercase tracking-wider font-semibold">Replace</p>
+                  <p className="text-xs text-[#9A9AAA] uppercase tracking-wider font-semibold">Replace</p>
                   <p className="font-bold text-base mt-0.5 truncate max-w-[260px]">{replaceTarget.name}</p>
                 </div>
                 <button
@@ -670,7 +670,7 @@ export default function PlanPage() {
                 </div>
               ) : alternatives.length > 0 && !customRequest && (
                 <div className="mb-2">
-                  <p className="text-xs font-semibold text-[#636366] uppercase tracking-wider px-5 mb-3">Suggested</p>
+                  <p className="text-xs font-semibold text-[#9A9AAA] uppercase tracking-wider px-5 mb-3">Suggested</p>
                   <div className="flex gap-3 px-5 overflow-x-auto no-scrollbar pb-1">
                     {alternatives.map((alt, i) => {
                       return (
@@ -708,7 +708,7 @@ export default function PlanPage() {
               {/* Divider */}
               <div className="flex items-center gap-3 px-5 my-3">
                 <div className="flex-1 h-px bg-[#252528]" />
-                <span className="text-xs text-[#636366] font-medium">or search</span>
+                <span className="text-xs font-semibold text-[#9A9AAA]">or search</span>
                 <div className="flex-1 h-px bg-[#252528]" />
               </div>
 
@@ -861,7 +861,7 @@ export default function PlanPage() {
                 <div className="flex items-center justify-between px-5 pt-2 pb-4">
                   <div>
                     <p className="font-bold text-base">Adjust Plan</p>
-                  <p className="text-xs text-[#636366] mt-0.5">Changes will regenerate your plan</p>
+                  <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">Changes will regenerate your plan</p>
                 </div>
                 <button onClick={() => setShowEditPlan(false)} className="w-8 h-8 rounded-full bg-[#252528] flex items-center justify-center text-[#9A9AAA]">
                   <X className="w-4 h-4" />
@@ -935,7 +935,7 @@ export default function PlanPage() {
                       >
                         <div className="flex-1">
                           <p className={`text-sm font-bold ${editSplit === v ? 'text-[#FF4500]' : 'text-white'}`}>{l}</p>
-                          <p className="text-xs text-[#636366] mt-0.5">{d}</p>
+                          <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">{d}</p>
                         </div>
                         {editSplit === v && <Check className="w-4 h-4 text-[#FF4500] flex-shrink-0" />}
                       </button>
@@ -965,7 +965,7 @@ export default function PlanPage() {
                       >
                         <div className="flex-1">
                           <p className={`text-sm font-bold ${editEquipment === v ? 'text-[#FF4500]' : 'text-white'}`}>{l}</p>
-                          <p className="text-xs text-[#636366] mt-0.5">{d}</p>
+                          <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">{d}</p>
                         </div>
                         {editEquipment === v && <Check className="w-4 h-4 text-[#FF4500] flex-shrink-0" />}
                       </button>
@@ -1023,7 +1023,7 @@ export default function PlanPage() {
               <div className="flex items-start justify-between px-5 py-3 flex-shrink-0">
                 <div>
                   <p className="font-bold text-base">{selectedEntry.dayName}</p>
-                  <p className="text-xs text-[#636366] mt-0.5">
+                  <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">
                     {new Date(selectedEntry.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                   </p>
                 </div>
@@ -1033,18 +1033,18 @@ export default function PlanPage() {
               </div>
               <div className="flex-1 overflow-y-auto px-5 flex flex-col gap-3">
                 {selectedEntry.exercises.length === 0 ? (
-                  <p className="text-sm text-[#636366] py-4">No exercise detail available for this session.</p>
+                  <p className="text-sm font-semibold text-[#9A9AAA] py-4">No exercise detail available for this session.</p>
                 ) : selectedEntry.exercises.map((ex, i) => (
                   <div key={i} className="bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4">
                     <p className="font-bold text-sm mb-3">{ex.name}</p>
-                    <div className="flex text-[10px] font-semibold text-[#636366] uppercase tracking-wider mb-2 gap-4">
+                    <div className="flex text-[10px] font-semibold text-[#9A9AAA] uppercase tracking-wider mb-2 gap-4">
                       <span className="w-8">Set</span>
                       <span className="flex-1">Weight</span>
                       <span className="flex-1">Reps</span>
                     </div>
                     {ex.sets.filter(s => s.completed).map((s, si) => (
                       <div key={si} className="flex items-center gap-4 py-1.5 border-t border-[#252528]">
-                        <span className="text-xs text-[#636366] w-8">{s.setNumber}</span>
+                        <span className="text-xs font-semibold text-[#9A9AAA] w-8">{s.setNumber}</span>
                         <span className="text-sm font-semibold flex-1">
                           {s.weight != null ? `${s.weight} lbs` : '—'}
                         </span>
@@ -1115,7 +1115,7 @@ export default function PlanPage() {
               <div className="grid grid-cols-7 px-4 mb-2">
                 {WEEK_DAYS.map((d, i) => (
                   <div key={i} className="flex justify-center">
-                    <span className="text-[11px] font-semibold text-[#636366] uppercase">{d}</span>
+                    <span className="text-[11px] font-semibold text-[#9A9AAA] uppercase">{d}</span>
                   </div>
                 ))}
               </div>

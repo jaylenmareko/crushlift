@@ -264,7 +264,7 @@ export default function CompetePage() {
         </div>
         <div className="text-center">
           <p className="text-xl font-black text-white mb-2">What's your bodyweight?</p>
-          <p className="text-sm text-[#636366] leading-relaxed">We need this to place you in the right weight class for belts and battle rankings.</p>
+          <p className="text-sm font-semibold text-[#9A9AAA] leading-relaxed">We need this to place you in the right weight class for belts and battle rankings.</p>
         </div>
         <div className="w-full">
           <div className="flex items-center bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-4 gap-3 mb-3">
@@ -276,7 +276,7 @@ export default function CompetePage() {
               placeholder="Enter your weight"
               className="flex-1 bg-transparent text-white text-lg font-bold focus:outline-none placeholder:text-[#48484A]"
             />
-            <span className="text-sm font-bold text-[#636366]">lbs</span>
+            <span className="text-sm font-bold text-[#9A9AAA]">lbs</span>
           </div>
           <motion.button
             whileTap={{ scale: 0.97 }}
@@ -346,9 +346,9 @@ export default function CompetePage() {
                       <span className="text-[8px] font-black mt-0.5 uppercase tracking-wider text-[#FF4500]">Battle</span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mb-0.5">Rankings & Battles</p>
+                      <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-0.5">Rankings & Battles</p>
                       <p className="text-lg font-black text-white leading-none">#4 in Middle</p>
-                      <p className="text-xs text-[#636366] mt-1">Record: <span className="text-[#22C55E] font-bold">2W</span> · <span className="text-red-400 font-bold">1L</span></p>
+                      <p className="text-xs font-semibold text-[#9A9AAA] mt-1">Record: <span className="text-[#22C55E] font-bold">2W</span> · <span className="text-red-400 font-bold">1L</span></p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-[#3A3A3C] flex-shrink-0" />
                   </div>
@@ -390,7 +390,7 @@ export default function CompetePage() {
                   <Scale className="w-6 h-6" style={{ color: displayColor(bestLift.tier.color) }} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[10px] text-[#636366] uppercase tracking-widest font-bold mb-0.5">Weight Class</p>
+                  <p className="text-[10px] text-[#9A9AAA] uppercase tracking-widest font-bold mb-0.5">Weight Class</p>
                   <p className="text-base font-bold text-white">{getWeightClass(userWeight!).full}</p>
                 </div>
                 <button
@@ -402,7 +402,7 @@ export default function CompetePage() {
               </div>
 
               {/* Per-lift belt ladders */}
-              <p className="text-[11px] font-bold text-[#636366] uppercase tracking-widest px-1 mt-1">Belts by Lift</p>
+              <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest px-1 mt-1">Belts by Lift</p>
               <div className="flex flex-col gap-2">
                 {liftData.map(l => {
                   const isOpen = expandedLift === l.name
@@ -562,10 +562,10 @@ export default function CompetePage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-2xl font-black text-white leading-none">#4 in Middle</p>
-                        <p className="text-xs text-[#636366] mt-0.5">Battle your way to #1</p>
+                        <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">Battle your way to #1</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] text-[#636366] uppercase tracking-widest font-bold mb-0.5">Record</p>
+                        <p className="text-[10px] text-[#9A9AAA] uppercase tracking-widest font-bold mb-0.5">Record</p>
                         <p className="text-xl font-black" style={{ color: userTierData.color }}>2–1</p>
                       </div>
                     </div>
@@ -601,7 +601,7 @@ export default function CompetePage() {
                               <p className={`text-xs font-bold truncate ${entry.you ? 'text-white' : 'text-[#9A9AAA]'}`}>
                                 {entry.name}{entry.you && <span className="text-[9px] font-black ml-1.5" style={{ color: userTierData.color }}> YOU</span>}
                               </p>
-                              <span className="text-xs font-bold tabular-nums text-[#636366]">{entry.record}</span>
+                              <span className="text-xs font-bold tabular-nums text-[#9A9AAA]">{entry.record}</span>
                               <span className="text-[10px] font-bold" style={{ color: tierColor }}>{entry.tier}</span>
                             </motion.div>
                           )
@@ -637,7 +637,7 @@ export default function CompetePage() {
                           }`}>{b.result ?? '!'}</div>
                           <div className="flex-1">
                             <p className="text-sm font-bold text-white">{b.opponent}</p>
-                            <p className="text-[10px] text-[#636366]">{b.lift} · {b.weight}</p>
+                            <p className="text-[10px] font-semibold text-[#9A9AAA]">{b.lift} · {b.weight}</p>
                           </div>
                           <span className={`text-[10px] font-bold ${
                             b.status === 'pending' ? 'text-[#FF4500]' :
@@ -683,7 +683,7 @@ export default function CompetePage() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-xs text-[#636366] mb-3">This updates your weight class for belts and rankings.</p>
+              <p className="text-xs font-semibold text-[#9A9AAA] mb-3">This updates your weight class for belts and rankings.</p>
               <div className="flex items-center bg-[#161618] border border-[#252528] rounded-2xl px-4 py-4 gap-3 mb-3">
                 <input
                   type="number"
@@ -693,7 +693,7 @@ export default function CompetePage() {
                   placeholder="Enter your weight"
                   className="flex-1 bg-transparent text-white text-lg font-bold focus:outline-none placeholder:text-[#48484A]"
                 />
-                <span className="text-sm font-bold text-[#636366]">lbs</span>
+                <span className="text-sm font-bold text-[#9A9AAA]">lbs</span>
               </div>
               {weightError && (
                 <p className="text-xs text-red-400 mb-3">{weightError}</p>

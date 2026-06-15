@@ -81,7 +81,7 @@ export default function WorkoutCompletePage() {
         >
           <p className="text-[10px] font-bold text-[#22C55E] uppercase tracking-[0.2em] mb-2">Workout Complete</p>
           <h1 className="text-[2rem] font-black tracking-tight leading-tight mb-1">{entry.dayName}</h1>
-          <p className="text-[#636366] text-sm">
+          <p className="text-[#9A9AAA] font-semibold text-sm">
             {new Date(entry.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
           </p>
         </motion.div>
@@ -100,7 +100,7 @@ export default function WorkoutCompletePage() {
           ].map(({ label, value, unit }) => (
             <div key={label} className="bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4">
               <p className="text-2xl font-black text-white leading-none">{value}{unit}</p>
-              <p className="text-[10px] text-[#636366] font-semibold uppercase tracking-wider mt-1.5">{label}</p>
+              <p className="text-[10px] text-[#9A9AAA] font-semibold uppercase tracking-wider mt-1.5">{label}</p>
             </div>
           ))}
         </motion.div>

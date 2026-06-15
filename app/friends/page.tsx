@@ -35,7 +35,7 @@ export default function FriendsPage() {
           <Users className="w-9 h-9 text-[#3A3A3C]" />
         </div>
         <p className="font-bold text-white text-lg mb-1">No friends yet</p>
-        <p className="text-sm text-[#636366] mb-6 max-w-[240px] leading-snug">
+        <p className="text-sm font-semibold text-[#9A9AAA] mb-6 max-w-[240px] leading-snug">
           Add friends to see their Power Rank, challenge them to battles, and push each other.
         </p>
         <motion.button
