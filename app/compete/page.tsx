@@ -227,7 +227,7 @@ export default function CompetePage() {
       // update().eq() would silently match 0 rows and never persist. .select() confirms the write landed.
       const { data: saved, error } = await supabase
         .from('profiles')
-        .upsert({ id: user.id, weight: w }, { onConflict: 'id' })
+        .upsert({ id: user.id, email: user.email, weight: w }, { onConflict: 'id' })
         .select('id')
         .single()
       if (error || !saved) { setWeightError(error?.message ?? 'Could not save weight.'); return }
