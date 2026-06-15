@@ -152,7 +152,7 @@ export default function CompetePage() {
   const [prWeight, setPrWeight] = useState<number | null>(null)
   const [prReps, setPrReps] = useState<number | null>(null)
   const [prVerified, setPrVerified] = useState(false)
-  const [prPlatePhoto, setPrPlatePhoto] = useState<string | null>(null)
+  const [prPlatePhotos, setPrPlatePhotos] = useState<{ left: string | null; right: string | null; front: string | null } | null>(null)
   const [userLifts, setUserLifts] = useState(USER_LIFTS_DEFAULT)
   const [userWeight, setUserWeight] = useState<number | null>(null)
   const [weightInput, setWeightInput] = useState('')
@@ -213,7 +213,7 @@ export default function CompetePage() {
     setPrWeight(null)
     setPrReps(null)
     setPrVerified(verified)
-    setPrPlatePhoto(null)
+    setPrPlatePhotos(null)
   }
 
   const userTierData  = TIERS.find(t => t.name === USER_TIER)!
@@ -278,6 +278,9 @@ export default function CompetePage() {
             />
             <span className="text-sm font-bold text-[#9A9AAA]">lbs</span>
           </div>
+          {weightError && (
+            <p className="text-xs text-red-400 mb-3">{weightError}</p>
+          )}
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={saveWeight}
@@ -419,7 +422,7 @@ export default function CompetePage() {
                             setPrWeight(null)
                             setPrReps(null)
                             setPrVerified(false)
-                            setPrPlatePhoto(null)
+                            setPrPlatePhotos(null)
                             setPrStep(l.type === 'bodyweight' ? 'reps' : 'plates')
                             setPrModalOpen(true)
                           }
@@ -769,7 +772,7 @@ export default function CompetePage() {
                       setPrWeight(null)
                       setPrReps(null)
                       setPrVerified(false)
-                      setPrPlatePhoto(null)
+                      setPrPlatePhotos(null)
                       const lift = liftData.find(x => x.name === prLift)
                       setPrStep(lift?.type === 'bodyweight' ? 'reps' : 'plates')
                     }}
@@ -845,7 +848,7 @@ export default function CompetePage() {
             exerciseName={prLift}
             weight={prWeight ?? 0}
             reps={prReps ?? undefined}
-            platePhoto={prPlatePhoto}
+            platePhotos={prPlatePhotos}
             onClose={() => setPrStep('record')}
             onDone={verified => logPr(prLift, prWeight, prReps, verified)}
           />
@@ -857,10 +860,10 @@ export default function CompetePage() {
           <PlateCheckModal
             liftName={prLift}
             onClose={() => setPrModalOpen(false)}
-            onDone={(weight, verified, photo) => {
+            onDone={(weight, verified, photos) => {
               setPrWeight(weight)
               setPrVerified(verified)
-              setPrPlatePhoto(photo)
+              setPrPlatePhotos(photos)
               setPrStep('record')
             }}
           />
@@ -876,7 +879,7 @@ export default function CompetePage() {
               setPrReps(reps)
               setPrWeight(weight)
               setPrVerified(false)
-              setPrPlatePhoto(null)
+              setPrPlatePhotos(null)
               setPrStep(weight > 0 ? 'weight-photo' : 'record')
             }}
           />
@@ -891,7 +894,7 @@ export default function CompetePage() {
             onClose={() => setPrModalOpen(false)}
             onDone={(verified, photo) => {
               setPrVerified(verified)
-              setPrPlatePhoto(photo)
+              setPrPlatePhotos(null)
               setPrStep('record')
             }}
           />

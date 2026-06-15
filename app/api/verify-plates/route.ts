@@ -10,13 +10,17 @@ interface VerifyResult {
 const DEMO_RESULT: VerifyResult = {
   verified: true,
   confidence: 'high',
-  note: 'Plate numbers match your declared weight.',
+  note: 'Plate setup looks consistent across all three angles.',
   demo: true,
 }
 
+function toBase64(dataUrl: string) {
+  return dataUrl.replace(/^data:image\/\w+;base64,/, '')
+}
+
 export async function POST(req: NextRequest) {
-  const { photo, declaredWeight, plates } = await req.json() as {
-    photo: string
+  const { photos, declaredWeight, plates } = await req.json() as {
+    photos: { left: string | null; right: string | null; front: string | null }
     declaredWeight: number
     plates: { size: number; count: number }[]
   }
@@ -34,38 +38,47 @@ export async function POST(req: NextRequest) {
       .map(p => `${p.count}x ${p.size}lb per side`)
       .join(', ') || 'no plates (bar only)'
 
+    type ContentBlock =
+      | { type: 'image'; source: { type: 'base64'; media_type: 'image/jpeg'; data: string } }
+      | { type: 'text'; text: string }
+
+    const labels = { left: '[Photo 1 — Left side of bar]', right: '[Photo 2 — Right side of bar]', front: '[Photo 3 — Front view of bar]' }
+    const imageBlocks: ContentBlock[] = []
+    for (const key of ['left', 'right', 'front'] as const) {
+      const photo = photos[key]
+      if (!photo) continue
+      imageBlocks.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: toBase64(photo) } })
+      imageBlocks.push({ type: 'text', text: labels[key] })
+    }
+
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 256,
+      max_tokens: 300,
       messages: [{
         role: 'user',
         content: [
-          {
-            type: 'image' as const,
-            source: {
-              type: 'base64' as const,
-              media_type: 'image/jpeg' as const,
-              data: photo.replace(/^data:image\/\w+;base64,/, ''),
-            },
-          },
+          ...imageBlocks,
           {
             type: 'text',
-            text: `This photo is supposed to show a barbell loaded with weight plates, ready for a PR attempt.
+            text: `These are up to 3 photos of a barbell loaded for a PR attempt — left side, right side, and front view. The bar may be racked or on the floor.
 
-The lifter declared: ${plateSummary}, for a total of ${declaredWeight} lbs (including a 45lb bar).
+Lifter declared: ${plateSummary}, total ${declaredWeight} lbs (including a 45lb bar).
 
-First check: does the photo actually show a barbell with plates loaded on its sleeve? Reject photos of a single plate sitting on the floor, a plate rack, an empty bar, or anything that isn't the assembled bar+plates setup.
+Analyze all photos together:
+- Left and right side photos: read any visible plate numbers on the outermost plate. Also estimate plate sizes by rim diameter — standard iron plates go from 45lb (largest) down to 2.5lb (smallest), each noticeably different in size.
+- Front photo: count the plate stacks per side and estimate sizes from the visible rims.
+- Check that both sides appear to match.
+- Cross-reference what you see with the declared ${plateSummary}.
+- If it looks like bumper plates (all same diameter, different colors/thickness), flag that diameter-based estimation is unreliable.
 
-If it does show a loaded bar, look at the numbers/markings printed on the plates and check whether what you see is consistent with the declared plates.
+Reject clearly invalid setups: empty bar, single loose plate on floor, plate rack, unloaded bar.
 
-Return ONLY valid JSON (no markdown, no explanation):
+Return ONLY valid JSON (no markdown):
 {
-  "verified": <true only if this is clearly a loaded barbell AND the visible plates plausibly match the declaration, false otherwise>,
+  "verified": <true if photos clearly show a loaded barbell and plates appear consistent with the declaration, false otherwise>,
   "confidence": "<high | medium | low>",
-  "note": "<one short sentence explaining what you saw — call out if it doesn't look like a loaded bar>"
-}
-
-If the photo is blurry, too far away, doesn't show a barbell, or plates aren't clearly readable, set confidence to "low" and verified to false.`,
+  "note": "<one sentence — what you saw on each side and whether it matched the declaration>"
+}`,
           },
         ],
       }],

@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { X, Camera, Loader2, CheckCircle2, AlertTriangle, Minus, Plus, SwitchCamera } from 'lucide-react'
+import { X, Camera, Loader2, CheckCircle2, AlertTriangle, Minus, Plus, SwitchCamera, ChevronRight, RotateCcw } from 'lucide-react'
 
-type Stage = 'select' | 'capture' | 'analyzing' | 'result'
+type PhotoStep = 'left' | 'right' | 'front'
+type Stage = 'select' | 'capture' | 'preview' | 'analyzing' | 'result'
 
 interface VerifyResult {
   verified: boolean
@@ -15,47 +16,62 @@ interface VerifyResult {
 
 interface Props {
   liftName: string
-  onDone: (weight: number, verified: boolean, photo: string | null) => void
+  onDone: (weight: number, verified: boolean, photos: { left: string | null; right: string | null; front: string | null }) => void
   onClose: () => void
 }
 
 const BAR_WEIGHT = 45
 const PLATE_SIZES = [45, 35, 25, 10, 5, 2.5]
 
+const STEPS: { step: PhotoStep; num: number; label: string; instruction: string }[] = [
+  { step: 'left',  num: 1, label: 'Left Side',  instruction: 'Stand on the LEFT side. Angle slightly forward so the outer plate number is readable.' },
+  { step: 'right', num: 2, label: 'Right Side', instruction: 'Stand on the RIGHT side. Angle slightly forward — outer plate number should be visible.' },
+  { step: 'front', num: 3, label: 'Front View', instruction: 'Stand directly in FRONT of the bar. Both sides should be fully visible.' },
+]
+
 export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const videoRef  = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
-  const [stage, setStage] = useState<Stage>('select')
+  const [stage, setStage]           = useState<Stage>('select')
+  const [photoStep, setPhotoStep]   = useState<PhotoStep>('left')
+  const [photos, setPhotos]         = useState<Record<PhotoStep, string | null>>({ left: null, right: null, front: null })
+  const [currentPhoto, setCurrentPhoto] = useState<string | null>(null)
   const [plateCounts, setPlateCounts] = useState<Record<number, number>>(
     Object.fromEntries(PLATE_SIZES.map(s => [s, 0]))
   )
-  const [photo, setPhoto] = useState<string | null>(null)
-  const [result, setResult] = useState<VerifyResult | null>(null)
+  const [result, setResult]     = useState<VerifyResult | null>(null)
   const [camError, setCamError] = useState(false)
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
 
-  const total = BAR_WEIGHT + 2 * PLATE_SIZES.reduce((sum, s) => sum + s * plateCounts[s], 0)
+  const total         = BAR_WEIGHT + 2 * PLATE_SIZES.reduce((sum, s) => sum + s * plateCounts[s], 0)
+  const stepIndex     = STEPS.findIndex(s => s.step === photoStep)
+  const currentStep   = STEPS[stepIndex]
 
   useEffect(() => {
     if (stage !== 'capture') return
     let active = true
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode }, audio: false })
-      .then(stream => {
-        if (!active) { stream.getTracks().forEach(t => t.stop()); return }
-        streamRef.current = stream
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          videoRef.current.play().catch(() => {})
-        }
-      })
-      .catch(() => { if (active) setCamError(true) })
+    if (videoRef.current) videoRef.current.srcObject = null
+    const timer = setTimeout(() => {
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode }, audio: false })
+        .then(stream => {
+          if (!active) { stream.getTracks().forEach(t => t.stop()); return }
+          streamRef.current = stream
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream
+            videoRef.current.play().catch(() => {})
+          }
+        })
+        .catch(() => { if (active) setCamError(true) })
+    }, 150)
     return () => {
       active = false
+      clearTimeout(timer)
       streamRef.current?.getTracks().forEach(t => t.stop())
       streamRef.current = null
+      if (videoRef.current) videoRef.current.srcObject = null
     }
   }, [stage, facingMode])
 
@@ -64,29 +80,43 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
   }
 
   function capturePhoto() {
-    const video = videoRef.current
+    const video  = videoRef.current
     const canvas = canvasRef.current
     if (!video || !canvas || video.readyState < 2) return
-    canvas.width = 800
+    canvas.width  = 800
     canvas.height = Math.round((video.videoHeight / video.videoWidth) * 800)
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
     const data = canvas.toDataURL('image/jpeg', 0.8)
-    setPhoto(data)
     streamRef.current?.getTracks().forEach(t => t.stop())
     streamRef.current = null
-    sendForVerification(data)
+    setCurrentPhoto(data)
+    setStage('preview')
   }
 
-  async function sendForVerification(photoData: string) {
+  function acceptPhoto() {
+    const updated = { ...photos, [photoStep]: currentPhoto }
+    setPhotos(updated)
+    setCurrentPhoto(null)
+    if (photoStep === 'left') { setPhotoStep('right'); setStage('capture') }
+    else if (photoStep === 'right') { setPhotoStep('front'); setStage('capture') }
+    else { sendForVerification(updated) }
+  }
+
+  function retakePhoto() {
+    setCurrentPhoto(null)
+    setStage('capture')
+  }
+
+  async function sendForVerification(allPhotos: Record<PhotoStep, string | null>) {
     setStage('analyzing')
     try {
       const plates = PLATE_SIZES.map(size => ({ size, count: plateCounts[size] }))
       const res = await fetch('/api/verify-plates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photo: photoData, declaredWeight: total, plates }),
+        body: JSON.stringify({ photos: allPhotos, declaredWeight: total, plates }),
       })
       if (!res.ok) throw new Error('API error')
       const data = await res.json()
@@ -98,18 +128,31 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
     }
   }
 
-  function retakePhoto() {
-    setPhoto(null)
-    setResult(null)
-    setStage('capture')
-  }
-
   function handleClose() {
     streamRef.current?.getTracks().forEach(t => t.stop())
     onClose()
   }
 
   const color = result ? (result.verified ? '#22C55E' : '#F59E0B') : '#FF4500'
+
+  // Step progress bar used in capture + preview
+  function StepProgress() {
+    return (
+      <div className="flex items-center gap-1.5 mb-1">
+        {STEPS.map((s, i) => (
+          <div key={s.step} className="flex items-center gap-1.5 flex-1 min-w-0">
+            <div className={`flex items-center justify-center w-5 h-5 rounded-full text-[9px] font-black border flex-shrink-0 transition-all ${
+              i < stepIndex  ? 'bg-[#22C55E] border-[#22C55E] text-white' :
+              i === stepIndex ? 'bg-[#FF4500] border-[#FF4500] text-white' :
+              'bg-transparent border-[#3A3A3C] text-[#636366]'
+            }`}>{i < stepIndex ? '✓' : s.num}</div>
+            <span className={`text-[10px] font-bold uppercase tracking-wide truncate ${i === stepIndex ? 'text-white' : 'text-[#636366]'}`}>{s.label}</span>
+            {i < STEPS.length - 1 && <div className={`h-px flex-1 ${i < stepIndex ? 'bg-[#22C55E]' : 'bg-[#3A3A3C]'}`} />}
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <>
@@ -126,24 +169,23 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div className="w-10 h-1 rounded-full bg-[#3A3A3C]" />
         </div>
-
         <div className="flex items-center justify-between px-5 pt-2 pb-4 flex-shrink-0">
           <div>
             <p className="text-[10px] text-[#9A9AAA] font-semibold uppercase tracking-widest mb-0.5">Verify Weight</p>
             <p className="font-bold text-base truncate max-w-[260px]">{liftName}</p>
           </div>
-          <button onClick={handleClose} className="w-8 h-8 rounded-full bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA] hover:text-white">
+          <button onClick={handleClose} className="w-8 h-8 rounded-full bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA]">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 pb-8">
 
-          {/* Plate selector */}
+          {/* ── SELECT PLATES ── */}
           {stage === 'select' && (
             <div className="flex flex-col gap-4">
               <div className="bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4 text-center">
-                <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-1">Weight on Bar (incl. 45lb bar)</p>
+                <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-1">Weight of Bar (incl. 45lb bar)</p>
                 <p className="text-3xl font-black text-white">{total} lbs</p>
               </div>
               <p className="text-xs font-semibold text-[#9A9AAA]">How many plates per side?</p>
@@ -161,20 +203,25 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                   </div>
                 ))}
               </div>
+              <div className="bg-[#FF4500]/8 border border-[#FF4500]/20 rounded-2xl p-3">
+                <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest mb-1">3 Photos Required</p>
+                <p className="text-xs text-[#9A9AAA]">Left side → Right side → Front. Bar can be racked or on the floor.</p>
+              </div>
               <motion.button
                 whileTap={{ scale: 0.97 }}
-                onClick={() => setStage('capture')}
+                onClick={() => { setPhotoStep('left'); setStage('capture') }}
                 className="w-full bg-[#FF4500] text-white font-bold py-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.25)]"
               >
                 <Camera className="w-4 h-4" />
-                Take Photo of Loaded Bar
+                Start Photo Verification
               </motion.button>
             </div>
           )}
 
-          {/* Camera */}
+          {/* ── CAPTURE ── */}
           {stage === 'capture' && (
             <div className="flex flex-col gap-4">
+              <StepProgress />
               {camError ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Camera className="w-10 h-10 text-[#3A3A3C] mb-3" />
@@ -194,7 +241,10 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                     </button>
                     <div className="absolute bottom-3 inset-x-3">
                       <div className="bg-black/60 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
-                        <p className="text-xs text-white/80">Show the full loaded bar — make sure the plate numbers are readable</p>
+                        <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest mb-0.5">
+                          Photo {currentStep.num} of 3 · {currentStep.label}
+                        </p>
+                        <p className="text-xs text-white/80">{currentStep.instruction}</p>
                       </div>
                     </div>
                   </div>
@@ -204,33 +254,66 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                     className="w-full bg-[#FF4500] text-white font-bold py-[18px] rounded-2xl flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.25)]"
                   >
                     <Camera className="w-5 h-5" />
-                    Capture Photo
+                    Capture {currentStep.label}
                   </motion.button>
                 </>
               )}
             </div>
           )}
 
-          {/* Analyzing */}
+          {/* ── PREVIEW ── */}
+          {stage === 'preview' && currentPhoto && (
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
+              <StepProgress />
+              <img src={currentPhoto} alt={`${currentStep.label} photo`} className="w-full aspect-[3/4] object-cover rounded-2xl border border-[#252528]" />
+              <p className="text-xs font-semibold text-[#9A9AAA] text-center">
+                {photoStep === 'front'
+                  ? 'Last photo — looks good?'
+                  : `Looks good? Next: ${STEPS[stepIndex + 1]?.label}.`}
+              </p>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={acceptPhoto}
+                className="w-full bg-[#FF4500] text-white font-black py-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.25)]"
+              >
+                {photoStep === 'front'
+                  ? 'Submit for Verification'
+                  : <><ChevronRight className="w-4 h-4" />Next: {STEPS[stepIndex + 1]?.label}</>
+                }
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={retakePhoto}
+                className="w-full bg-[#1C1C1E] border border-[#252528] text-[#9A9AAA] font-semibold py-3.5 rounded-2xl text-sm flex items-center justify-center gap-2 hover:text-white hover:border-[#3A3A3C] transition-all"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Retake
+              </motion.button>
+            </motion.div>
+          )}
+
+          {/* ── ANALYZING ── */}
           {stage === 'analyzing' && (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
-              {photo && (
-                <img src={photo} alt="Captured plates" className="w-32 h-32 object-cover rounded-2xl border border-[#252528]" />
-              )}
               <Loader2 className="w-10 h-10 text-[#FF4500] animate-spin" />
               <div className="text-center">
-                <p className="font-bold text-white">Checking your plates...</p>
-                <p className="text-xs font-semibold text-[#9A9AAA] mt-1">Claude Vision is reading the numbers</p>
+                <p className="font-bold text-white">Checking all 3 photos...</p>
+                <p className="text-xs font-semibold text-[#9A9AAA] mt-1">Claude Vision is cross-checking both sides and the front</p>
               </div>
             </div>
           )}
 
-          {/* Result */}
+          {/* ── RESULT ── */}
           {stage === 'result' && result && (
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
-              {photo && (
-                <img src={photo} alt="Captured plates" className="w-full aspect-[3/4] object-cover rounded-2xl border border-[#252528]" />
-              )}
+              <div className="grid grid-cols-3 gap-2">
+                {STEPS.map(s => photos[s.step] && (
+                  <div key={s.step} className="flex flex-col gap-1">
+                    <img src={photos[s.step]!} alt={s.label} className="w-full aspect-square object-cover rounded-xl border border-[#252528]" />
+                    <p className="text-[9px] font-bold text-[#636366] uppercase tracking-wide text-center">{s.label}</p>
+                  </div>
+                ))}
+              </div>
               <div className="rounded-2xl border p-4 flex items-center gap-3" style={{ backgroundColor: `${color}10`, borderColor: `${color}30` }}>
                 {result.verified
                   ? <CheckCircle2 className="w-6 h-6 flex-shrink-0" style={{ color }} />
@@ -244,20 +327,19 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                   {result.demo && <p className="text-[10px] font-semibold text-[#9A9AAA] mt-1">Demo — add ANTHROPIC_API_KEY for real verification</p>}
                 </div>
               </div>
-
               <motion.button
                 whileTap={{ scale: 0.97 }}
-                onClick={() => onDone(total, result.verified, photo)}
+                onClick={() => onDone(total, result.verified, photos)}
                 className="w-full bg-[#FF4500] text-white font-black py-4 rounded-2xl text-sm shadow-[0_8px_32px_rgba(255,69,0,0.25)]"
               >
                 {result.verified ? 'Continue to Recording' : 'Continue Anyway (Unverified)'}
               </motion.button>
               <motion.button
                 whileTap={{ scale: 0.97 }}
-                onClick={retakePhoto}
+                onClick={() => { setPhotos({ left: null, right: null, front: null }); setPhotoStep('left'); setResult(null); setStage('capture') }}
                 className="w-full bg-[#1C1C1E] border border-[#252528] text-[#9A9AAA] font-semibold py-3.5 rounded-2xl text-sm hover:text-white hover:border-[#3A3A3C] transition-all"
               >
-                Retake Photo
+                Retake All Photos
               </motion.button>
             </motion.div>
           )}
