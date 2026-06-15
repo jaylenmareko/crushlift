@@ -129,7 +129,7 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
 
         <div className="flex items-center justify-between px-5 pt-2 pb-4 flex-shrink-0">
           <div>
-            <p className="text-[10px] text-[#636366] font-semibold uppercase tracking-widest mb-0.5">Verify Weight</p>
+            <p className="text-[10px] text-[#9A9AAA] font-semibold uppercase tracking-widest mb-0.5">Verify Weight</p>
             <p className="font-bold text-base truncate max-w-[260px]">{liftName}</p>
           </div>
           <button onClick={handleClose} className="w-8 h-8 rounded-full bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA] hover:text-white">
@@ -146,7 +146,7 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                 <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-1">Weight on Bar (incl. 45lb bar)</p>
                 <p className="text-3xl font-black text-white">{total} lbs</p>
               </div>
-              <p className="text-xs text-[#636366]">How many plates per side?</p>
+              <p className="text-xs font-semibold text-[#9A9AAA]">How many plates per side?</p>
               <div className="flex flex-col gap-2">
                 {PLATE_SIZES.map(size => (
                   <div key={size} className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl px-4 py-3">
@@ -179,7 +179,7 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Camera className="w-10 h-10 text-[#3A3A3C] mb-3" />
                   <p className="text-sm font-semibold text-[#9A9AAA]">Camera access denied</p>
-                  <p className="text-xs text-[#636366] mt-1">Allow camera access to verify your plates.</p>
+                  <p className="text-xs font-semibold text-[#9A9AAA] mt-1">Allow camera access to verify your plates.</p>
                 </div>
               ) : (
                 <>
@@ -220,7 +220,7 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
               <Loader2 className="w-10 h-10 text-[#FF4500] animate-spin" />
               <div className="text-center">
                 <p className="font-bold text-white">Checking your plates...</p>
-                <p className="text-xs text-[#636366] mt-1">Claude Vision is reading the numbers</p>
+                <p className="text-xs font-semibold text-[#9A9AAA] mt-1">Claude Vision is reading the numbers</p>
               </div>
             </div>
           )}
@@ -241,7 +241,7 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                     {result.verified ? `Verified — ${total} lbs` : 'Could not verify'}
                   </p>
                   <p className="text-xs text-[#9A9AAA] mt-0.5">{result.note}</p>
-                  {result.demo && <p className="text-[10px] text-[#636366] mt-1">Demo — add ANTHROPIC_API_KEY for real verification</p>}
+                  {result.demo && <p className="text-[10px] font-semibold text-[#9A9AAA] mt-1">Demo — add ANTHROPIC_API_KEY for real verification</p>}
                 </div>
               </div>
 
