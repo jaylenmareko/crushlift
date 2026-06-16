@@ -24,9 +24,9 @@ const BAR_WEIGHT = 45
 const PLATE_SIZES = [45, 35, 25, 10, 5, 2.5]
 
 const STEPS: { step: PhotoStep; num: number; label: string; instruction: string }[] = [
-  { step: 'left',  num: 1, label: 'Left Side',  instruction: 'Stand on the LEFT side. Angle slightly forward so the outer plate number is readable.' },
-  { step: 'right', num: 2, label: 'Right Side', instruction: 'Stand on the RIGHT side. Angle slightly forward — outer plate number should be visible.' },
-  { step: 'front', num: 3, label: 'Front View', instruction: 'Stand directly in FRONT of the bar. Both sides should be fully visible.' },
+  { step: 'left',  num: 1, label: 'Left Side',  instruction: 'Stand in FRONT of your setup at the LEFT end · Aim camera at the plates' },
+  { step: 'right', num: 2, label: 'Right Side', instruction: 'Stand in FRONT of your setup at the RIGHT end · Aim camera at the plates' },
+  { step: 'front', num: 3, label: 'Front View', instruction: 'Stand directly FACING the bar · Both sides should be visible in frame' },
 ]
 
 export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
@@ -245,72 +245,6 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                     <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
                     <canvas ref={canvasRef} className="hidden" />
 
-                    {/* Pictogram guide: chunky icon-style figure next to bar showing position */}
-                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                      <svg viewBox="0 0 160 220" className="w-3/4 opacity-[0.22]" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        {photoStep === 'front' ? (
-                          <>
-                            {/* Bar + equal plate stacks both sides */}
-                            <line x1="30" y1="72" x2="130" y2="72" stroke="white" strokeWidth="5" strokeLinecap="round"/>
-                            <ellipse cx="20" cy="72" rx="9" ry="30" fill="white"/>
-                            <ellipse cx="27" cy="72" rx="6" ry="22" fill="white" opacity="0.75"/>
-                            <ellipse cx="140" cy="72" rx="9" ry="30" fill="white"/>
-                            <ellipse cx="133" cy="72" rx="6" ry="22" fill="white" opacity="0.75"/>
-                            {/* Figure: head + pill body + thick limbs */}
-                            <circle cx="80" cy="122" r="10" fill="white"/>
-                            <rect x="71" y="132" width="18" height="30" rx="9" fill="white"/>
-                            <line x1="72" y1="138" x2="52" y2="106" stroke="white" strokeWidth="6" strokeLinecap="round"/>
-                            <line x1="88" y1="138" x2="108" y2="106" stroke="white" strokeWidth="6" strokeLinecap="round"/>
-                            <rect x="49" y="96" width="26" height="15" rx="3" fill="white"/>
-                            <line x1="75" y1="162" x2="69" y2="196" stroke="white" strokeWidth="7" strokeLinecap="round"/>
-                            <line x1="85" y1="162" x2="91" y2="196" stroke="white" strokeWidth="7" strokeLinecap="round"/>
-                          </>
-                        ) : photoStep === 'left' ? (
-                          <>
-                            {/* Near plates LEFT — large face-on discs */}
-                            <ellipse cx="12" cy="72" rx="10" ry="36" fill="white"/>
-                            <ellipse cx="19" cy="72" rx="7" ry="27" fill="white" opacity="0.8"/>
-                            <ellipse cx="25" cy="72" rx="5" ry="19" fill="white" opacity="0.55"/>
-                            {/* Bar shaft — one-point perspective converging right */}
-                            <line x1="26" y1="65" x2="148" y2="68" stroke="white" strokeWidth="5" strokeLinecap="round"/>
-                            <line x1="26" y1="79" x2="148" y2="76" stroke="white" strokeWidth="5" strokeLinecap="round"/>
-                            {/* Far plates RIGHT — tiny edge-on */}
-                            <ellipse cx="150" cy="72" rx="4" ry="14" fill="white" opacity="0.5"/>
-                            <ellipse cx="155" cy="72" rx="3" ry="10" fill="white" opacity="0.35"/>
-                            {/* Figure lower-left: head + pill body + arm raised toward near plates */}
-                            <circle cx="48" cy="122" r="10" fill="white"/>
-                            <rect x="39" y="132" width="18" height="30" rx="9" fill="white"/>
-                            <line x1="41" y1="138" x2="20" y2="104" stroke="white" strokeWidth="6" strokeLinecap="round"/>
-                            <rect x="12" y="94" width="12" height="15" rx="3" fill="white"/>
-                            <line x1="55" y1="138" x2="68" y2="158" stroke="white" strokeWidth="6" strokeLinecap="round"/>
-                            <line x1="44" y1="162" x2="38" y2="196" stroke="white" strokeWidth="7" strokeLinecap="round"/>
-                            <line x1="52" y1="162" x2="58" y2="196" stroke="white" strokeWidth="7" strokeLinecap="round"/>
-                          </>
-                        ) : (
-                          <>
-                            {/* Far plates LEFT — tiny edge-on */}
-                            <ellipse cx="5" cy="72" rx="4" ry="14" fill="white" opacity="0.5"/>
-                            <ellipse cx="10" cy="72" rx="3" ry="10" fill="white" opacity="0.35"/>
-                            {/* Bar shaft — one-point perspective converging left */}
-                            <line x1="12" y1="68" x2="134" y2="65" stroke="white" strokeWidth="5" strokeLinecap="round"/>
-                            <line x1="12" y1="76" x2="134" y2="79" stroke="white" strokeWidth="5" strokeLinecap="round"/>
-                            {/* Near plates RIGHT — large face-on discs */}
-                            <ellipse cx="135" cy="72" rx="5" ry="19" fill="white" opacity="0.55"/>
-                            <ellipse cx="141" cy="72" rx="7" ry="27" fill="white" opacity="0.8"/>
-                            <ellipse cx="148" cy="72" rx="10" ry="36" fill="white"/>
-                            {/* Figure lower-right: head + pill body + arm raised toward near plates */}
-                            <circle cx="112" cy="122" r="10" fill="white"/>
-                            <rect x="103" y="132" width="18" height="30" rx="9" fill="white"/>
-                            <line x1="119" y1="138" x2="140" y2="104" stroke="white" strokeWidth="6" strokeLinecap="round"/>
-                            <rect x="136" y="94" width="12" height="15" rx="3" fill="white"/>
-                            <line x1="105" y1="138" x2="92" y2="158" stroke="white" strokeWidth="6" strokeLinecap="round"/>
-                            <line x1="108" y1="162" x2="102" y2="196" stroke="white" strokeWidth="7" strokeLinecap="round"/>
-                            <line x1="116" y1="162" x2="122" y2="196" stroke="white" strokeWidth="7" strokeLinecap="round"/>
-                          </>
-                        )}
-                      </svg>
-                    </div>
-
                     {hasMultipleCams && (
                       <button
                         onClick={() => setFacingMode(m => m === 'environment' ? 'user' : 'environment')}
@@ -320,9 +254,12 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                       </button>
                     )}
                     <div className="absolute bottom-3 inset-x-3">
-                      <div className="bg-black/60 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
-                        <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest mb-0.5">
+                      <div className="bg-black/80 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
+                        <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest mb-1">
                           Photo {currentStep.num} of 3 · {currentStep.label}
+                        </p>
+                        <p className="text-xs font-semibold text-white leading-snug">
+                          {currentStep.instruction}
                         </p>
                       </div>
                     </div>
