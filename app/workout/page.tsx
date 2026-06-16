@@ -3,11 +3,12 @@
 import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, ChevronLeft, Video } from 'lucide-react'
+import { Check, ChevronLeft, Video, PlayCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Plan, PlanDay, PlanExercise, WorkoutSet, WorkoutHistoryEntry } from '@/lib/types'
 import BottomNav from '@/components/BottomNav'
 import FormAnalysisModal from '@/components/FormAnalysisModal'
+import ExerciseDemoModal from '@/components/ExerciseDemoModal'
 
 const REST_SECONDS = 90
 
@@ -23,7 +24,8 @@ function WorkoutContent() {
   const [restTimer, setRestTimer] = useState<number | null>(null)
   const [restingFor, setRestingFor] = useState<string | null>(null)
   const [planLoaded, setPlanLoaded] = useState(false)
-  const [formTarget, setFormTarget] = useState<PlanExercise | null>(null)
+  const [formTarget, setFormTarget]   = useState<PlanExercise | null>(null)
+  const [demoTarget, setDemoTarget]   = useState<PlanExercise | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startedAtRef = useRef<string>(new Date().toISOString())
 
@@ -253,6 +255,13 @@ function WorkoutContent() {
                   : 'Rest'}
               </button>
               <button
+                onClick={() => setDemoTarget(ex)}
+                className="text-[10px] font-bold px-2 py-1 rounded-lg border border-[#252528] bg-[#252528] text-[#636366] hover:text-[#3B82F6] hover:border-[#3B82F6]/30 transition-all flex-shrink-0 flex items-center gap-1"
+              >
+                <PlayCircle className="w-3 h-3" />
+                Demo
+              </button>
+              <button
                 onClick={() => setFormTarget(ex)}
                 className="text-[10px] font-bold px-2 py-1 rounded-lg border border-[#252528] bg-[#252528] text-[#636366] hover:text-[#FF4500] hover:border-[#FF4500]/30 transition-all flex-shrink-0 flex items-center gap-1"
               >
@@ -345,6 +354,14 @@ function WorkoutContent() {
 
       <BottomNav active="workout" />
 
+      <AnimatePresence>
+        {demoTarget && (
+          <ExerciseDemoModal
+            exerciseName={demoTarget.name}
+            onClose={() => setDemoTarget(null)}
+          />
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {formTarget && (
           <FormAnalysisModal
