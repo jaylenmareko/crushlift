@@ -10,7 +10,7 @@ interface VerifyResult {
 const DEMO_RESULT: VerifyResult = {
   verified: true,
   confidence: 'high',
-  note: 'Plate setup looks consistent across all three angles.',
+  note: 'Verification complete.',
   demo: true,
 }
 

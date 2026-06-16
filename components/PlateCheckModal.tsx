@@ -44,18 +44,28 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
   const [result, setResult]     = useState<VerifyResult | null>(null)
   const [camError, setCamError] = useState(false)
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
+  const [hasMultipleCams, setHasMultipleCams] = useState(false)
 
   const total         = BAR_WEIGHT + 2 * PLATE_SIZES.reduce((sum, s) => sum + s * plateCounts[s], 0)
   const stepIndex     = STEPS.findIndex(s => s.step === photoStep)
   const currentStep   = STEPS[stepIndex]
+
+  // Detect how many video inputs are available — hide flip button on single-camera devices (e.g. laptops)
+  useEffect(() => {
+    navigator.mediaDevices.enumerateDevices().then(devices => {
+      const cams = devices.filter(d => d.kind === 'videoinput')
+      setHasMultipleCams(cams.length > 1)
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (stage !== 'capture') return
     let active = true
     if (videoRef.current) videoRef.current.srcObject = null
     const timer = setTimeout(() => {
+      // Use ideal (not exact) so single-camera devices fall back gracefully instead of erroring
       navigator.mediaDevices
-        .getUserMedia({ video: { facingMode }, audio: false })
+        .getUserMedia({ video: { facingMode: { ideal: facingMode } }, audio: false })
         .then(stream => {
           if (!active) { stream.getTracks().forEach(t => t.stop()); return }
           streamRef.current = stream
@@ -230,21 +240,47 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                 </div>
               ) : (
                 <>
-                  <div className="relative bg-[#1C1C1E] rounded-2xl overflow-hidden aspect-[3/4]">
+                  <div className="relative bg-[#1C1C1E] rounded-2xl overflow-hidden aspect-[3/4] ring-2 ring-[#FF4500]/60 animate-pulse-ring">
+                    <style>{`@keyframes pulse-ring{0%,100%{box-shadow:0 0 0 0 rgba(255,69,0,0.4)}50%{box-shadow:0 0 0 6px rgba(255,69,0,0)}} .animate-pulse-ring{animation:pulse-ring 2s ease-in-out infinite}`}</style>
                     <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
                     <canvas ref={canvasRef} className="hidden" />
-                    <button
-                      onClick={() => setFacingMode(m => m === 'environment' ? 'user' : 'environment')}
-                      className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white"
-                    >
-                      <SwitchCamera className="w-4 h-4" />
-                    </button>
+
+                    {/* Barbell positioning guide overlay */}
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                      <svg viewBox="0 0 200 200" className="w-4/5 opacity-25" fill="none" xmlns="http://www.w3.org/2000/svg"
+                        style={{ transform: photoStep === 'front' ? 'none' : 'rotate(-8deg)' }}>
+                        {/* Bar */}
+                        <rect x="20" y="97" width="160" height="6" rx="3" fill="white"/>
+                        {/* Left plates */}
+                        <rect x="22" y="80" width="12" height="40" rx="3" fill="white"/>
+                        <rect x="36" y="84" width="10" height="32" rx="3" fill="white"/>
+                        {/* Right plates */}
+                        <rect x="166" y="80" width="12" height="40" rx="3" fill="white"/>
+                        <rect x="154" y="84" width="10" height="32" rx="3" fill="white"/>
+                        {/* Center knurl marks */}
+                        <rect x="92" y="94" width="16" height="12" rx="2" fill="white" opacity="0.5"/>
+                        {/* Arrow pointing where to aim camera */}
+                        {photoStep !== 'front' && (
+                          <text x="100" y="155" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" opacity="0.7">
+                            {photoStep === 'left' ? '← Aim at plates' : 'Aim at plates →'}
+                          </text>
+                        )}
+                      </svg>
+                    </div>
+
+                    {hasMultipleCams && (
+                      <button
+                        onClick={() => setFacingMode(m => m === 'environment' ? 'user' : 'environment')}
+                        className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white"
+                      >
+                        <SwitchCamera className="w-4 h-4" />
+                      </button>
+                    )}
                     <div className="absolute bottom-3 inset-x-3">
                       <div className="bg-black/60 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
                         <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest mb-0.5">
                           Photo {currentStep.num} of 3 · {currentStep.label}
                         </p>
-                        <p className="text-xs text-white/80">{currentStep.instruction}</p>
                       </div>
                     </div>
                   </div>
@@ -266,11 +302,6 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
               <StepProgress />
               <img src={currentPhoto} alt={`${currentStep.label} photo`} className="w-full aspect-[3/4] object-cover rounded-2xl border border-[#252528]" />
-              <p className="text-xs font-semibold text-[#9A9AAA] text-center">
-                {photoStep === 'front'
-                  ? 'Last photo — looks good?'
-                  : `Looks good? Next: ${STEPS[stepIndex + 1]?.label}.`}
-              </p>
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={acceptPhoto}
