@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Write to Supabase + memory (fire-and-forget, don't block response)
-  supabase()
+  void supabase()
     .from('exercise_demos')
     .upsert({
       name: key,
@@ -98,8 +98,6 @@ export async function GET(req: NextRequest) {
       secondary_muscles: result.secondaryMuscles,
       instructions: result.instructions,
     }, { onConflict: 'name' })
-    .then()
-    .catch(() => {})
 
   memCache.set(key, result)
   return NextResponse.json(result)
