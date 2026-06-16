@@ -245,67 +245,67 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                     <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
                     <canvas ref={canvasRef} className="hidden" />
 
-                    {/* Perspective diagram: stick figure next to bar, arm raised holding phone */}
+                    {/* Pictogram guide: chunky icon-style figure next to bar showing position */}
                     <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                      <svg viewBox="0 0 150 210" className="w-3/4 opacity-[0.22]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <svg viewBox="0 0 160 220" className="w-3/4 opacity-[0.22]" fill="none" xmlns="http://www.w3.org/2000/svg">
                         {photoStep === 'front' ? (
                           <>
-                            {/* Bar + both plate stacks equal size */}
-                            <line x1="30" y1="78" x2="120" y2="78" stroke="white" strokeWidth="4" strokeLinecap="round"/>
-                            <ellipse cx="22" cy="78" rx="7" ry="28" fill="white"/>
-                            <ellipse cx="28" cy="78" rx="5" ry="20" fill="white" opacity="0.75"/>
-                            <ellipse cx="128" cy="78" rx="7" ry="28" fill="white"/>
-                            <ellipse cx="122" cy="78" rx="5" ry="20" fill="white" opacity="0.75"/>
-                            {/* Figure centered, both arms up holding phone toward bar */}
-                            <circle cx="75" cy="132" r="7" fill="white"/>
-                            <line x1="75" y1="139" x2="75" y2="160" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                            <line x1="75" y1="145" x2="59" y2="110" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                            <line x1="75" y1="145" x2="91" y2="110" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                            <rect x="57" y="100" width="18" height="13" rx="2" fill="white"/>
-                            <line x1="75" y1="160" x2="67" y2="186" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                            <line x1="75" y1="160" x2="83" y2="186" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                            {/* Bar + equal plate stacks both sides */}
+                            <line x1="30" y1="72" x2="130" y2="72" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+                            <ellipse cx="20" cy="72" rx="9" ry="30" fill="white"/>
+                            <ellipse cx="27" cy="72" rx="6" ry="22" fill="white" opacity="0.75"/>
+                            <ellipse cx="140" cy="72" rx="9" ry="30" fill="white"/>
+                            <ellipse cx="133" cy="72" rx="6" ry="22" fill="white" opacity="0.75"/>
+                            {/* Figure: head + pill body + thick limbs */}
+                            <circle cx="80" cy="122" r="10" fill="white"/>
+                            <rect x="71" y="132" width="18" height="30" rx="9" fill="white"/>
+                            <line x1="72" y1="138" x2="52" y2="106" stroke="white" strokeWidth="6" strokeLinecap="round"/>
+                            <line x1="88" y1="138" x2="108" y2="106" stroke="white" strokeWidth="6" strokeLinecap="round"/>
+                            <rect x="49" y="96" width="26" height="15" rx="3" fill="white"/>
+                            <line x1="75" y1="162" x2="69" y2="196" stroke="white" strokeWidth="7" strokeLinecap="round"/>
+                            <line x1="85" y1="162" x2="91" y2="196" stroke="white" strokeWidth="7" strokeLinecap="round"/>
                           </>
                         ) : photoStep === 'left' ? (
                           <>
-                            {/* Near plates LEFT (large, face-on) */}
-                            <ellipse cx="16" cy="78" rx="9" ry="38" fill="white"/>
-                            <ellipse cx="23" cy="78" rx="7" ry="29" fill="white" opacity="0.8"/>
-                            <ellipse cx="29" cy="78" rx="5" ry="20" fill="white" opacity="0.6"/>
-                            {/* Bar in perspective */}
-                            <line x1="29" y1="71" x2="128" y2="73" stroke="white" strokeWidth="4" strokeLinecap="round"/>
-                            <line x1="29" y1="85" x2="128" y2="83" stroke="white" strokeWidth="4" strokeLinecap="round"/>
-                            {/* Far plates RIGHT (small) */}
-                            <ellipse cx="130" cy="78" rx="4" ry="16" fill="white" opacity="0.5"/>
-                            <ellipse cx="135" cy="78" rx="3" ry="11" fill="white" opacity="0.35"/>
-                            {/* Figure lower-left, arm raised toward near plates */}
-                            <circle cx="40" cy="132" r="7" fill="white"/>
-                            <line x1="40" y1="139" x2="40" y2="160" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                            <line x1="40" y1="145" x2="26" y2="106" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                            <rect x="19" y="95" width="11" height="14" rx="2" fill="white"/>
-                            <line x1="40" y1="145" x2="28" y2="162" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                            <line x1="40" y1="160" x2="32" y2="186" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                            <line x1="40" y1="160" x2="48" y2="186" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                            {/* Near plates LEFT — large face-on discs */}
+                            <ellipse cx="12" cy="72" rx="10" ry="36" fill="white"/>
+                            <ellipse cx="19" cy="72" rx="7" ry="27" fill="white" opacity="0.8"/>
+                            <ellipse cx="25" cy="72" rx="5" ry="19" fill="white" opacity="0.55"/>
+                            {/* Bar shaft — one-point perspective converging right */}
+                            <line x1="26" y1="65" x2="148" y2="68" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+                            <line x1="26" y1="79" x2="148" y2="76" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+                            {/* Far plates RIGHT — tiny edge-on */}
+                            <ellipse cx="150" cy="72" rx="4" ry="14" fill="white" opacity="0.5"/>
+                            <ellipse cx="155" cy="72" rx="3" ry="10" fill="white" opacity="0.35"/>
+                            {/* Figure lower-left: head + pill body + arm raised toward near plates */}
+                            <circle cx="48" cy="122" r="10" fill="white"/>
+                            <rect x="39" y="132" width="18" height="30" rx="9" fill="white"/>
+                            <line x1="41" y1="138" x2="20" y2="104" stroke="white" strokeWidth="6" strokeLinecap="round"/>
+                            <rect x="12" y="94" width="12" height="15" rx="3" fill="white"/>
+                            <line x1="55" y1="138" x2="68" y2="158" stroke="white" strokeWidth="6" strokeLinecap="round"/>
+                            <line x1="44" y1="162" x2="38" y2="196" stroke="white" strokeWidth="7" strokeLinecap="round"/>
+                            <line x1="52" y1="162" x2="58" y2="196" stroke="white" strokeWidth="7" strokeLinecap="round"/>
                           </>
                         ) : (
                           <>
-                            {/* Far plates LEFT (small) */}
-                            <ellipse cx="15" cy="78" rx="4" ry="16" fill="white" opacity="0.5"/>
-                            <ellipse cx="20" cy="78" rx="3" ry="11" fill="white" opacity="0.35"/>
-                            {/* Bar in perspective */}
-                            <line x1="22" y1="73" x2="121" y2="71" stroke="white" strokeWidth="4" strokeLinecap="round"/>
-                            <line x1="22" y1="83" x2="121" y2="85" stroke="white" strokeWidth="4" strokeLinecap="round"/>
-                            {/* Near plates RIGHT (large) */}
-                            <ellipse cx="121" cy="78" rx="5" ry="20" fill="white" opacity="0.6"/>
-                            <ellipse cx="127" cy="78" rx="7" ry="29" fill="white" opacity="0.8"/>
-                            <ellipse cx="134" cy="78" rx="9" ry="38" fill="white"/>
-                            {/* Figure lower-right, arm raised toward near plates */}
-                            <circle cx="110" cy="132" r="7" fill="white"/>
-                            <line x1="110" y1="139" x2="110" y2="160" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                            <line x1="110" y1="145" x2="124" y2="106" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                            <rect x="120" y="95" width="11" height="14" rx="2" fill="white"/>
-                            <line x1="110" y1="145" x2="122" y2="162" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                            <line x1="110" y1="160" x2="102" y2="186" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                            <line x1="110" y1="160" x2="118" y2="186" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                            {/* Far plates LEFT — tiny edge-on */}
+                            <ellipse cx="5" cy="72" rx="4" ry="14" fill="white" opacity="0.5"/>
+                            <ellipse cx="10" cy="72" rx="3" ry="10" fill="white" opacity="0.35"/>
+                            {/* Bar shaft — one-point perspective converging left */}
+                            <line x1="12" y1="68" x2="134" y2="65" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+                            <line x1="12" y1="76" x2="134" y2="79" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+                            {/* Near plates RIGHT — large face-on discs */}
+                            <ellipse cx="135" cy="72" rx="5" ry="19" fill="white" opacity="0.55"/>
+                            <ellipse cx="141" cy="72" rx="7" ry="27" fill="white" opacity="0.8"/>
+                            <ellipse cx="148" cy="72" rx="10" ry="36" fill="white"/>
+                            {/* Figure lower-right: head + pill body + arm raised toward near plates */}
+                            <circle cx="112" cy="122" r="10" fill="white"/>
+                            <rect x="103" y="132" width="18" height="30" rx="9" fill="white"/>
+                            <line x1="119" y1="138" x2="140" y2="104" stroke="white" strokeWidth="6" strokeLinecap="round"/>
+                            <rect x="136" y="94" width="12" height="15" rx="3" fill="white"/>
+                            <line x1="105" y1="138" x2="92" y2="158" stroke="white" strokeWidth="6" strokeLinecap="round"/>
+                            <line x1="108" y1="162" x2="102" y2="196" stroke="white" strokeWidth="7" strokeLinecap="round"/>
+                            <line x1="116" y1="162" x2="122" y2="196" stroke="white" strokeWidth="7" strokeLinecap="round"/>
                           </>
                         )}
                       </svg>
