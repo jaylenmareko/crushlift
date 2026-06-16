@@ -245,25 +245,40 @@ export default function PlateCheckModal({ liftName, onDone, onClose }: Props) {
                     <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
                     <canvas ref={canvasRef} className="hidden" />
 
-                    {/* Barbell positioning guide overlay */}
+                    {/* Perspective side-view barbell guide — matches what user actually sees from the side */}
                     <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                      <svg viewBox="0 0 200 200" className="w-4/5 opacity-25" fill="none" xmlns="http://www.w3.org/2000/svg"
-                        style={{ transform: photoStep === 'front' ? 'none' : 'rotate(-8deg)' }}>
-                        {/* Bar */}
-                        <rect x="20" y="97" width="160" height="6" rx="3" fill="white"/>
-                        {/* Left plates */}
-                        <rect x="22" y="80" width="12" height="40" rx="3" fill="white"/>
-                        <rect x="36" y="84" width="10" height="32" rx="3" fill="white"/>
-                        {/* Right plates */}
-                        <rect x="166" y="80" width="12" height="40" rx="3" fill="white"/>
-                        <rect x="154" y="84" width="10" height="32" rx="3" fill="white"/>
-                        {/* Center knurl marks */}
-                        <rect x="92" y="94" width="16" height="12" rx="2" fill="white" opacity="0.5"/>
-                        {/* Arrow pointing where to aim camera */}
-                        {photoStep !== 'front' && (
-                          <text x="100" y="155" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" opacity="0.7">
-                            {photoStep === 'left' ? '← Aim at plates' : 'Aim at plates →'}
-                          </text>
+                      <svg viewBox="0 0 150 200" className="w-3/4 opacity-[0.22]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        {photoStep === 'front' ? (
+                          <>
+                            {/* Front view: standing in front of bench, bar runs left-right, both stacks equal size */}
+                            <line x1="30" y1="100" x2="120" y2="100" stroke="white" strokeWidth="4" strokeLinecap="round"/>
+                            <ellipse cx="22" cy="100" rx="7" ry="30" fill="white"/>
+                            <ellipse cx="28" cy="100" rx="5" ry="22" fill="white" opacity="0.75"/>
+                            <ellipse cx="128" cy="100" rx="7" ry="30" fill="white"/>
+                            <ellipse cx="122" cy="100" rx="5" ry="22" fill="white" opacity="0.75"/>
+                          </>
+                        ) : photoStep === 'left' ? (
+                          <>
+                            {/* Left side: near plates on LEFT (large, face-on), bar extends right in perspective, far plates small */}
+                            <ellipse cx="16" cy="100" rx="9" ry="40" fill="white"/>
+                            <ellipse cx="23" cy="100" rx="7" ry="31" fill="white" opacity="0.8"/>
+                            <ellipse cx="29" cy="100" rx="5" ry="22" fill="white" opacity="0.6"/>
+                            <line x1="29" y1="93" x2="128" y2="95" stroke="white" strokeWidth="4" strokeLinecap="round"/>
+                            <line x1="29" y1="107" x2="128" y2="105" stroke="white" strokeWidth="4" strokeLinecap="round"/>
+                            <ellipse cx="130" cy="100" rx="4" ry="18" fill="white" opacity="0.5"/>
+                            <ellipse cx="135" cy="100" rx="3" ry="13" fill="white" opacity="0.35"/>
+                          </>
+                        ) : (
+                          <>
+                            {/* Right side: near plates on RIGHT (large, face-on), bar extends left in perspective, far plates small */}
+                            <ellipse cx="15" cy="100" rx="4" ry="18" fill="white" opacity="0.5"/>
+                            <ellipse cx="20" cy="100" rx="3" ry="13" fill="white" opacity="0.35"/>
+                            <line x1="22" y1="95" x2="121" y2="93" stroke="white" strokeWidth="4" strokeLinecap="round"/>
+                            <line x1="22" y1="105" x2="121" y2="107" stroke="white" strokeWidth="4" strokeLinecap="round"/>
+                            <ellipse cx="121" cy="100" rx="5" ry="22" fill="white" opacity="0.6"/>
+                            <ellipse cx="127" cy="100" rx="7" ry="31" fill="white" opacity="0.8"/>
+                            <ellipse cx="134" cy="100" rx="9" ry="40" fill="white"/>
+                          </>
                         )}
                       </svg>
                     </div>
