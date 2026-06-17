@@ -9,7 +9,7 @@ MVP Build — core flows built, PR verification chain complete, media storage li
 - [ ] Power Rank — rank stored in profiles
 - [ ] 1v1 Battle flow (challenge, respond, Claude verification, W/L record update)
 - [ ] Friends system (search by username, add/remove, challenge button)
-- [x] Belts page (`/belts`) — split out from Compete, reads from real `pr_verifications` data (verified-only)
+- [x] Ranks page (`/ranks`, renamed from Belts) — split out from Compete, reads from real `pr_verifications` data (verified-only)
 - [ ] Compete page (`/compete`) Rankings & Battles tabs — still `RANKINGS_DATA` / `DUMMY_BATTLES`
 
 ## Next stage

@@ -18,7 +18,7 @@ import {
   getWeightClass,
 } from '@/lib/belts'
 
-export default function BeltsPage() {
+export default function RanksPage() {
   const {
     userWeight, weightInput, setWeightInput, weightLoading,
     savingWeight, weightError, saveWeight,
@@ -96,7 +96,7 @@ export default function BeltsPage() {
 
   if (!userWeight) return (
     <WeightGate
-      active="belts"
+      active="ranks"
       weightInput={weightInput}
       setWeightInput={setWeightInput}
       weightError={weightError}
@@ -109,7 +109,7 @@ export default function BeltsPage() {
     <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav overflow-hidden">
       <header className="px-5 pt-12 pb-4">
         <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em]">Power Rank</p>
-        <h1 className="text-2xl font-bold leading-none">Belts</h1>
+        <h1 className="text-2xl font-bold leading-none">Ranks</h1>
       </header>
 
       <div className="flex-1 px-5 flex flex-col gap-3 pb-4 overflow-y-auto">
@@ -138,7 +138,7 @@ export default function BeltsPage() {
         </div>
 
         {/* Per-lift belt ladders */}
-        <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest px-1 mt-1">Belts by Lift</p>
+        <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest px-1 mt-1">Ranks by Lift</p>
         <div className="flex flex-col gap-2">
           {liftData.map(l => {
             const isOpen = expandedLift === l.name
@@ -179,15 +179,15 @@ export default function BeltsPage() {
                           {l.tier.name} · {l.bestReps ? `${l.bestReps} ${l.bestReps === 1 ? 'rep' : 'reps'}${l.best ? ` + ${l.best} lbs` : ''}` : `${l.best} lbs`}
                         </span>
                         {l.demoted ? (
-                          <p className="text-[11px] font-bold mt-1 text-[#F59E0B]">Dropped from {l.droppedFrom} belt to {l.tier.name} belt, log a PR to climb back</p>
+                          <p className="text-[11px] font-bold mt-1 text-[#F59E0B]">Dropped from {l.droppedFrom} to {l.tier.name} rank, log a PR to climb back</p>
                         ) : l.atRisk ? (
-                          <p className="text-[11px] font-bold mt-1 text-[#F59E0B]">⚠ {l.daysLeft} {l.daysLeft === 1 ? 'day' : 'days'} left — log a PR to defend and maintain {l.tier.name} belt</p>
+                          <p className="text-[11px] font-bold mt-1 text-[#F59E0B]">⚠ {l.daysLeft} {l.daysLeft === 1 ? 'day' : 'days'} left — log a PR to defend and maintain {l.tier.name} rank</p>
                         ) : l.daysLeft !== null ? (
-                          <p className="text-[11px] font-semibold text-[#9A9AAA] mt-1">Defend belt by {decayDate(l.lastPrAt!)} ({l.daysLeft} days left)</p>
+                          <p className="text-[11px] font-semibold text-[#9A9AAA] mt-1">Defend rank by {decayDate(l.lastPrAt!)} ({l.daysLeft} days left)</p>
                         ) : null}
                       </>
                     ) : (
-                      <p className="text-xs font-bold mt-0.5 text-[#FF4500]">Log a PR to earn this belt →</p>
+                      <p className="text-xs font-bold mt-0.5 text-[#FF4500]">Log a PR to earn this rank →</p>
                     )}
                   </div>
                   {hasLog && (
@@ -260,7 +260,7 @@ export default function BeltsPage() {
           Log a PR
         </motion.button>
       </div>
-      <BottomNav active="belts" />
+      <BottomNav active="ranks" />
 
       <ChangeWeightModal
         open={weightModalOpen}

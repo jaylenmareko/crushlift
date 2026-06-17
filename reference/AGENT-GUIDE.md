@@ -581,9 +581,11 @@ comparing — that converts "per weight class" into one formula. Not yet impleme
 
 ## Battle / Rankings System
 
-- W/L record from 1v1 challenges determines rank within weight class
-- Rankings are scoped to weight class only (no cross-class comparison)
-- Challenges: 1v1, same weight class, most weight moved on a declared lift wins
+- 1v1 challenges. Two battle formats:
+  - **Most Weight** — both do the declared lift; whoever moves more weight wins.
+  - **Most Reps** — both do the declared lift; whoever does more reps wins.
+- Default rankings are scoped to your weight class. A structured boxing-style system (titles + unification)
+  and an **Open (pound-for-pound)** ranking are planned — see "Competition structure" below.
 - #1 position = top of leaderboard in your class
 
 **Weight classes:**
@@ -595,6 +597,69 @@ Light Heavy:   175–200 lbs
 Heavy:         200–220 lbs
 Super Heavy:   220+ lbs
 ```
+
+### Competition structure (proposed — not built yet)
+
+Two separate pages, two separate jobs (they don't connect in the UI — but Rank quietly feeds Compete's matchmaking):
+
+- **Ranks** *(the page currently called "Belts")* — your **solo** skill tier per lift (Iron→Legend, earned by
+  hitting strength numbers, never lost). Works with zero opponents. Belt colors stay as the visual.
+- **Compete** — **head-to-head** battles + per-lift leaderboards.
+
+**Battles** — 1v1; challenger picks one of the Big 6 + a format:
+
+| Format | Win by | Best fit |
+|---|---|---|
+| Most Weight | move more weight | barbell lifts |
+| Most Reps | more reps | pull-up / bodyweight |
+
+**Matchmaking — fair on two dials.** You only get matched with someone in **your weight class AND near your
+Rank on that lift.** Stops both unfair cases:
+
+| Dial | Fixes | Without it… |
+|---|---|---|
+| Weight class | body-size advantage | 150 always loses to 220 |
+| Rank tier | skill / strength gap | Iron gets smashed by Legend |
+
+Ranks are per-lift, so a Bench battle uses Bench ranks. (Boxing ranks contenders so the champ isn't fighting
+debutants; chess pairs by rating — same idea.)
+
+**Leaderboards — NOT per lift.** Two boards only, both ranked by **W/L record** (per-lift boards make no sense
+with record ordering — a win/loss doesn't belong to a lift):
+
+| Board | Scope | Ordered by |
+|---|---|---|
+| Weight Class | one per class | W/L record |
+| Overall (Open) | everyone, all classes | W/L record, **DOTS-adjusted** for fairness |
+
+**#1 of a board = "champion"** — a label, not a separate Title system.
+
+**Where did per-lift variety go?** It isn't lost, just lives elsewhere:
+- **In the battle** — the challenger still picks any of the Big 6 + format (most weight / most reps). Variety is
+  in *how* you compete, not in separate boards.
+- **On the Ranks page** — that's already per-lift (your Bench rank ≠ your Squat rank). Lift-specific bragging
+  rights live there.
+
+**Open · Pound-for-Pound** — the Overall board compares everyone across classes, size-adjusted with **DOTS** so
+a small lifter and a big lifter compare fairly. It's a *ranking*, not open matchmaking — you still can't freely
+battle across classes (only special "superfights," DOTS-scored). DOTS is one formula; we already store
+bodyweight + lifts, so no new data.
+
+**Plain-English — "pound-for-pound" / DOTS:** a formula that adjusts a lift for the lifter's bodyweight so a
+small lifter and a big lifter compare fairly. One formula, no per-class lookup table.
+
+**Real systems we're copying**
+
+| Sport / app | What they do | What we borrow |
+|---|---|---|
+| Boxing | ranked contenders per division; champ defends | matchmaking by weight + rank; #1 = champion |
+| UFC | class champs **+** pound-for-pound list | per-class boards + Open P4P |
+| Powerlifting (DOTS / Wilks) | class records **+** "Best Lifter" coefficient | the DOTS math for Open |
+| Chess.com | pairs opponents by rating | rank-gated matchmaking |
+
+**Status:** proposed. Compete still runs on dummy data (`RANKINGS_DATA` in `app/compete/page.tsx`).
+**Decided:** Belts page renamed → **Ranks** (route `/ranks`, done) · two leaderboards only (per weight class + Overall), both ordered by **W/L record** · matchmaking gated by weight class + Rank · battle formats = most weight / most reps · #1 = champion (no separate Title system) · per-lift recognition lives on the Ranks page + in battle lift choice, NOT in separate boards.
+Build order: per-class record board → rank-gated battles → Overall (DOTS) board → superfights.
 
 ---
 
