@@ -105,10 +105,7 @@ export default function CompetePage() {
             <p className="text-[10px] text-[#9A9AAA] uppercase tracking-widest font-bold mb-1">Your Rank</p>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-[#FF4500] leading-none">{yourEntry ? `#${yourEntry.pos}` : '—'}</span>
-              <button onClick={() => setClassSheetOpen(true)} className="flex items-center gap-1">
-                <span className="text-sm font-bold text-white">{shortClassName(WEIGHT_CLASSES[selectedClass].full)}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-[#636366]" />
-              </button>
+              <span className="text-sm font-bold text-white">{shortClassName(WEIGHT_CLASSES[selectedClass].full)}</span>
             </div>
           </div>
           <div className="text-right">
@@ -140,6 +137,17 @@ export default function CompetePage() {
           {/* Rankings */}
           {competeTab === 'rankings' && (
             <motion.div key="rankings" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }} className="flex flex-col flex-1 overflow-hidden px-5">
+              {/* Weight-class selector — sits right above the list so it's clear these rankings are for this class */}
+              <button
+                onClick={() => setClassSheetOpen(true)}
+                className="w-full flex items-center justify-between bg-[#1C1C1E] border border-[#252528] rounded-xl px-4 py-3 mb-2 hover:border-[#3A3A3C] transition-colors"
+              >
+                <div className="flex flex-col items-start">
+                  <span className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em]">Your Weight Class</span>
+                  <span className="text-sm font-bold text-white">{WEIGHT_CLASSES[selectedClass].full}</span>
+                </div>
+                <ChevronDown className="w-4 h-4 text-[#636366]" />
+              </button>
               <div className="bg-[#1C1C1E] border border-[#252528] rounded-2xl overflow-hidden flex-1">
                 <div className="overflow-y-auto max-h-[420px] p-2 flex flex-col gap-1.5">
                   {rankings.map((entry, i) => {
