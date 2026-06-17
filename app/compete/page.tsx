@@ -55,6 +55,20 @@ function shortClassName(full: string) {
   return full.split('·')[0].trim()
 }
 
+// Initials for avatars: "Marcus T." -> "MT", "You" -> "Y"
+function initials(name: string) {
+  const p = name.replace(/\./g, '').trim().split(/\s+/)
+  return ((p[0]?.[0] ?? '') + (p[1]?.[0] ?? '')).toUpperCase()
+}
+
+// Deterministic avatar color from a name
+const AVATAR_COLORS = ['#3B82F6', '#8B5CF6', '#22C55E', '#F59E0B', '#EF4444', '#06B6D4', '#EC4899']
+function avatarColor(name: string) {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h)
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
+}
+
 export default function CompetePage() {
   const {
     userWeight, selectedClass, setSelectedClass,
@@ -72,6 +86,7 @@ export default function CompetePage() {
   const youIdx    = rankings.findIndex(r => r.you)
   const yourEntry = youIdx >= 0 ? rankings[youIdx] : null
   const rival     = youIdx > 0 ? rankings[youIdx - 1] : null  // person one spot above you
+  const [yWins, yLosses] = (yourEntry?.record ?? '0-0').split('-')
 
   function openChallenge(name: string | null) {
     setChallengeOpponent(name)
@@ -118,11 +133,18 @@ export default function CompetePage() {
                 <span className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest">{shortClassName(WEIGHT_CLASSES[selectedClass].full)}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-[#636366]" />
               </button>
-              <span className="text-4xl font-black text-[#FF4500] leading-none">{yourEntry ? `#${yourEntry.pos}` : '—'}</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-5xl font-black text-[#FF4500] leading-none">{yourEntry ? `#${yourEntry.pos}` : '—'}</span>
+                {yourEntry && <span className="text-sm font-bold text-[#636366]">of {rankings.length}</span>}
+              </div>
             </div>
             <div className="text-right">
               <p className="text-[10px] text-[#9A9AAA] uppercase tracking-widest font-bold mb-1">Record</p>
-              <p className="text-2xl font-black text-[#22C55E] leading-none">{yourEntry ? yourEntry.record : '0-0'}</p>
+              <p className="text-2xl font-black leading-none tabular-nums">
+                <span className="text-[#22C55E]">{yWins}</span>
+                <span className="text-[#48484A]">-</span>
+                <span className="text-[#EF4444]">{yLosses}</span>
+              </p>
             </div>
           </div>
           {/* Climb hook */}
@@ -154,12 +176,20 @@ export default function CompetePage() {
             <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest px-1">Incoming</p>
             {PENDING_CHALLENGES.map((c, i) => (
               <div key={i} className="rounded-2xl bg-[#FF4500]/8 border border-[#FF4500]/25 p-3">
-                <div className="flex items-center gap-2 mb-2.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse flex-shrink-0" />
-                  <p className="text-sm font-bold text-white flex-1">
-                    {c.from} challenged you
-                    <span className="text-[#9A9AAA] font-semibold"> · {c.lift} · {c.format === 'weight' ? 'most weight' : 'most reps'}</span>
-                  </p>
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-black"
+                    style={{ backgroundColor: `${avatarColor(c.from)}22`, color: avatarColor(c.from), border: `1.5px solid ${avatarColor(c.from)}55` }}
+                  >
+                    {initials(c.from)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse flex-shrink-0" />
+                      {c.from} challenged you
+                    </p>
+                    <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">{c.lift} · {c.format === 'weight' ? 'most weight' : 'most reps'}</p>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <motion.button whileTap={{ scale: 0.97 }}
@@ -187,8 +217,14 @@ export default function CompetePage() {
               const rankColor =
                 entry.pos === 1 ? '#FFC107' :
                 entry.pos === 2 ? '#D1D5DB' :
-                entry.pos === 3 ? '#F59E0B' : '#48484A'
+                entry.pos === 3 ? '#F59E0B' : '#636366'
               const isRival = rival?.pos === entry.pos
+              const av = entry.you ? '#FF4500' : avatarColor(entry.name)
+              const rowStyle =
+                entry.you  ? { backgroundColor: '#FF450014', borderColor: '#FF450045' }
+                : isRival  ? { backgroundColor: '#FF45000F', borderColor: '#FF450033' }
+                : entry.pos <= 3 ? { backgroundColor: `${rankColor}12`, borderColor: 'transparent' }
+                : { backgroundColor: '#25252880', borderColor: 'transparent' }
               return (
                 <motion.button
                   key={entry.pos}
@@ -196,28 +232,33 @@ export default function CompetePage() {
                   whileTap={entry.you ? undefined : { scale: 0.98 }}
                   onClick={() => !entry.you && openChallenge(entry.name)}
                   initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
-                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left ${entry.you ? 'border' : isRival ? 'border' : 'bg-[#252528]/50'}`}
-                  style={
-                    entry.you ? { backgroundColor: '#FF450012', borderColor: '#FF450040' }
-                    : isRival ? { backgroundColor: '#FF45000A', borderColor: '#FF450030' }
-                    : {}
-                  }
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-left border"
+                  style={rowStyle}
                 >
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${rankColor}20` }}>
+                  {/* rank */}
+                  <div className="w-5 flex items-center justify-center flex-shrink-0">
                     {entry.pos === 1
                       ? <Crown className="w-4 h-4" style={{ color: rankColor }} />
-                      : <span className="text-xs font-black" style={{ color: rankColor }}>{entry.pos}</span>
-                    }
+                      : <span className="text-xs font-black tabular-nums" style={{ color: rankColor }}>{entry.pos}</span>}
                   </div>
-                  <p className={`flex-1 text-sm font-bold truncate ${entry.you ? 'text-white' : 'text-[#9A9AAA]'}`}>
-                    {entry.you ? 'You' : entry.name}
-                  </p>
+                  {/* avatar */}
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-black"
+                    style={{ backgroundColor: `${av}22`, color: av, border: `1.5px solid ${av}55` }}
+                  >
+                    {initials(entry.you ? 'You' : entry.name)}
+                  </div>
+                  {/* name */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-white truncate">{entry.you ? 'You' : entry.name}</p>
+                    {isRival && <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-wider">Rival · one spot up</p>}
+                  </div>
+                  {/* record */}
                   <span className="text-sm font-bold tabular-nums text-[#9A9AAA]">{entry.record}</span>
-                  {!entry.you && (
-                    isRival
-                      ? <Swords className="w-4 h-4 text-[#FF4500] flex-shrink-0" />
-                      : <Swords className="w-3.5 h-3.5 text-[#48484A] flex-shrink-0" />
-                  )}
+                  {/* fight affordance */}
+                  {entry.you ? null : isRival
+                    ? <span className="text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 flex-shrink-0 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</span>
+                    : <Swords className="w-3.5 h-3.5 text-[#48484A] flex-shrink-0" />}
                 </motion.button>
               )
             })}
