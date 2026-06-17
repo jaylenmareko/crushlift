@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Swords, Crown, ChevronDown, ChevronRight, Check, X, ArrowUp } from 'lucide-react'
+import { Swords, Crown, ChevronDown, ChevronRight, Check, X, ArrowUp, Flame } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
 import WeightGate from '@/components/WeightGate'
 import { useUserWeight } from '@/lib/hooks/useUserWeight'
 import { WEIGHT_CLASSES, BIG_SIX } from '@/lib/belts'
 
-const RANKINGS_DATA: Record<number, { pos: number; name: string; record: string; you: boolean }[]> = {
+const RANKINGS_DATA: Record<number, { pos: number; name: string; record: string; you: boolean; streak?: number; trend?: number }[]> = {
   0: [
     { pos: 1, name: 'Cam R.',    record: '14-2', you: false },
     { pos: 2, name: 'Devon L.',  record: '11-4', you: false },
@@ -21,10 +21,10 @@ const RANKINGS_DATA: Record<number, { pos: number; name: string; record: string;
     { pos: 4, name: 'Gus W.',    record: '6-6',  you: false },
   ],
   2: [
-    { pos: 1, name: 'Marcus T.', record: '21-2', you: false },
-    { pos: 2, name: 'Dre W.',    record: '15-5', you: false },
+    { pos: 1, name: 'Marcus T.', record: '21-2', you: false, streak: 8 },
+    { pos: 2, name: 'Dre W.',    record: '15-5', you: false, streak: 4 },
     { pos: 3, name: 'Kyle B.',   record: '10-4', you: false },
-    { pos: 4, name: 'You',       record: '2-1',  you: true  },
+    { pos: 4, name: 'You',       record: '2-1',  you: true,  trend: 2 },
     { pos: 5, name: 'Jordan S.', record: '2-2',  you: false },
     { pos: 6, name: 'Tyler M.',  record: '1-3',  you: false },
     { pos: 7, name: 'Chris A.',  record: '0-2',  you: false },
@@ -137,6 +137,11 @@ export default function CompetePage() {
                 <span className="text-5xl font-black text-[#FF4500] leading-none">{yourEntry ? `#${yourEntry.pos}` : '—'}</span>
                 {yourEntry && <span className="text-sm font-bold text-[#636366]">of {rankings.length}</span>}
               </div>
+              {yourEntry?.trend ? (
+                <span className="inline-flex items-center gap-0.5 mt-2 text-xs font-black text-[#22C55E]">
+                  <ArrowUp className="w-3.5 h-3.5" />{yourEntry.trend} this week
+                </span>
+              ) : null}
             </div>
             <div className="text-right">
               <p className="text-[10px] text-[#9A9AAA] uppercase tracking-widest font-bold mb-1">Record</p>
@@ -251,13 +256,17 @@ export default function CompetePage() {
                   {/* name */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-white truncate">{entry.you ? 'You' : entry.name}</p>
-                    {isRival && <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-wider">Rival · one spot up</p>}
+                    {isRival
+                      ? <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-wider">Rival · one spot up</p>
+                      : (entry.streak ?? 0) >= 3
+                        ? <p className="flex items-center gap-0.5 text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider"><Flame className="w-3 h-3" />{entry.streak} win streak</p>
+                        : null}
                   </div>
                   {/* record */}
                   <span className="text-sm font-bold tabular-nums text-[#9A9AAA]">{entry.record}</span>
                   {/* fight affordance */}
                   {entry.you ? null : isRival
-                    ? <span className="text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 flex-shrink-0 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</span>
+                    ? <motion.span animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} className="text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 flex-shrink-0 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</motion.span>
                     : <Swords className="w-3.5 h-3.5 text-[#48484A] flex-shrink-0" />}
                 </motion.button>
               )
