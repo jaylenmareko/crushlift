@@ -274,7 +274,6 @@ export default function CompetePage() {
           </div>
         </div>
 
-        <p className="text-[10px] text-[#48484A] text-center mt-1">1v1 · Same weight class · Most weight or most reps wins</p>
       </div>
 
       {/* Primary action — the loudest thing on the page */}
