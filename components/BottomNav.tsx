@@ -1,12 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { Dumbbell, Zap, Trophy, Users, User } from 'lucide-react'
+import { Dumbbell, Zap, Trophy, Swords, Users, User } from 'lucide-react'
 
 const TABS = [
   { href: '/plan', icon: Dumbbell, label: 'Plan', key: 'plan' },
   { href: '/workout', icon: Zap, label: 'Workout', key: 'workout' },
-  { href: '/compete', icon: Trophy, label: 'Compete', key: 'compete' },
+  { href: '/belts', icon: Trophy, label: 'Belts', key: 'belts' },
+  { href: '/compete', icon: Swords, label: 'Compete', key: 'compete' },
   { href: '/friends', icon: Users, label: 'Friends', key: 'friends' },
   { href: '/profile', icon: User, label: 'Profile', key: 'profile' },
 ]
