@@ -657,6 +657,11 @@ small lifter and a big lifter compare fairly. One formula, no per-class lookup t
 | Powerlifting (DOTS / Wilks) | class records **+** "Best Lifter" coefficient | the DOTS math for Open |
 | Chess.com | pairs opponents by rating | rank-gated matchmaking |
 
+**Backend foundation (in repo, NOT yet applied to the live DB):**
+- `lib/dots.ts` — real DOTS pound-for-pound scoring (Open board ranks by it).
+- `lib/battles.ts` — Battle/Friendship types + pure `resolveBattle()` (raw for class, DOTS for superfight).
+- `artifacts/17-06-2026-battles-schema-draft.sql` — `battles` + `friendships` tables, RLS, derived `user_records` view. **DRAFT — do not run against production (cheanydnmvqdvsexxdav) until Jaylen approves.** Reuses `pr_verifications` as battle proof; W/L derived, not stored.
+
 **Status:** proposed. Compete still runs on dummy data (`RANKINGS_DATA` in `app/compete/page.tsx`).
 **Decided:** Belts page renamed → **Ranks** (route `/ranks`, done) · two leaderboards only (per weight class + Overall), both ordered by **W/L record** · matchmaking gated by weight class + Rank · battle formats = most weight / most reps · #1 = champion (no separate Title system) · per-lift recognition lives on the Ranks page + in battle lift choice, NOT in separate boards.
 Build order: per-class record board → rank-gated battles → Overall (DOTS) board → superfights.
