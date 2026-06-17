@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Zap, Trophy, Swords } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import LoginSheet from '@/components/LoginSheet'
 
 const FEATURES = [
   { icon: Zap, label: 'AI Plans' },
@@ -17,6 +18,7 @@ const FEATURES = [
 export default function LandingPage() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
+  const [loginOpen, setLoginOpen] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -82,12 +84,15 @@ export default function LandingPage() {
             GET STARTED
           </motion.button>
         </Link>
-        <Link href="/login">
-          <button className="w-full bg-[#1C1C1E] border border-[#2C2C2E] text-[#9A9AAA] font-bold text-[15px] tracking-wide py-[18px] rounded-full hover:border-[#3A3A3C] hover:text-white transition-all">
-            I HAVE AN ACCOUNT
-          </button>
-        </Link>
+        <button
+          onClick={() => setLoginOpen(true)}
+          className="w-full bg-[#1C1C1E] border border-[#2C2C2E] text-[#9A9AAA] font-bold text-[15px] tracking-wide py-[18px] rounded-full hover:border-[#3A3A3C] hover:text-white transition-all"
+        >
+          I HAVE AN ACCOUNT
+        </button>
       </motion.div>
+
+      <LoginSheet open={loginOpen} onClose={() => setLoginOpen(false)} />
     </div>
   )
 }

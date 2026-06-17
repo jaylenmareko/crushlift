@@ -15,7 +15,7 @@ AI-powered workout PR verification + gamified ranking web app. Mobile-first. Dar
 4. 1v1 battles with others in the same weight class determine leaderboard rank
 
 **Repo:** `jaylenmareko/crushlift` (app is called Trainmaxxing, repo name is legacy)
-**Supabase project ref:** `rjqwjfzvhkdkdjldlnqs`
+**Supabase project ref:** `cheanydnmvqdvsexxdav` (project name "trainmaxxing"). ⚠️ NOT `rjqwjfzvhkdkdjldlnqs` — that's a stale older DB named "PJRoutes" in the same org; do not use it.
 
 ---
 
@@ -600,11 +600,13 @@ Super Heavy:   220+ lbs
 
 ## Supabase Schema
 
-Verified against the live DB 2026-06-15. `profiles` does NOT have `username`/`first_name`/`created_at`.
+Verified against the live `trainmaxxing` DB (cheanydnmvqdvsexxdav) via REST 2026-06-17.
+(The earlier 2026-06-15 note described the WRONG `rjqwjfzvhkdkdjldlnqs`/PJRoutes DB — disregard it.)
 
 ```
-profiles         — id, email, weight, stripe_customer_id, subscription_status, subscription_period_end
-                   (username + first_name are NOT here — they live in auth user metadata)
+profiles         — id, email, username, first_name, weight, created_at
+                   (username + first_name DO exist here — Friends-by-username is unblocked)
+                   MISSING until added: subscription_status, stripe_customer_id, subscription_period_end (added 2026-06-17)
 plans            — id, user_id, onboarding_data (jsonb), days (jsonb), created_at
 workout_sessions — id, user_id, plan_id, day_number, day_name, started_at, finished_at  (unverified — table empty)
 workout_sets     — id, session_id, exercise_name, set_number, weight_lbs, reps, completed  (unverified — table empty)
@@ -618,8 +620,9 @@ auto-creates a profiles row on signup — onboarding must upsert one (`{ id, ema
 Never use `.update().eq('id', uid)` to set profile fields: if the row doesn't exist it silently writes nothing. Always upsert.
 `pr-media` storage has RLS: upload path must start with `auth.uid()`.
 
-**TODO (schema):** add `username` + `first_name` columns to `profiles` (needed for the Friends search-by-username
-feature). Until then they persist only in auth metadata. SQL: `alter table profiles add column username text unique, add column first_name text;`
+**Schema note:** `username` + `first_name` already exist on `profiles` in the live DB (Friends-by-username unblocked).
+Stripe columns (`subscription_status`, `stripe_customer_id`, `subscription_period_end`) added 2026-06-17 so
+`profile`/`plan` page queries and the Stripe webhook don't error. Stripe itself (keys, products, webhook) not yet set up.
 
 ---
 

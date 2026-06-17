@@ -17,13 +17,13 @@ Beta — real users, real PRs, iterate on verification accuracy
 
 ## Stack
 - Next.js 16 App Router (Turbopack)
-- Supabase (auth, PostgreSQL, Storage — project ref: rjqwjfzvhkdkdjldlnqs)
+- Supabase (auth, PostgreSQL, Storage — project ref: cheanydnmvqdvsexxdav, project name "trainmaxxing")
 - Tailwind CSS, Framer Motion, Lucide React
 - Anthropic Claude API (claude-sonnet-4-6) — all AI calls server-side
 - shadcn/ui primitives
 
 ## Repo
-`jaylenmareko/crushlift` — codebase lives at `C:\Users\jdavis\train-maxxing\`
+`jaylenmareko/crushlift` — codebase lives at `C:\Users\jdavis\Intern\projects\dev\train-maxxing\` (canonical copy; older standalone clone at `C:\Users\jdavis\train-maxxing\` is retired/stale)
 
 ## File map
 - `reference/AGENT-GUIDE.md` — full build + design system guide (read before any code work)
