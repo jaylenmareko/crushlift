@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Swords, Crown, ChevronDown, ChevronRight, Check, X, ArrowUp, Flame, Trophy } from 'lucide-react'
+import { Swords, Crown, ChevronRight, Check, X, ArrowUp, Flame, Trophy } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
 import WeightGate from '@/components/WeightGate'
 import { useUserWeight } from '@/lib/hooks/useUserWeight'
@@ -51,6 +51,18 @@ const PENDING_CHALLENGES: { from: string; lift: string; format: 'weight' | 'reps
   { from: 'Marcus T.', lift: 'Squat', format: 'weight' },
 ]
 
+// Open / pound-for-pound board — everyone across all classes (cls = weight-class index).
+// Fights here are superfights, scored size-adjusted (DOTS) so a smaller lifter can win.
+const OPEN_RANKINGS: { pos: number; name: string; cls: number; record: string; you: boolean; streak?: number }[] = [
+  { pos: 1, name: 'Tank G.',   cls: 4, record: '30-1', you: false, streak: 12 },
+  { pos: 2, name: 'Goliath',   cls: 5, record: '25-0', you: false, streak: 9 },
+  { pos: 3, name: 'Big K.',    cls: 3, record: '22-0', you: false, streak: 7 },
+  { pos: 4, name: 'Marcus T.', cls: 2, record: '21-2', you: false, streak: 8 },
+  { pos: 5, name: 'Leon T.',   cls: 1, record: '18-1', you: false },
+  { pos: 6, name: 'Cam R.',    cls: 0, record: '14-2', you: false },
+  { pos: 7, name: 'You',       cls: 2, record: '2-1',  you: true },
+]
+
 function shortClassName(full: string) {
   return full.split('·')[0].trim()
 }
@@ -71,17 +83,18 @@ function avatarColor(name: string) {
 
 export default function CompetePage() {
   const {
-    userWeight, selectedClass, setSelectedClass,
+    userWeight, selectedClass,
     weightInput, setWeightInput, weightLoading,
     savingWeight, weightError, saveWeight,
   } = useUserWeight()
 
-  const [classSheetOpen, setClassSheetOpen] = useState(false)
   const [challengeOpponent, setChallengeOpponent] = useState<string | null>(null)
+  const [challengeSuperfight, setChallengeSuperfight] = useState(false)
   const [challengeOpen, setChallengeOpen] = useState(false)
   const [challengeLift, setChallengeLift] = useState<string | null>(null)
   const [challengeFormat, setChallengeFormat] = useState<'weight' | 'reps'>('weight')
   const [leaderboardOpen, setLeaderboardOpen] = useState(false)
+  const [boardView, setBoardView] = useState<'class' | 'open'>('class')
 
   const rankings  = RANKINGS_DATA[selectedClass] ?? []
   const youIdx    = rankings.findIndex(r => r.you)
@@ -89,8 +102,9 @@ export default function CompetePage() {
   const rival     = youIdx > 0 ? rankings[youIdx - 1] : null  // person one spot above you
   const [yWins, yLosses] = (yourEntry?.record ?? '0-0').split('-')
 
-  function openChallenge(name: string | null) {
+  function openChallenge(name: string | null, superfight = false) {
     setChallengeOpponent(name)
+    setChallengeSuperfight(superfight)
     setChallengeLift(null)
     setChallengeFormat('weight')
     setChallengeOpen(true)
@@ -145,6 +159,51 @@ export default function CompetePage() {
     )
   }
 
+  const renderOpenRow = (entry: (typeof OPEN_RANKINGS)[number], i: number) => {
+    const rankColor =
+      entry.pos === 1 ? '#FFC107' :
+      entry.pos === 2 ? '#D1D5DB' :
+      entry.pos === 3 ? '#F59E0B' : '#636366'
+    const av = entry.you ? '#FF4500' : avatarColor(entry.name)
+    const sameClass = entry.cls === selectedClass
+    const rowStyle =
+      entry.you ? { backgroundColor: '#FF450014', borderColor: '#FF450045' }
+      : entry.pos <= 3 ? { backgroundColor: `${rankColor}12`, borderColor: 'transparent' }
+      : { backgroundColor: '#25252880', borderColor: 'transparent' }
+    return (
+      <motion.button
+        key={entry.pos}
+        disabled={entry.you}
+        whileTap={entry.you ? undefined : { scale: 0.98 }}
+        onClick={() => { if (!entry.you) { setLeaderboardOpen(false); openChallenge(entry.name, !sameClass) } }}
+        initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
+        className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-left border"
+        style={rowStyle}
+      >
+        <div className="w-5 flex items-center justify-center flex-shrink-0">
+          {entry.pos === 1
+            ? <Crown className="w-4 h-4" style={{ color: rankColor }} />
+            : <span className="text-xs font-black tabular-nums" style={{ color: rankColor }}>{entry.pos}</span>}
+        </div>
+        <div
+          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-black"
+          style={{ backgroundColor: `${av}22`, color: av, border: `1.5px solid ${av}55` }}
+        >
+          {initials(entry.you ? 'You' : entry.name)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-bold text-white truncate">{entry.you ? 'You' : entry.name}</p>
+            <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[#252528] text-[#9A9AAA] uppercase tracking-wider flex-shrink-0">{shortClassName(WEIGHT_CLASSES[entry.cls].full)}</span>
+          </div>
+          {(entry.streak ?? 0) >= 5 && <p className="flex items-center gap-0.5 text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider mt-0.5"><Flame className="w-3 h-3" />{entry.streak} win streak</p>}
+        </div>
+        <span className="text-sm font-bold tabular-nums text-[#9A9AAA]">{entry.record}</span>
+        {entry.you ? null : <Swords className="w-3.5 h-3.5 text-[#48484A] flex-shrink-0" />}
+      </motion.button>
+    )
+  }
+
   if (weightLoading) return (
     <div className="mobile-container flex items-center justify-center min-h-dvh bg-[#0D0D0F]">
       <div className="w-8 h-8 border-2 border-[#FF4500] border-t-transparent rounded-full animate-spin" />
@@ -179,10 +238,7 @@ export default function CompetePage() {
           <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
           <div className="p-4 flex items-center gap-4">
             <div className="flex-1">
-              <button onClick={() => setClassSheetOpen(true)} className="flex items-center gap-1 mb-1.5">
-                <span className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest">{shortClassName(WEIGHT_CLASSES[selectedClass].full)}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-[#636366]" />
-              </button>
+              <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-1.5">{shortClassName(WEIGHT_CLASSES[selectedClass].full)}</p>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-5xl font-black text-[#FF4500] leading-none">{yourEntry ? `#${yourEntry.pos}` : '—'}</span>
                 {yourEntry && <span className="text-sm font-bold text-[#636366]">of {rankings.length}</span>}
@@ -309,14 +365,23 @@ export default function CompetePage() {
               <div className="flex items-center justify-between px-5 pt-2 pb-4 flex-shrink-0">
                 <div>
                   <h2 className="text-xl font-bold">Leaderboard</h2>
-                  <p className="text-[#9A9AAA] text-sm">{shortClassName(WEIGHT_CLASSES[selectedClass].full)} · tap to fight</p>
+                  <p className="text-[#9A9AAA] text-sm">Tap a fighter to challenge</p>
                 </div>
                 <button onClick={() => setLeaderboardOpen(false)} className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA] hover:text-white flex-shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               </div>
+              <div className="px-5 pb-3 flex-shrink-0">
+                <div className="flex bg-[#161618] rounded-xl p-1 border border-[#252528]">
+                  {([['class', 'My Class'], ['open', 'Open']] as const).map(([v, l]) => (
+                    <button key={v} onClick={() => setBoardView(v)}
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${boardView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>{l}</button>
+                  ))}
+                </div>
+              </div>
               <div className="flex-1 overflow-y-auto px-5 pb-8 flex flex-col gap-1.5">
-                {rankings.map(renderLeaderRow)}
+                {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
+                {boardView === 'open' && <p className="text-[10px] text-[#48484A] text-center mt-2">Cross-class · pound-for-pound (size-adjusted)</p>}
               </div>
             </motion.div>
           </>
@@ -343,7 +408,7 @@ export default function CompetePage() {
               <div className="flex items-center justify-between px-5 pt-2 pb-4 flex-shrink-0">
                 <div>
                   <h2 className="text-xl font-bold">Challenge</h2>
-                  <p className="text-[#9A9AAA] text-sm">{challengeOpponent ?? 'Pick someone from the leaderboard'}</p>
+                  <p className="text-[#9A9AAA] text-sm">{challengeOpponent ? (challengeSuperfight ? `${challengeOpponent} · Superfight (P4P)` : challengeOpponent) : 'Pick someone from the leaderboard'}</p>
                 </div>
                 <button onClick={() => setChallengeOpen(false)} className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA] hover:text-white flex-shrink-0">
                   <X className="w-4 h-4" />
@@ -398,44 +463,6 @@ export default function CompetePage() {
         )}
       </AnimatePresence>
 
-      {/* Weight class switcher */}
-      <AnimatePresence>
-        {classSheetOpen && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/70 flex items-end justify-center"
-            onClick={() => setClassSheetOpen(false)}
-          >
-            <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              onClick={e => e.stopPropagation()}
-              className="w-full max-w-[900px] bg-[#1C1C1E] border-t border-[#252528] rounded-t-3xl p-5 pb-8"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-black text-white">Weight Class</h2>
-                <button onClick={() => setClassSheetOpen(false)} className="text-[#636366]">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="flex flex-col gap-2">
-                {WEIGHT_CLASSES.map((wc, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { setSelectedClass(i); setClassSheetOpen(false) }}
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${
-                      selectedClass === i ? 'border-[#FF4500] bg-[#FF4500]/10' : 'border-[#252528] bg-[#161618]'
-                    }`}
-                  >
-                    <span className={`text-sm font-bold ${selectedClass === i ? 'text-[#FF4500]' : 'text-white'}`}>{wc.full}</span>
-                    {selectedClass === i && <Check className="w-4 h-4 text-[#FF4500]" />}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }
