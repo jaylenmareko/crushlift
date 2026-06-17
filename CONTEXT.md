@@ -9,8 +9,8 @@ MVP Build — core flows built, PR verification chain complete, media storage li
 - [ ] Power Rank — rank stored in profiles
 - [ ] 1v1 Battle flow (challenge, respond, Claude verification, W/L record update)
 - [ ] Friends system (search by username, add/remove, challenge button)
-- [x] Compete page belts — read from real `pr_verifications` data (verified-only)
-- [ ] Compete page Rankings & Battles tabs — still `RANKINGS_DATA` / `DUMMY_BATTLES`
+- [x] Belts page (`/belts`) — split out from Compete, reads from real `pr_verifications` data (verified-only)
+- [ ] Compete page (`/compete`) Rankings & Battles tabs — still `RANKINGS_DATA` / `DUMMY_BATTLES`
 
 ## Next stage
 Beta — real users, real PRs, iterate on verification accuracy
@@ -49,6 +49,6 @@ Beta — real users, real PRs, iterate on verification accuracy
 
 ## Current priority
 1. Power Rank — PR detection in workout page, rank stored in profiles
-2. Compete page — replace `RANKINGS_DATA` / `DUMMY_BATTLES` with real data
+2. Compete page (`/compete`) — replace `RANKINGS_DATA` / `DUMMY_BATTLES` with real data
 3. 1v1 Battle flow
 4. Friends system
