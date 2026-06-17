@@ -3,15 +3,18 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { LogOut, Crown, RefreshCw, Settings, Trophy, Calendar, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react'
+import { LogOut, Crown, RefreshCw, Settings, Calendar, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
 import PaywallModal from '@/components/PaywallModal'
+import { initials, avatarColor } from '@/lib/avatar'
 import type { WorkoutHistoryEntry } from '@/lib/types'
 
 export default function ProfilePage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [username, setUsername] = useState('')
   const [status, setStatus] = useState<string | null>(null)
   const [showPaywall, setShowPaywall] = useState(false)
   const [sessions, setSessions] = useState<WorkoutHistoryEntry[]>([])
@@ -34,8 +37,13 @@ export default function ProfilePage() {
       }
 
       setEmail(user.email || '')
-      supabase.from('profiles').select('subscription_status').eq('id', user.id).single()
-        .then(({ data }) => setStatus(data?.subscription_status || null))
+      supabase.from('profiles').select('subscription_status, first_name, username').eq('id', user.id).single()
+        .then(({ data }) => {
+          setStatus(data?.subscription_status || null)
+          // fall back to auth metadata if the profiles row predates name persistence
+          setFirstName(data?.first_name || user.user_metadata?.first_name || '')
+          setUsername(data?.username || user.user_metadata?.username || '')
+        })
 
       supabase
         .from('workout_sessions')
@@ -103,9 +111,21 @@ export default function ProfilePage() {
       <div className="flex-1 px-5 flex flex-col gap-4 pb-6 relative z-10">
         {/* Account */}
         <div className="bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4">
-          <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-1">Account</p>
+          <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-2">Account</p>
           {email ? (
-            <p className="text-sm font-semibold truncate">{email}</p>
+            <div className="flex items-center gap-3">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
+                style={{ backgroundColor: `${avatarColor(username || firstName || email)}22`, color: avatarColor(username || firstName || email), border: `1.5px solid ${avatarColor(username || firstName || email)}55` }}
+              >
+                {initials(firstName || username || email)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-base font-bold text-white truncate">{firstName || (username ? `@${username}` : 'Athlete')}</p>
+                {username && <p className="text-xs font-semibold text-[#9A9AAA] truncate">@{username}</p>}
+                <p className="text-xs text-[#636366] truncate mt-0.5">{email}</p>
+              </div>
+            </div>
           ) : (
             <div className="flex items-center justify-between">
               <p className="text-sm text-[#9A9AAA]">Guest</p>
@@ -137,19 +157,6 @@ export default function ProfilePage() {
                 Upgrade
               </motion.button>
             )}
-          </div>
-        </div>
-
-        {/* Power Rank placeholder */}
-        <div className="bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FF4500]/10 border border-[#FF4500]/20 flex items-center justify-center flex-shrink-0">
-              <Trophy className="w-5 h-5 text-[#FF4500]" />
-            </div>
-            <div className="flex-1">
-              <p className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest mb-0.5">Power Rank</p>
-              <p className="text-sm font-semibold text-[#9A9AAA]">Log a verified PR to earn your rank</p>
-            </div>
           </div>
         </div>
 

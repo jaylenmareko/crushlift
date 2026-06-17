@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import EditProfileModal from '@/components/EditProfileModal'
 
 type Item = {
   label: string
@@ -17,11 +19,13 @@ type Section = {
 
 export default function SettingsPage() {
   const router = useRouter()
+  const [editProfileOpen, setEditProfileOpen] = useState(false)
 
   const sections: Section[] = [
     {
       title: 'Account',
       items: [
+        { label: 'Edit Profile', hint: 'Name & username', action: () => setEditProfileOpen(true) },
         { label: 'Change Email' },
         { label: 'Change Password' },
       ],
@@ -101,6 +105,8 @@ export default function SettingsPage() {
           </div>
         ))}
       </div>
+
+      <EditProfileModal open={editProfileOpen} onClose={() => setEditProfileOpen(false)} />
     </div>
   )
 }

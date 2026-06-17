@@ -235,14 +235,18 @@ export default function OnboardingPage() {
       return
     }
     if (authData.user) {
-      // profiles columns: id, email, weight (+ stripe). upsert so the row is actually created.
+      // profiles is the source of truth for name/handle (also kept in auth metadata above).
+      // username has a unique index — a taken handle throws 23505, surfaced as a friendly error.
       const { error: profileError } = await supabase.from('profiles').upsert({
         id: authData.user.id,
         email: email.trim(),
+        first_name: firstName.trim(),
+        username: username.trim(),
         weight: weight ? parseFloat(weight) : null,
       }, { onConflict: 'id' })
       if (profileError) {
-        setSignupError(profileError.message)
+        const taken = profileError.code === '23505' || /duplicate|unique/i.test(profileError.message)
+        setSignupError(taken ? 'That username is taken — pick another.' : profileError.message)
         setLoading(false)
         return
       }
