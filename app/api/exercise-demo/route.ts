@@ -76,9 +76,34 @@ export async function GET(req: NextRequest) {
   }
 
   const ex = data[0]
+
+  // ExerciseDB v2.2 doesn't return gifUrl directly — it requires a separate
+  // authenticated /image request. Fetch the bytes once and store permanently
+  // in Supabase Storage (public bucket) so the browser can load it with a
+  // plain <img src> — no RapidAPI key ever touches the client.
+  let gifUrl = ''
+  try {
+    const imgRes = await fetch(
+      `https://exercisedb.p.rapidapi.com/image?exerciseId=${ex.id}&resolution=180`,
+      { headers: { 'X-RapidAPI-Key': apiKey, 'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com' } }
+    )
+    if (imgRes.ok) {
+      const buf = await imgRes.arrayBuffer()
+      const path = `${ex.id}.gif`
+      await supabase().storage.from('exercise-gifs').upload(path, buf, {
+        contentType: 'image/gif',
+        upsert: true,
+      })
+      const { data: pub } = supabase().storage.from('exercise-gifs').getPublicUrl(path)
+      gifUrl = pub.publicUrl
+    }
+  } catch {
+    // gif fetch/upload failed — fall through with empty gifUrl, rest of data still useful
+  }
+
   const result: ExerciseDemoData = {
     name: key,
-    gifUrl: ex.gifUrl,
+    gifUrl,
     bodyPart: ex.bodyPart,
     target: ex.target,
     equipment: ex.equipment,
@@ -86,8 +111,9 @@ export async function GET(req: NextRequest) {
     instructions: ex.instructions ?? [],
   }
 
-  // Write to Supabase + memory (fire-and-forget, don't block response)
-  void supabase()
+  // Write to Supabase + memory. Awaited (not fire-and-forget) — in serverless
+  // environments the function can be torn down before an un-awaited write lands.
+  await supabase()
     .from('exercise_demos')
     .upsert({
       name: key,
