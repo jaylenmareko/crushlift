@@ -7,6 +7,7 @@ import BottomNav from '@/components/BottomNav'
 import WeightGate from '@/components/WeightGate'
 import { useUserWeight } from '@/lib/hooks/useUserWeight'
 import { WEIGHT_CLASSES, BIG_SIX } from '@/lib/belts'
+import { p4pDisplay, pound4poundScore } from '@/lib/dots'
 
 const RANKINGS_DATA: Record<number, { pos: number; name: string; record: string; you: boolean; streak?: number; trend?: number }[]> = {
   0: [
@@ -51,17 +52,24 @@ const PENDING_CHALLENGES: { from: string; lift: string; format: 'weight' | 'reps
   { from: 'Marcus T.', lift: 'Squat', format: 'weight' },
 ]
 
-// Open / pound-for-pound board — everyone across all classes (cls = weight-class index).
-// Fights here are superfights, scored size-adjusted (DOTS) so a smaller lifter can win.
-const OPEN_RANKINGS: { pos: number; name: string; cls: number; record: string; you: boolean; streak?: number }[] = [
-  { pos: 1, name: 'Tank G.',   cls: 4, record: '30-1', you: false, streak: 12 },
-  { pos: 2, name: 'Goliath',   cls: 5, record: '25-0', you: false, streak: 9 },
-  { pos: 3, name: 'Big K.',    cls: 3, record: '22-0', you: false, streak: 7 },
-  { pos: 4, name: 'Marcus T.', cls: 2, record: '21-2', you: false, streak: 8 },
-  { pos: 5, name: 'Leon T.',   cls: 1, record: '18-1', you: false },
-  { pos: 6, name: 'Cam R.',    cls: 0, record: '14-2', you: false },
-  { pos: 7, name: 'You',       cls: 2, record: '2-1',  you: true },
+// Open / pound-for-pound roster — everyone across all classes (cls = weight-class index).
+// Fights here are superfights, ranked by a real DOTS score: each fighter's best lift (lbs)
+// adjusted for their bodyweight (bw, lbs). A smaller lifter can out-rank a bigger one.
+type OpenFighter = { name: string; cls: number; bw: number; lift: number; record: string; you: boolean; streak?: number }
+const OPEN_ROSTER: OpenFighter[] = [
+  { name: 'Tank G.',   cls: 4, bw: 215, lift: 545, record: '30-1', you: false, streak: 12 },
+  { name: 'Goliath',   cls: 5, bw: 240, lift: 575, record: '25-0', you: false, streak: 9 },
+  { name: 'Big K.',    cls: 3, bw: 195, lift: 500, record: '22-0', you: false, streak: 7 },
+  { name: 'Marcus T.', cls: 2, bw: 170, lift: 455, record: '21-2', you: false, streak: 8 },
+  { name: 'Leon T.',   cls: 1, bw: 148, lift: 420, record: '18-1', you: false },
+  { name: 'Cam R.',    cls: 0, bw: 132, lift: 365, record: '14-2', you: false },
+  { name: 'You',       cls: 2, bw: 165, lift: 300, record: '2-1',  you: true },
 ]
+// Ranked by pound-for-pound score (highest first), then numbered.
+const OPEN_RANKINGS = [...OPEN_ROSTER]
+  .map(f => ({ ...f, score: p4pDisplay(f.lift, f.bw) }))
+  .sort((a, b) => pound4poundScore(b.lift, b.bw) - pound4poundScore(a.lift, a.bw))
+  .map((f, i) => ({ ...f, pos: i + 1 }))
 
 function shortClassName(full: string) {
   return full.split('·')[0].trim()
@@ -198,7 +206,10 @@ export default function CompetePage() {
           </div>
           {(entry.streak ?? 0) >= 5 && <p className="flex items-center gap-0.5 text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider mt-0.5"><Flame className="w-3 h-3" />{entry.streak} win streak</p>}
         </div>
-        <span className="text-sm font-bold tabular-nums text-[#9A9AAA]">{entry.record}</span>
+        <div className="text-right flex-shrink-0">
+          <p className="text-sm font-black tabular-nums text-white leading-none">{entry.score}</p>
+          <p className="text-[9px] font-bold text-[#636366] uppercase tracking-wider mt-0.5">P4P</p>
+        </div>
         {entry.you ? null : <Swords className="w-3.5 h-3.5 text-[#48484A] flex-shrink-0" />}
       </motion.button>
     )
