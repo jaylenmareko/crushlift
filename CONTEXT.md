@@ -5,7 +5,7 @@ MVP Build — core flows built, PR verification chain complete, media storage li
 
 ## Done criteria
 - [x] Power Rank — per-lift belt thresholds (StrengthLevel-calibrated, Pull-up rep-based)
-- [ ] Power Rank — PR detection in workout page
+- [x] Power Rank — PR detection in workout page (inline "New PR!" banner on a completed set that beats the verified best, opens shared `usePrLogger` flow)
 - [ ] Power Rank — rank stored in profiles
 - [ ] 1v1 Battle flow (challenge, respond, Claude verification, W/L record update)
 - [ ] Friends system (search by username, add/remove, challenge button)
@@ -48,7 +48,7 @@ Beta — real users, real PRs, iterate on verification accuracy
 - `reference/env.md` — load only when setting up env or onboarding new service
 
 ## Current priority
-1. Power Rank — PR detection in workout page, rank stored in profiles
-2. Compete page (`/compete`) — replace `RANKINGS_DATA` / `DUMMY_BATTLES` with real data
+1. Power Rank — rank stored in profiles (needs prod Supabase schema change, sign-off required)
+2. Compete page (`/compete`) — replace `RANKINGS_DATA` / `PENDING_CHALLENGES` / `OPEN_ROSTER` with real data
 3. 1v1 Battle flow
 4. Friends system
