@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Swords, Crown, ChevronRight, Check, X, ArrowUp, Flame, Trophy } from 'lucide-react'
+import { Swords, Crown, ChevronRight, Check, X, ArrowUp, Flame, Trophy, Medal } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
 import WeightGate from '@/components/WeightGate'
 import { useUserWeight } from '@/lib/hooks/useUserWeight'
@@ -89,6 +89,13 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
 }
 
+const TABS = [
+  { id: 'rank', label: 'Rank', icon: Medal },
+  { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+  { id: 'challenges', label: 'Challenges', icon: Swords },
+] as const
+type TabId = (typeof TABS)[number]['id']
+
 export default function CompetePage() {
   const {
     userWeight, selectedClass,
@@ -101,7 +108,7 @@ export default function CompetePage() {
   const [challengeOpen, setChallengeOpen] = useState(false)
   const [challengeLift, setChallengeLift] = useState<string | null>(null)
   const [challengeFormat, setChallengeFormat] = useState<'weight' | 'reps'>('weight')
-  const [leaderboardOpen, setLeaderboardOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<TabId>('rank')
   const [boardView, setBoardView] = useState<'class' | 'open'>('class')
 
   const rankings  = RANKINGS_DATA[selectedClass] ?? []
@@ -135,7 +142,7 @@ export default function CompetePage() {
         key={entry.pos}
         disabled={entry.you}
         whileTap={entry.you ? undefined : { scale: 0.98 }}
-        onClick={() => { if (!entry.you) { setLeaderboardOpen(false); openChallenge(entry.name) } }}
+        onClick={() => { if (!entry.you) openChallenge(entry.name) }}
         initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
         className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-left border"
         style={rowStyle}
@@ -183,7 +190,7 @@ export default function CompetePage() {
         key={entry.pos}
         disabled={entry.you}
         whileTap={entry.you ? undefined : { scale: 0.98 }}
-        onClick={() => { if (!entry.you) { setLeaderboardOpen(false); openChallenge(entry.name, !sameClass) } }}
+        onClick={() => { if (!entry.you) openChallenge(entry.name, !sameClass) }}
         initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
         className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-left border"
         style={rowStyle}
@@ -238,12 +245,13 @@ export default function CompetePage() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[420px] h-[220px] bg-[#FF4500]/8 blur-[110px] pointer-events-none rounded-full" />
 
       <header className="px-5 pt-12 pb-3 relative">
-        <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em]">Power Rank</p>
         <h1 className="text-2xl font-bold leading-none">Compete</h1>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-4 flex flex-col gap-3 relative">
+      <div className="flex-1 overflow-y-auto px-5 pb-28 flex flex-col gap-3 relative">
 
+        {activeTab === 'rank' && (
+        <>
         {/* HERO — where you stand + the climb hook */}
         <div className="rounded-2xl bg-[#1C1C1E] border border-[#252528] overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
@@ -291,9 +299,12 @@ export default function CompetePage() {
             )}
           </button>
         </div>
+        </>
+        )}
 
-        {/* PENDING — urgent, only when present */}
-        {PENDING_CHALLENGES.length > 0 && (
+        {activeTab === 'challenges' && (
+        <>
+        {PENDING_CHALLENGES.length > 0 ? (
           <div className="flex flex-col gap-2">
             <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest px-1">Incoming</p>
             {PENDING_CHALLENGES.map((c, i) => (
@@ -324,80 +335,64 @@ export default function CompetePage() {
               </div>
             ))}
           </div>
+        ) : (
+          <p className="text-sm font-semibold text-[#636366] text-center py-6">No pending challenges</p>
         )}
 
-        {/* LEADERBOARD — opens the full board on tap */}
-        <button
-          onClick={() => setLeaderboardOpen(true)}
-          className="w-full flex items-center gap-3 rounded-2xl bg-[#1C1C1E] border border-[#252528] p-4 hover:border-[#3A3A3C] transition-colors"
-        >
-          <div className="w-10 h-10 rounded-xl bg-[#FF4500]/15 border border-[#FF4500]/30 flex items-center justify-center flex-shrink-0">
-            <Trophy className="w-5 h-5 text-[#FF4500]" />
-          </div>
-          <div className="flex-1 text-left">
-            <p className="text-sm font-bold text-white">Leaderboard</p>
-            <p className="text-xs font-semibold text-[#9A9AAA]">{shortClassName(WEIGHT_CLASSES[selectedClass].full)} · {rankings.length} fighters</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-[#636366]" />
-        </button>
-
-      </div>
-
-      {/* Primary action — the loudest thing on the page */}
-      <div className="px-5 pb-6 pt-3 relative">
         <motion.button whileTap={{ scale: 0.97 }}
-          onClick={() => openChallenge(rival?.name ?? null)}
+          onClick={() => openChallenge(null)}
           className="w-full bg-[#FF4500] text-white font-black py-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.25)]"
         >
           <Swords className="w-4 h-4" />
-          Challenge
+          New Challenge
         </motion.button>
+        </>
+        )}
+
+        {activeTab === 'leaderboard' && (
+        <>
+        <div className="flex bg-[#161618] rounded-xl p-1 border border-[#252528]">
+          {([['class', 'My Class'], ['open', 'Open']] as const).map(([v, l]) => (
+            <button key={v} onClick={() => setBoardView(v)}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${boardView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>{l}</button>
+          ))}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
+          {boardView === 'open' && <p className="text-[10px] text-[#48484A] text-center mt-2">Cross-class · pound-for-pound (size-adjusted)</p>}
+        </div>
+        </>
+        )}
+
+      </div>
+
+      {/* Section tab bar — Rank / Leaderboard / Challenges — pinned just above BottomNav, styled as its own floating pill so it doesn't read as part of BottomNav */}
+      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-[900px] px-5 z-20">
+        <div className="flex bg-[#161618] rounded-xl p-1 border border-[#3A3A3C] shadow-[0_6px_24px_rgba(0,0,0,0.45)]">
+          {TABS.map(tab => {
+            const Icon = tab.icon
+            const active = activeTab === tab.id
+            const showDot = tab.id === 'challenges' && PENDING_CHALLENGES.length > 0
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  active ? 'bg-[#1C1C1E] text-[#FF4500] shadow-sm' : 'text-[#636366]'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+                {showDot && (
+                  <span className="absolute top-1 right-[28%] w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse" />
+                )}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <BottomNav active="compete" />
-
-      {/* Leaderboard sheet */}
-      <AnimatePresence>
-        {leaderboardOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setLeaderboardOpen(false)}
-              className="fixed inset-0 bg-black/90 z-[60]"
-            />
-            <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[900px] bg-[#0D0D0F] border-t border-[#252528] rounded-t-3xl z-[70] flex flex-col max-h-[92dvh]"
-            >
-              <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-                <div className="w-10 h-1 rounded-full bg-[#3A3A3C]" />
-              </div>
-              <div className="flex items-center justify-between px-5 pt-2 pb-4 flex-shrink-0">
-                <div>
-                  <h2 className="text-xl font-bold">Leaderboard</h2>
-                  <p className="text-[#9A9AAA] text-sm">Tap a fighter to challenge</p>
-                </div>
-                <button onClick={() => setLeaderboardOpen(false)} className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA] hover:text-white flex-shrink-0">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="px-5 pb-3 flex-shrink-0">
-                <div className="flex bg-[#161618] rounded-xl p-1 border border-[#252528]">
-                  {([['class', 'My Class'], ['open', 'Open']] as const).map(([v, l]) => (
-                    <button key={v} onClick={() => setBoardView(v)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${boardView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>{l}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex-1 overflow-y-auto px-5 pb-8 flex flex-col gap-1.5">
-                {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
-                {boardView === 'open' && <p className="text-[10px] text-[#48484A] text-center mt-2">Cross-class · pound-for-pound (size-adjusted)</p>}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
       {/* Challenge sheet — opponent + lift + format */}
       <AnimatePresence>
