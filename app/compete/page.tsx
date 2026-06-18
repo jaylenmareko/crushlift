@@ -204,10 +204,12 @@ export default function CompetePage() {
               ? <p className="flex items-center gap-0.5 text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider"><Flame className="w-3 h-3" />{entry.streak} win streak</p>
               : null}
         </div>
-        <span className="text-sm font-bold tabular-nums text-[#9A9AAA]">{entry.record}</span>
-        {entry.you ? null : isRival
-          ? <motion.span animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} className="text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 flex-shrink-0 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</motion.span>
-          : <Swords className="w-3.5 h-3.5 text-[#48484A] flex-shrink-0" />}
+        <span className="w-11 text-right text-sm font-bold tabular-nums text-[#9A9AAA] flex-shrink-0">{entry.record}</span>
+        <div className="w-[64px] flex justify-end flex-shrink-0">
+          {entry.you ? null : isRival
+            ? <motion.span animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} className="text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</motion.span>
+            : <Swords className="w-3.5 h-3.5 text-[#48484A]" />}
+        </div>
       </motion.button>
     )
   }
@@ -370,12 +372,7 @@ export default function CompetePage() {
         {/* Your position — you + the lifters directly around you */}
         {neighborhood.length > 0 && (
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between px-1">
-              <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest">Your Position</p>
-              <button onClick={() => changeTab('leaderboard')} className="flex items-center gap-0.5 text-[11px] font-bold text-[#FF4500]">
-                Full board <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest px-1">Your Position</p>
             <div className="flex flex-col gap-1.5">
               {neighborhood.map(renderLeaderRow)}
             </div>
