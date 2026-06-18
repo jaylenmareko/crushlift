@@ -134,6 +134,11 @@ export default function CompetePage() {
   const yourEntry = youIdx >= 0 ? rankings[youIdx] : null
   const rival     = youIdx > 0 ? rankings[youIdx - 1] : null  // person one spot above you
   const [yWins, yLosses] = (yourEntry?.record ?? '0-0').split('-')
+  const wNum = parseInt(yWins) || 0
+  const lNum = parseInt(yLosses) || 0
+  const winRate = wNum + lNum > 0 ? Math.round((wNum / (wNum + lNum)) * 100) : 0
+  // you + the people directly above/below you, for the rank-tab mini board
+  const neighborhood = yourEntry ? rankings.slice(Math.max(0, youIdx - 1), youIdx + 2) : []
 
   function openChallenge(name: string | null, superfight = false) {
     setChallengeOpponent(name)
@@ -273,35 +278,62 @@ export default function CompetePage() {
         {activeTab === 'rank' && (
         <motion.div key="rank" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
         {/* HERO — where you stand + the climb hook */}
-        <div className="rounded-2xl bg-[#1C1C1E] border border-[#252528] overflow-hidden">
+        <div className="relative rounded-3xl bg-gradient-to-b from-[#202023] to-[#161618] border border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
           <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
-          <div className="p-4 flex items-center gap-4">
-            <div className="flex-1">
-              <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-1.5">{shortClassName(WEIGHT_CLASSES[selectedClass].full)}</p>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-5xl font-black text-[#FF4500] leading-none">{yourEntry ? `#${yourEntry.pos}` : '—'}</span>
-                {yourEntry && <span className="text-sm font-bold text-[#636366]">of {rankings.length}</span>}
-              </div>
+          {/* inner glow */}
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-44 bg-[#FF4500]/15 blur-[80px] pointer-events-none rounded-full" />
+
+          <div className="relative pt-6 pb-5 flex flex-col items-center text-center">
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center text-lg font-black mb-3"
+              style={{ backgroundColor: '#FF45001f', color: '#FF4500', border: '2px solid #FF450066', boxShadow: '0 0 24px rgba(255,69,0,0.25)' }}
+            >
+              {initials('You')}
+            </div>
+            <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.2em] mb-2">{shortClassName(WEIGHT_CLASSES[selectedClass].full)}</span>
+            {yourEntry ? (
+              <>
+                <span className="text-7xl font-black text-[#FF4500] leading-none tracking-tight drop-shadow-[0_2px_20px_rgba(255,69,0,0.35)]">#{yourEntry.pos}</span>
+                <p className="text-xs font-bold text-[#636366] mt-2">of {rankings.length} in your class</p>
+              </>
+            ) : (
+              <span className="text-4xl font-black text-[#636366] leading-none">Unranked</span>
+            )}
+            <div className="flex items-center gap-2 mt-3 empty:hidden">
               {yourEntry?.trend ? (
-                <span className="inline-flex items-center gap-0.5 mt-2 text-xs font-black text-[#22C55E]">
+                <span className="inline-flex items-center gap-0.5 text-xs font-black text-[#22C55E] bg-[#22C55E]/10 px-2.5 py-1 rounded-lg">
                   <ArrowUp className="w-3.5 h-3.5" />{yourEntry.trend} this week
                 </span>
               ) : null}
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] text-[#9A9AAA] uppercase tracking-widest font-bold mb-1">Record</p>
-              <p className="text-2xl font-black leading-none tabular-nums">
-                <span className="text-[#22C55E]">{yWins}</span>
-                <span className="text-[#48484A]">-</span>
-                <span className="text-[#EF4444]">{yLosses}</span>
-              </p>
+              {(yourEntry?.streak ?? 0) >= 2 ? (
+                <span className="inline-flex items-center gap-0.5 text-xs font-black text-[#F59E0B] bg-[#F59E0B]/10 px-2.5 py-1 rounded-lg">
+                  <Flame className="w-3.5 h-3.5" />{yourEntry?.streak} win streak
+                </span>
+              ) : null}
             </div>
           </div>
+
+          {/* Stat strip */}
+          <div className="relative grid grid-cols-3 border-t border-[#252528]">
+            <div className="py-3.5 text-center">
+              <p className="text-2xl font-black text-[#22C55E] leading-none tabular-nums">{yWins}</p>
+              <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1.5">Wins</p>
+            </div>
+            <div className="py-3.5 text-center border-x border-[#252528]">
+              <p className="text-2xl font-black text-[#EF4444] leading-none tabular-nums">{yLosses}</p>
+              <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1.5">Losses</p>
+            </div>
+            <div className="py-3.5 text-center">
+              <p className="text-2xl font-black text-white leading-none tabular-nums">{winRate}<span className="text-sm text-[#636366]">%</span></p>
+              <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1.5">Win Rate</p>
+            </div>
+          </div>
+
           {/* Climb hook */}
           <button
             onClick={() => rival && openChallenge(rival.name)}
             disabled={!rival}
-            className="w-full flex items-center gap-2 px-4 py-3 border-t border-[#252528] text-left disabled:cursor-default"
+            className="relative w-full flex items-center gap-2 px-4 py-3.5 border-t border-[#252528] text-left disabled:cursor-default hover:bg-[#FF4500]/5 transition-colors"
           >
             {rival ? (
               <>
@@ -319,6 +351,21 @@ export default function CompetePage() {
             )}
           </button>
         </div>
+
+        {/* Your position — you + the lifters directly around you */}
+        {neighborhood.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between px-1">
+              <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest">Your Position</p>
+              <button onClick={() => changeTab('leaderboard')} className="flex items-center gap-0.5 text-[11px] font-bold text-[#FF4500]">
+                Full board <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {neighborhood.map(renderLeaderRow)}
+            </div>
+          </div>
+        )}
         </motion.div>
         )}
 
