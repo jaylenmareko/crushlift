@@ -112,7 +112,6 @@ export default function OnboardingPage() {
   const notesRef = useRef<HTMLTextAreaElement>(null)
   const goalCustomRef = useRef<HTMLTextAreaElement>(null)
   const equipCustomRef = useRef<HTMLTextAreaElement>(null)
-  const [firstName, setFirstName] = useState('')
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -214,7 +213,7 @@ export default function OnboardingPage() {
       case 1: return !!data.experience
       case 2: return !!data.daysPerWeek && !!data.sessionLength && splitTypes.length > 0
       case 3: return equipmentSelections.length > 0 || !!equipCustom
-      case TOTAL_STEPS - 1: return !!firstName.trim() && /^[a-z0-9_]{3,20}$/.test(username) && /\S+@\S+\.\S+/.test(email) && password.length >= 8
+      case TOTAL_STEPS - 1: return /^[a-z0-9_]{3,20}$/.test(username) && /\S+@\S+\.\S+/.test(email) && password.length >= 8
       default: return true
     }
   }
@@ -226,8 +225,8 @@ export default function OnboardingPage() {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      // username + first_name live in auth user metadata — the profiles table has no columns for them
-      options: { data: { first_name: firstName.trim(), username: username.trim() } },
+      // username lives in auth user metadata too (mirrors the profiles row)
+      options: { data: { username: username.trim() } },
     })
     if (authError) {
       setSignupError(authError.message)
@@ -235,12 +234,11 @@ export default function OnboardingPage() {
       return
     }
     if (authData.user) {
-      // profiles is the source of truth for name/handle (also kept in auth metadata above).
+      // profiles is the source of truth for the handle (also kept in auth metadata above).
       // username has a unique index — a taken handle throws 23505, surfaced as a friendly error.
       const { error: profileError } = await supabase.from('profiles').upsert({
         id: authData.user.id,
         email: email.trim(),
-        first_name: firstName.trim(),
         username: username.trim(),
         weight: weight ? parseFloat(weight) : null,
       }, { onConflict: 'id' })
@@ -677,7 +675,6 @@ export default function OnboardingPage() {
                   Create your account
                 </h2>
                 {(() => {
-                  const vFirst = !!firstName.trim()
                   const vUser = /^[a-z0-9_]{3,20}$/.test(username)
                   const vEmail = /\S+@\S+\.\S+/.test(email)
                   const vPass = password.length >= 8
@@ -685,12 +682,6 @@ export default function OnboardingPage() {
                     hasValue ? (valid ? 'border-[#22C55E]' : 'border-red-500/60') : 'border-[#252528]'
                   return (
                     <div className="flex flex-col gap-3">
-                      <div>
-                        <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-2">First name</label>
-                        <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
-                          placeholder="e.g. Jaylen" autoComplete="given-name"
-                          className={`w-full bg-[#1C1C1E] border ${fieldBorder(vFirst, !!firstName)} rounded-2xl px-4 py-4 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:border-[#FF4500] transition-colors`} />
-                      </div>
                       <div>
                         <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-2">Username</label>
                         <div className="relative">
