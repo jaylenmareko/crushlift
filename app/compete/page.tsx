@@ -367,8 +367,8 @@ export default function CompetePage() {
       </div>
 
       {/* Section tab bar — Rank / Leaderboard / Challenges — pinned just above BottomNav, styled as its own floating pill so it doesn't read as part of BottomNav */}
-      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-[900px] px-5 z-20">
-        <div className="flex bg-[#161618] rounded-xl p-1 border border-[#3A3A3C] shadow-[0_6px_24px_rgba(0,0,0,0.45)]">
+      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-[900px] px-5 z-20">
+        <div className="flex bg-[#161618] rounded-xl p-1 border border-[#252528] shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
           {TABS.map(tab => {
             const Icon = tab.icon
             const active = activeTab === tab.id
