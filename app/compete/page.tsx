@@ -463,7 +463,7 @@ export default function CompetePage() {
         {activeTab === 'leaderboard' && (
         <motion.div key="leaderboard" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
         <div className="flex bg-[#161618] rounded-xl p-1 border border-[#252528]">
-          {([['class', 'My Class'], ['open', 'Open']] as const).map(([v, l]) => (
+          {([['class', 'My Class'], ['open', 'Pound for Pound']] as const).map(([v, l]) => (
             <button key={v} onClick={() => setBoardView(v)}
               className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${boardView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>{l}</button>
           ))}
