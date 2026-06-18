@@ -155,6 +155,14 @@ export default function CompetePage() {
     setChallengeOpen(true)
   }
 
+  // On send, close the sheet and drop the user on Challenges → Outgoing so they
+  // see the challenge they just sent. (TODO: persist via battle backend.)
+  function sendChallenge() {
+    setChallengeOpen(false)
+    setChallengeView('outgoing')
+    changeTab('challenges')
+  }
+
   const renderLeaderRow = (entry: (typeof rankings)[number], i: number) => {
     const rankColor =
       entry.pos === 1 ? '#FFC107' :
@@ -570,7 +578,7 @@ export default function CompetePage() {
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   disabled={!challengeOpponent || !challengeLift}
-                  onClick={() => setChallengeOpen(false)}
+                  onClick={sendChallenge}
                   className="w-full bg-[#FF4500] text-white font-black py-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.25)] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Swords className="w-4 h-4" />
