@@ -465,7 +465,7 @@ export default function CompetePage() {
         <div className="flex bg-[#161618] rounded-xl p-1 border border-[#252528]">
           {([['class', 'My Class'], ['open', 'Pound for Pound']] as const).map(([v, l]) => (
             <button key={v} onClick={() => setBoardView(v)}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${boardView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>{l}</button>
+              className={`flex-1 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${boardView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>{l}</button>
           ))}
         </div>
         <div className="flex flex-col gap-1.5">
