@@ -10,7 +10,7 @@ MVP Build — core flows built, PR verification chain complete, media storage li
 - [ ] 1v1 Battle flow (challenge, respond, Claude verification, W/L record update)
 - [ ] Friends system (search by username, add/remove, challenge button)
 - [x] Ranks page (`/ranks`, renamed from Belts) — split out from Compete, reads from real `pr_verifications` data (verified-only)
-- [ ] Compete page (`/compete`) Rankings & Battles tabs — still `RANKINGS_DATA` / `DUMMY_BATTLES`
+- [x] Compete page (`/compete`) restructured into Rank / Leaderboard / Challenges tabs (floating pill above BottomNav) — still backed by dummy `RANKINGS_DATA` / `PENDING_CHALLENGES` / `OPEN_ROSTER`, not real Supabase data
 
 ## Next stage
 Beta — real users, real PRs, iterate on verification accuracy
