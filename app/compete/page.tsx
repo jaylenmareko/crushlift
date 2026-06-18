@@ -52,6 +52,12 @@ const PENDING_CHALLENGES: { from: string; lift: string; format: 'weight' | 'reps
   { from: 'Marcus T.', lift: 'Squat', format: 'weight' },
 ]
 
+// Outgoing challenges you've sent that are awaiting the opponent's response.
+const OUTGOING_CHALLENGES: { to: string; lift: string; format: 'weight' | 'reps' }[] = [
+  { to: 'Devon L.', lift: 'Bench Press', format: 'weight' },
+  { to: 'Hector V.', lift: 'Pull-up', format: 'reps' },
+]
+
 // Open / pound-for-pound roster — everyone across all classes (cls = weight-class index).
 // Fights here are superfights, ranked by a real DOTS score: each fighter's best lift (lbs)
 // adjusted for their bodyweight (bw, lbs). A smaller lifter can out-rank a bigger one.
@@ -120,6 +126,7 @@ export default function CompetePage() {
   const [activeTab, setActiveTab] = useState<TabId>('rank')
   const [tabDir, setTabDir] = useState(0)
   const [boardView, setBoardView] = useState<'class' | 'open'>('class')
+  const [challengeView, setChallengeView] = useState<'incoming' | 'outgoing'>('incoming')
 
   function changeTab(id: TabId) {
     if (id === activeTab) return
@@ -371,15 +378,30 @@ export default function CompetePage() {
 
         {activeTab === 'challenges' && (
         <motion.div key="challenges" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
-        {PENDING_CHALLENGES.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest px-1">Incoming</p>
-            {PENDING_CHALLENGES.map((c, i) => (
+
+        {/* Incoming / Outgoing underline tabs */}
+        <div className="flex border-b border-[#252528] -mx-1">
+          {([['incoming', 'Incoming', PENDING_CHALLENGES.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length]] as const).map(([v, label, count]) => {
+            const active = challengeView === v
+            return (
+              <button key={v} onClick={() => setChallengeView(v)} className="relative flex-1 flex items-center justify-center gap-1.5 py-3">
+                <span className={`text-sm font-bold transition-colors ${active ? 'text-white' : 'text-[#636366]'}`}>{label}</span>
+                {count > 0 && (
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${active ? 'bg-[#FF4500] text-white' : 'bg-[#252528] text-[#9A9AAA]'}`}>{count}</span>
+                )}
+                {active && <motion.div layoutId="challengeUnderline" className="absolute -bottom-px left-0 right-0 h-[2px] bg-[#FF4500] rounded-full" transition={{ type: 'spring', damping: 30, stiffness: 350 }} />}
+              </button>
+            )
+          })}
+        </div>
+
+        <AnimatePresence mode="wait">
+        <motion.div key={challengeView} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }} className="flex flex-col gap-2">
+          {challengeView === 'incoming' ? (
+            PENDING_CHALLENGES.length > 0 ? PENDING_CHALLENGES.map((c, i) => (
               <div key={i} className="rounded-2xl bg-[#FF4500]/8 border border-[#FF4500]/25 p-3 flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black"
-                  style={{ backgroundColor: `${avatarColor(c.from)}22`, color: avatarColor(c.from), border: `1.5px solid ${avatarColor(c.from)}55` }}
-                >
+                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black"
+                  style={{ backgroundColor: `${avatarColor(c.from)}22`, color: avatarColor(c.from), border: `1.5px solid ${avatarColor(c.from)}55` }}>
                   {initials(c.from)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -400,11 +422,33 @@ export default function CompetePage() {
                   </motion.button>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm font-semibold text-[#636366] text-center py-6">No pending challenges</p>
-        )}
+            )) : (
+              <p className="text-sm font-semibold text-[#636366] text-center py-8">No incoming challenges</p>
+            )
+          ) : (
+            OUTGOING_CHALLENGES.length > 0 ? OUTGOING_CHALLENGES.map((c, i) => (
+              <div key={i} className="rounded-2xl bg-[#1C1C1E] border border-[#252528] p-3 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black"
+                  style={{ backgroundColor: `${avatarColor(c.to)}22`, color: avatarColor(c.to), border: `1.5px solid ${avatarColor(c.to)}55` }}>
+                  {initials(c.to)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white truncate">You challenged {c.to}</p>
+                  <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5 truncate">
+                    {c.lift} · {c.format === 'weight' ? 'most weight' : 'most reps'} · <span className="text-[#F59E0B] font-bold">awaiting response</span>
+                  </p>
+                </div>
+                <motion.button whileTap={{ scale: 0.9 }} aria-label="Cancel challenge"
+                  className="w-10 h-10 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA] hover:text-white flex-shrink-0">
+                  <X className="w-5 h-5" />
+                </motion.button>
+              </div>
+            )) : (
+              <p className="text-sm font-semibold text-[#636366] text-center py-8">No outgoing challenges</p>
+            )
+          )}
+        </motion.div>
+        </AnimatePresence>
 
         <motion.button whileTap={{ scale: 0.97 }}
           onClick={() => openChallenge(null)}
