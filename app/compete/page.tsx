@@ -96,6 +96,15 @@ const TABS = [
 ] as const
 type TabId = (typeof TABS)[number]['id']
 
+// Directional roll-over between tabs: new content slides in from the side
+// you're heading toward, old content slides out the opposite way.
+const tabVariants = {
+  enter:  (dir: number) => ({ opacity: 0, x: dir > 0 ? 28 : -28 }),
+  center: { opacity: 1, x: 0 },
+  exit:   (dir: number) => ({ opacity: 0, x: dir > 0 ? -28 : 28 }),
+}
+const tabTransition = { duration: 0.22, ease: 'easeOut' } as const
+
 export default function CompetePage() {
   const {
     userWeight, selectedClass,
@@ -109,7 +118,16 @@ export default function CompetePage() {
   const [challengeLift, setChallengeLift] = useState<string | null>(null)
   const [challengeFormat, setChallengeFormat] = useState<'weight' | 'reps'>('weight')
   const [activeTab, setActiveTab] = useState<TabId>('rank')
+  const [tabDir, setTabDir] = useState(0)
   const [boardView, setBoardView] = useState<'class' | 'open'>('class')
+
+  function changeTab(id: TabId) {
+    if (id === activeTab) return
+    const from = TABS.findIndex(t => t.id === activeTab)
+    const to = TABS.findIndex(t => t.id === id)
+    setTabDir(to > from ? 1 : -1)
+    setActiveTab(id)
+  }
 
   const rankings  = RANKINGS_DATA[selectedClass] ?? []
   const youIdx    = rankings.findIndex(r => r.you)
@@ -250,8 +268,10 @@ export default function CompetePage() {
 
       <div className="flex-1 overflow-y-auto px-5 pb-28 flex flex-col gap-3 relative">
 
+        <AnimatePresence mode="wait" custom={tabDir} initial={false}>
+
         {activeTab === 'rank' && (
-        <>
+        <motion.div key="rank" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
         {/* HERO — where you stand + the climb hook */}
         <div className="rounded-2xl bg-[#1C1C1E] border border-[#252528] overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
@@ -299,11 +319,11 @@ export default function CompetePage() {
             )}
           </button>
         </div>
-        </>
+        </motion.div>
         )}
 
         {activeTab === 'challenges' && (
-        <>
+        <motion.div key="challenges" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
         {PENDING_CHALLENGES.length > 0 ? (
           <div className="flex flex-col gap-2">
             <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest px-1">Incoming</p>
@@ -346,11 +366,11 @@ export default function CompetePage() {
           <Swords className="w-4 h-4" />
           New Challenge
         </motion.button>
-        </>
+        </motion.div>
         )}
 
         {activeTab === 'leaderboard' && (
-        <>
+        <motion.div key="leaderboard" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
         <div className="flex bg-[#161618] rounded-xl p-1 border border-[#252528]">
           {([['class', 'My Class'], ['open', 'Open']] as const).map(([v, l]) => (
             <button key={v} onClick={() => setBoardView(v)}
@@ -361,8 +381,10 @@ export default function CompetePage() {
           {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
           {boardView === 'open' && <p className="text-[10px] text-[#48484A] text-center mt-2">Cross-class · pound-for-pound (size-adjusted)</p>}
         </div>
-        </>
+        </motion.div>
         )}
+
+        </AnimatePresence>
 
       </div>
 
@@ -376,7 +398,7 @@ export default function CompetePage() {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => changeTab(tab.id)}
                 className={`relative flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
                   active ? 'bg-[#1C1C1E] text-[#FF4500] shadow-sm' : 'text-[#636366]'
                 }`}
