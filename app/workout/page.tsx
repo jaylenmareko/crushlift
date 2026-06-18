@@ -3,12 +3,14 @@
 import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, ChevronLeft, Video, PlayCircle } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Video, PlayCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Plan, PlanDay, PlanExercise, WorkoutSet, WorkoutHistoryEntry } from '@/lib/types'
 import BottomNav from '@/components/BottomNav'
 import FormAnalysisModal from '@/components/FormAnalysisModal'
 import ExerciseDemoModal from '@/components/ExerciseDemoModal'
+import { BIG_SIX, computeLiftData } from '@/lib/belts'
+import { usePrLogger } from '@/lib/hooks/usePrLogger'
 
 const REST_SECONDS = 90
 
@@ -21,6 +23,10 @@ function WorkoutContent() {
   const [plan, setPlan] = useState<Plan | null>(null)
   const [sets, setSets] = useState<Record<string, WorkoutSet[]>>({})
   const [prevBests, setPrevBests] = useState<Record<string, { weight: number | null, reps: number | null }>>({})
+  // Verified-PR bests per Big-6 lift (from pr_verifications) — separate from prevBests above,
+  // which is just last-session display data. Used to detect when a completed set is a new PR.
+  const [runningBest, setRunningBest] = useState<Record<string, { best: number; bestReps: number | null }>>({})
+  const [prCandidates, setPrCandidates] = useState<Record<string, { setIndex: number; weight: number | null; reps: number | null } | null>>({})
   const [restTimer, setRestTimer] = useState<number | null>(null)
   const [restingFor, setRestingFor] = useState<string | null>(null)
   const [planLoaded, setPlanLoaded] = useState(false)
@@ -99,6 +105,80 @@ function WorkoutContent() {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [])
 
+  // Verified PR bests per Big-6 lift — powers inline "New PR!" detection below
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      const { data: prs } = await supabase
+        .from('pr_verifications')
+        .select('exercise_name, declared_weight, declared_reps')
+        .eq('user_id', user.id)
+        .eq('verified', true)
+      if (!prs) return
+      const byLift: Record<string, { best: number; bestReps: number | null }> = {}
+      for (const pr of prs) {
+        const cur = byLift[pr.exercise_name] ?? { best: 0, bestReps: null }
+        if ((pr.declared_weight ?? 0) > cur.best) cur.best = pr.declared_weight ?? 0
+        if (pr.declared_reps != null && (cur.bestReps == null || pr.declared_reps > cur.bestReps)) cur.bestReps = pr.declared_reps
+        byLift[pr.exercise_name] = cur
+      }
+      setRunningBest(byLift)
+    }).catch(() => {})
+  }, [])
+
+  function getExerciseName(exerciseId: string): string | undefined {
+    if (!plan) return undefined
+    const idx = Math.min(dayIndex, plan.days.length - 1)
+    return plan.days[idx].exercises.find((e: PlanExercise) => e.id === exerciseId)?.name
+  }
+
+  // Recomputes which completed set (if any) is the best PR-beating set for this exercise.
+  // Re-derives from scratch on every toggle so unchecking a set clears a stale banner correctly.
+  function recomputePrCandidate(exerciseId: string, updatedSets: WorkoutSet[]) {
+    const liftName = getExerciseName(exerciseId)
+    const lift = BIG_SIX.find(l => l.name === liftName)
+    if (!lift) return
+    const best = runningBest[lift.name] ?? { best: 0, bestReps: null }
+    let candidate: { setIndex: number; weight: number | null; reps: number | null } | null = null
+    updatedSets.forEach((s, i) => {
+      if (!s.completed) return
+      const beats = lift.type === 'bodyweight'
+        ? (s.reps ?? 0) > (best.bestReps ?? 0)
+        : (s.weight ?? 0) > best.best
+      if (!beats) return
+      const better = !candidate || (lift.type === 'bodyweight'
+        ? (s.reps ?? 0) > (candidate.reps ?? 0)
+        : (s.weight ?? 0) > (candidate.weight ?? 0))
+      if (better) candidate = { setIndex: i, weight: s.weight, reps: s.reps }
+    })
+    setPrCandidates(prev => ({ ...prev, [exerciseId]: candidate }))
+  }
+
+  const liftDataForPr = computeLiftData(BIG_SIX.map(l => ({
+    ...l,
+    best: runningBest[l.name]?.best ?? 0,
+    bestReps: runningBest[l.name]?.bestReps ?? null,
+  })))
+
+  const { openLogPr, modals: prModals } = usePrLogger(liftDataForPr, (liftName, weight, reps) => {
+    setRunningBest(prev => {
+      const cur = prev[liftName] ?? { best: 0, bestReps: null }
+      return {
+        ...prev,
+        [liftName]: {
+          best: weight !== null && weight > cur.best ? weight : cur.best,
+          bestReps: reps !== null && (cur.bestReps === null || reps > cur.bestReps) ? reps : cur.bestReps,
+        },
+      }
+    })
+    setPrCandidates(prev => {
+      const next = { ...prev }
+      Object.keys(next).forEach(exId => { if (getExerciseName(exId) === liftName) next[exId] = null })
+      return next
+    })
+  })
+
   useEffect(() => {
     if (planLoaded && !plan) router.replace('/plan')
   }, [planLoaded, plan, router])
@@ -120,12 +200,13 @@ function WorkoutContent() {
   }
 
   function toggleSet(exerciseId: string, setIndex: number) {
-    setSets(prev => ({
-      ...prev,
-      [exerciseId]: prev[exerciseId].map((s, i) =>
+    setSets(prev => {
+      const updated = prev[exerciseId].map((s, i) =>
         i === setIndex ? { ...s, completed: !s.completed } : s
-      ),
-    }))
+      )
+      recomputePrCandidate(exerciseId, updated)
+      return { ...prev, [exerciseId]: updated }
+    })
   }
 
   function updateSet(exerciseId: string, setIndex: number, field: 'weight' | 'reps', value: string) {
@@ -281,8 +362,8 @@ function WorkoutContent() {
             {/* Sets */}
             <div className="flex flex-col gap-1.5">
               {(sets[ex.id] || []).map((s, i) => (
+                <div key={s.id} className="flex flex-col gap-1">
                 <div
-                  key={s.id}
                   className={`grid grid-cols-[32px_1fr_76px_76px_36px] gap-2 items-center px-1 py-2.5 rounded-xl transition-colors ${
                     s.completed ? 'bg-[#22C55E]/8 border border-[#22C55E]/15' : 'border border-transparent'
                   }`}
@@ -335,6 +416,18 @@ function WorkoutContent() {
                     <Check className={`w-3.5 h-3.5 ${s.completed ? 'text-white' : 'text-[#636366]'}`} />
                   </button>
                 </div>
+                {prCandidates[ex.id]?.setIndex === i && (
+                  <motion.button
+                    initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                    onClick={() => openLogPr(ex.name, { weight: s.weight ?? undefined, reps: s.reps ?? undefined })}
+                    className="flex items-center gap-2 bg-[#FF4500]/8 border border-[#FF4500]/20 rounded-xl px-3 py-2"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse flex-shrink-0" />
+                    <span className="text-xs font-bold text-[#FF4500] flex-1 text-left">🔥 New PR! Tap to log it</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-[#FF4500] flex-shrink-0" />
+                  </motion.button>
+                )}
+                </div>
               ))}
             </div>
           </div>
@@ -353,6 +446,8 @@ function WorkoutContent() {
       </div>
 
       <BottomNav active="workout" />
+
+      {prModals}
 
       <AnimatePresence>
         {demoTarget && (

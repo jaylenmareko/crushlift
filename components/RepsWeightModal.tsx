@@ -6,13 +6,15 @@ import { X, Minus, Plus } from 'lucide-react'
 
 interface Props {
   liftName: string
+  initialReps?: number
+  initialWeight?: number
   onDone: (reps: number, weight: number) => void
   onClose: () => void
 }
 
-export default function RepsWeightModal({ liftName, onDone, onClose }: Props) {
-  const [reps, setReps] = useState(1)
-  const [weight, setWeight] = useState(0)
+export default function RepsWeightModal({ liftName, initialReps, initialWeight, onDone, onClose }: Props) {
+  const [reps, setReps] = useState(initialReps ?? 1)
+  const [weight, setWeight] = useState(initialWeight ?? 0)
 
   return (
     <>
