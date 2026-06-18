@@ -13,7 +13,6 @@ import type { WorkoutHistoryEntry } from '@/lib/types'
 export default function ProfilePage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
-  const [firstName, setFirstName] = useState('')
   const [username, setUsername] = useState('')
   const [status, setStatus] = useState<string | null>(null)
   const [showPaywall, setShowPaywall] = useState(false)
@@ -37,11 +36,10 @@ export default function ProfilePage() {
       }
 
       setEmail(user.email || '')
-      supabase.from('profiles').select('subscription_status, first_name, username').eq('id', user.id).single()
+      supabase.from('profiles').select('subscription_status, username').eq('id', user.id).single()
         .then(({ data }) => {
           setStatus(data?.subscription_status || null)
           // fall back to auth metadata if the profiles row predates name persistence
-          setFirstName(data?.first_name || user.user_metadata?.first_name || '')
           setUsername(data?.username || user.user_metadata?.username || '')
         })
 
@@ -116,13 +114,12 @@ export default function ProfilePage() {
             <div className="flex items-center gap-3">
               <div
                 className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
-                style={{ backgroundColor: `${avatarColor(username || firstName || email)}22`, color: avatarColor(username || firstName || email), border: `1.5px solid ${avatarColor(username || firstName || email)}55` }}
+                style={{ backgroundColor: `${avatarColor(username || email)}22`, color: avatarColor(username || email), border: `1.5px solid ${avatarColor(username || email)}55` }}
               >
-                {initials(firstName || username || email)}
+                {initials(username || email)}
               </div>
               <div className="min-w-0">
-                <p className="text-base font-bold text-white truncate">{firstName || (username ? `@${username}` : 'Athlete')}</p>
-                {username && <p className="text-xs font-semibold text-[#9A9AAA] truncate">@{username}</p>}
+                <p className="text-base font-bold text-white truncate">{username ? `@${username}` : 'Athlete'}</p>
                 <p className="text-xs text-[#636366] truncate mt-0.5">{email}</p>
               </div>
             </div>
