@@ -198,11 +198,9 @@ export default function CompetePage() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-white truncate">{entry.you ? 'You' : entry.name}</p>
-          {isRival
-            ? <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-wider">Rival · one spot up</p>
-            : (entry.streak ?? 0) >= 3
-              ? <p className="flex items-center gap-0.5 text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider"><Flame className="w-3 h-3" />{entry.streak} win streak</p>
-              : null}
+          {(entry.streak ?? 0) >= 3
+            ? <p className="flex items-center gap-0.5 text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider"><Flame className="w-3 h-3" />{entry.streak} win streak</p>
+            : null}
         </div>
         <span className="w-11 text-right text-sm font-bold tabular-nums text-[#9A9AAA] flex-shrink-0">{entry.record}</span>
         <div className="w-[64px] flex justify-end flex-shrink-0">
