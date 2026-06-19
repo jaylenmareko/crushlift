@@ -657,8 +657,14 @@ small lifter and a big lifter compare fairly. One formula, no per-class lookup t
 | Powerlifting (DOTS / Wilks) | class records **+** "Best Lifter" coefficient | the DOTS math for Open |
 | Chess.com | pairs opponents by rating | rank-gated matchmaking |
 
+> **2026-06-19 — Open board ranks by W/L record, NOT by a P4P score.** Briefly the Open board displayed a
+> DOTS strength score and ranked by it; that measured strength, not winning, and confused users. Now the
+> Open board (UI label **"All Classes"**, toggle next to "My Class" on the Leaderboard tab) lists everyone
+> across classes **ordered by W/L record** — no P4P number shown. DOTS (`lib/dots.ts`) is reserved for fairly
+> deciding cross-class **superfight** outcomes at resolution time, not for ranking the board.
+
 **Backend foundation (in repo, NOT yet applied to the live DB):**
-- `lib/dots.ts` — real DOTS pound-for-pound scoring (Open board ranks by it).
+- `lib/dots.ts` — DOTS pound-for-pound math, reserved for deciding cross-class superfight winners (not board ranking).
 - `lib/battles.ts` — Battle/Friendship types + pure `resolveBattle()` (raw for class, DOTS for superfight).
 - `artifacts/17-06-2026-battles-schema-draft.sql` — `battles` + `friendships` tables, RLS, derived `user_records` view. **DRAFT — do not run against production (cheanydnmvqdvsexxdav) until Jaylen approves.** Reuses `pr_verifications` as battle proof; W/L derived, not stored.
 

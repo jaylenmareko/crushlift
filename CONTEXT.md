@@ -52,3 +52,6 @@ Beta — real users, real PRs, iterate on verification accuracy
 2. Compete page (`/compete`) — replace `RANKINGS_DATA` / `PENDING_CHALLENGES` / `OPEN_ROSTER` with real data
 3. 1v1 Battle flow
 4. Friends system
+
+## Deferred (build later)
+- **Matchmaking gating** — keep choose-your-opponent, but only allow challenging people in your weight class + near your rank; gray out/hide ineligible rows. Add a "Quick Match" button (auto-pick eligible opponent) + anti-farming guard (cooldown on repeat fights, weight rank movement by opponent strength). Decided model; not yet built. (Discussed 2026-06-19.)

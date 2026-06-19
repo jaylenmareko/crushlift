@@ -7,7 +7,6 @@ import BottomNav from '@/components/BottomNav'
 import WeightGate from '@/components/WeightGate'
 import { useUserWeight } from '@/lib/hooks/useUserWeight'
 import { WEIGHT_CLASSES, BIG_SIX } from '@/lib/belts'
-import { p4pDisplay, pound4poundScore } from '@/lib/dots'
 
 const RANKINGS_DATA: Record<number, { pos: number; name: string; record: string; you: boolean; streak?: number; trend?: number }[]> = {
   0: [
@@ -58,9 +57,9 @@ const OUTGOING_CHALLENGES: { to: string; lift: string; format: 'weight' | 'reps'
   { to: 'Hector V.', lift: 'Pull-up', format: 'reps' },
 ]
 
-// Open / pound-for-pound roster — everyone across all classes (cls = weight-class index).
-// Fights here are superfights, ranked by a real DOTS score: each fighter's best lift (lbs)
-// adjusted for their bodyweight (bw, lbs). A smaller lifter can out-rank a bigger one.
+// Open (cross-class) roster — everyone across all classes (cls = weight-class index).
+// The board ranks by W/L RECORD. Cross-class fights are "superfights" — decided fairly
+// with DOTS at resolution time (see lib/dots.ts); bw/lift kept here for that future use.
 type OpenFighter = { name: string; cls: number; bw: number; lift: number; record: string; you: boolean; streak?: number }
 const OPEN_ROSTER: OpenFighter[] = [
   { name: 'Tank G.',   cls: 4, bw: 215, lift: 545, record: '30-1', you: false, streak: 12 },
@@ -71,10 +70,17 @@ const OPEN_ROSTER: OpenFighter[] = [
   { name: 'Cam R.',    cls: 0, bw: 132, lift: 365, record: '14-2', you: false },
   { name: 'You',       cls: 2, bw: 165, lift: 300, record: '2-1',  you: true },
 ]
-// Ranked by pound-for-pound score (highest first), then numbered.
+// Parse "30-1" -> wins/losses/rate for record-based sorting.
+function recordParts(r: string) {
+  const [w, l] = r.split('-').map(n => parseInt(n) || 0)
+  return { w, l, rate: w + l > 0 ? w / (w + l) : 0 }
+}
+// Ranked by W/L record: most wins, then fewest losses, then win rate.
 const OPEN_RANKINGS = [...OPEN_ROSTER]
-  .map(f => ({ ...f, score: p4pDisplay(f.lift, f.bw) }))
-  .sort((a, b) => pound4poundScore(b.lift, b.bw) - pound4poundScore(a.lift, a.bw))
+  .sort((a, b) => {
+    const ra = recordParts(a.record), rb = recordParts(b.record)
+    return rb.w - ra.w || ra.l - rb.l || rb.rate - ra.rate
+  })
   .map((f, i) => ({ ...f, pos: i + 1 }))
 
 function shortClassName(full: string) {
@@ -260,11 +266,10 @@ export default function CompetePage() {
           </div>
           {(entry.streak ?? 0) >= 5 && <p className="flex items-center gap-0.5 text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider mt-0.5"><Flame className="w-3 h-3" />{entry.streak} win streak</p>}
         </div>
-        <div className="text-right flex-shrink-0">
-          <p className="text-sm font-black tabular-nums text-white leading-none">{entry.score}</p>
-          <p className="text-[9px] font-bold text-[#636366] uppercase tracking-wider mt-0.5">P4P</p>
+        <span className="w-11 text-right text-sm font-bold tabular-nums text-[#9A9AAA] flex-shrink-0">{entry.record}</span>
+        <div className="w-7 flex justify-end flex-shrink-0">
+          {entry.you ? null : <Swords className="w-3.5 h-3.5 text-[#48484A]" />}
         </div>
-        {entry.you ? null : <Swords className="w-3.5 h-3.5 text-[#48484A] flex-shrink-0" />}
       </motion.button>
     )
   }
@@ -511,7 +516,7 @@ export default function CompetePage() {
 
           <div className="border-t border-[#252528] p-3">
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
-              {([['class', 'My Class'], ['open', 'Pound for Pound']] as const).map(([v, l]) => (
+              {([['class', 'My Class'], ['open', 'All Classes']] as const).map(([v, l]) => (
                 <button key={v} onClick={() => setBoardView(v)}
                   className={`flex-1 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${boardView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>{l}</button>
               ))}
