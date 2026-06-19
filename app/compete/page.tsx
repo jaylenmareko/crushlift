@@ -384,20 +384,18 @@ export default function CompetePage() {
           <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-44 bg-[#FF4500]/15 blur-[80px] pointer-events-none rounded-full" />
 
-          <div className="relative px-4 pt-5 pb-4 flex items-center gap-3">
+          <div className="relative pt-6 pb-5 flex flex-col items-center text-center">
             <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: '#FF45001f', border: '1.5px solid #FF450066', boxShadow: '0 0 18px rgba(255,69,0,0.2)' }}
+              className="w-16 h-16 rounded-full flex items-center justify-center mb-3"
+              style={{ backgroundColor: '#FF45001f', border: '2px solid #FF450066', boxShadow: '0 0 24px rgba(255,69,0,0.25)' }}
             >
-              <Swords className="w-5 h-5 text-[#FF4500]" />
+              <Swords className="w-7 h-7 text-[#FF4500]" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em]">1v1 Battles</p>
-              <p className="text-lg font-black text-white leading-tight">Challenges</p>
-              <p className="text-xs font-semibold text-[#9A9AAA]">
-                {PENDING_CHALLENGES.length > 0 ? `${PENDING_CHALLENGES.length} incoming · ` : ''}{OUTGOING_CHALLENGES.length} outgoing
-              </p>
-            </div>
+            <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.2em] mb-2">1v1 Battles</span>
+            <span className="text-3xl font-black text-white leading-none tracking-tight">Challenges</span>
+            <p className="text-xs font-bold text-[#636366] mt-2">
+              {PENDING_CHALLENGES.length > 0 ? `${PENDING_CHALLENGES.length} incoming · ` : ''}{OUTGOING_CHALLENGES.length} outgoing
+            </p>
           </div>
 
           <div className="border-t border-[#252528] p-3">
@@ -488,18 +486,16 @@ export default function CompetePage() {
           <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-44 bg-[#FF4500]/15 blur-[80px] pointer-events-none rounded-full" />
 
-          <div className="relative px-4 pt-5 pb-4 flex items-center gap-3">
+          <div className="relative pt-6 pb-5 flex flex-col items-center text-center">
             <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: '#FF45001f', border: '1.5px solid #FF450066', boxShadow: '0 0 18px rgba(255,69,0,0.2)' }}
+              className="w-16 h-16 rounded-full flex items-center justify-center mb-3"
+              style={{ backgroundColor: '#FF45001f', border: '2px solid #FF450066', boxShadow: '0 0 24px rgba(255,69,0,0.25)' }}
             >
-              <Trophy className="w-5 h-5 text-[#FF4500]" />
+              <Trophy className="w-7 h-7 text-[#FF4500]" />
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em]">{shortClassName(WEIGHT_CLASSES[selectedClass].full)}</p>
-              <p className="text-lg font-black text-white leading-tight">Leaderboard</p>
-              <p className="text-xs font-semibold text-[#9A9AAA]">{rankings.length} fighters ranked</p>
-            </div>
+            <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.2em] mb-2">{shortClassName(WEIGHT_CLASSES[selectedClass].full)}</span>
+            <span className="text-3xl font-black text-white leading-none tracking-tight">Leaderboard</span>
+            <p className="text-xs font-bold text-[#636366] mt-2">{rankings.length} fighters ranked</p>
           </div>
 
           <div className="border-t border-[#252528] p-3">
