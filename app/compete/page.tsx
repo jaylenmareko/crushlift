@@ -398,11 +398,6 @@ export default function CompetePage() {
                 {PENDING_CHALLENGES.length > 0 ? `${PENDING_CHALLENGES.length} incoming · ` : ''}{OUTGOING_CHALLENGES.length} outgoing
               </p>
             </div>
-            {PENDING_CHALLENGES.length > 0 && (
-              <span className="flex-shrink-0 text-xs font-black text-white bg-[#FF4500] px-2.5 py-1 rounded-lg animate-pulse">
-                {PENDING_CHALLENGES.length} New
-              </span>
-            )}
           </div>
 
           <div className="border-t border-[#252528] p-3">
