@@ -289,8 +289,8 @@ export default function CompetePage() {
 
         {activeTab === 'rank' && (
         <motion.div key="rank" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
-        {/* HERO — where you stand + the climb hook */}
-        <div className="relative rounded-3xl bg-gradient-to-b from-[#202023] to-[#161618] border border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+        {/* HERO — where you stand + the climb hook (full-bleed to screen edges) */}
+        <div className="relative -mx-5 bg-gradient-to-b from-[#202023] to-[#161618] border-y border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
           <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
           {/* inner glow */}
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-44 bg-[#FF4500]/15 blur-[80px] pointer-events-none rounded-full" />
