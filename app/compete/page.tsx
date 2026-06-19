@@ -282,9 +282,6 @@ export default function CompetePage() {
       {/* Top glow — arena energy */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[420px] h-[220px] bg-[#FF4500]/8 blur-[110px] pointer-events-none rounded-full" />
 
-      <header className="px-5 pt-12 pb-3 relative">
-        <h1 className="text-2xl font-bold leading-none">Compete</h1>
-      </header>
 
       <div className="flex-1 overflow-y-auto px-5 pb-28 flex flex-col gap-3 relative">
 
@@ -382,20 +379,45 @@ export default function CompetePage() {
         {activeTab === 'challenges' && (
         <motion.div key="challenges" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
 
-        {/* Incoming / Outgoing underline tabs */}
-        <div className="flex border-b border-[#252528] -mx-1">
-          {([['incoming', 'Incoming', PENDING_CHALLENGES.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length]] as const).map(([v, label, count]) => {
-            const active = challengeView === v
-            return (
-              <button key={v} onClick={() => setChallengeView(v)} className="relative flex-1 flex items-center justify-center gap-1.5 py-3">
-                <span className={`text-sm font-bold transition-colors ${active ? 'text-white' : 'text-[#636366]'}`}>{label}</span>
-                {count > 0 && (
-                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${active ? 'bg-[#FF4500] text-white' : 'bg-[#252528] text-[#9A9AAA]'}`}>{count}</span>
-                )}
-                {active && <motion.div layoutId="challengeUnderline" className="absolute -bottom-px left-0 right-0 h-[2px] bg-[#FF4500] rounded-full" transition={{ type: 'spring', damping: 30, stiffness: 350 }} />}
-              </button>
-            )
-          })}
+        {/* Hero card — same visual language as Rank + Leaderboard tabs */}
+        <div className="relative rounded-3xl bg-gradient-to-b from-[#202023] to-[#161618] border border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+          <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-44 bg-[#FF4500]/15 blur-[80px] pointer-events-none rounded-full" />
+
+          <div className="relative px-4 pt-5 pb-4 flex items-center gap-3">
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: '#FF45001f', border: '1.5px solid #FF450066', boxShadow: '0 0 18px rgba(255,69,0,0.2)' }}
+            >
+              <Swords className="w-5 h-5 text-[#FF4500]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em]">1v1 Battles</p>
+              <p className="text-lg font-black text-white leading-tight">Challenges</p>
+              <p className="text-xs font-semibold text-[#9A9AAA]">
+                {PENDING_CHALLENGES.length > 0 ? `${PENDING_CHALLENGES.length} incoming · ` : ''}{OUTGOING_CHALLENGES.length} outgoing
+              </p>
+            </div>
+            {PENDING_CHALLENGES.length > 0 && (
+              <span className="flex-shrink-0 text-xs font-black text-white bg-[#FF4500] px-2.5 py-1 rounded-lg animate-pulse">
+                {PENDING_CHALLENGES.length} New
+              </span>
+            )}
+          </div>
+
+          <div className="border-t border-[#252528] p-3">
+            <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
+              {([['incoming', 'Incoming', PENDING_CHALLENGES.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length]] as const).map(([v, label, count]) => (
+                <button key={v} onClick={() => setChallengeView(v)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold transition-all ${challengeView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>
+                  {label}
+                  {count > 0 && (
+                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${challengeView === v ? 'bg-[#FF4500] text-white' : 'bg-[#252528] text-[#9A9AAA]'}`}>{count}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <AnimatePresence mode="wait">
@@ -465,12 +487,36 @@ export default function CompetePage() {
 
         {activeTab === 'leaderboard' && (
         <motion.div key="leaderboard" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
-        <div className="flex bg-[#161618] rounded-xl p-1 border border-[#252528]">
-          {([['class', 'My Class'], ['open', 'Pound for Pound']] as const).map(([v, l]) => (
-            <button key={v} onClick={() => setBoardView(v)}
-              className={`flex-1 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${boardView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>{l}</button>
-          ))}
+
+        {/* Hero card — same visual language as Rank tab */}
+        <div className="relative rounded-3xl bg-gradient-to-b from-[#202023] to-[#161618] border border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+          <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-44 bg-[#FF4500]/15 blur-[80px] pointer-events-none rounded-full" />
+
+          <div className="relative px-4 pt-5 pb-4 flex items-center gap-3">
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: '#FF45001f', border: '1.5px solid #FF450066', boxShadow: '0 0 18px rgba(255,69,0,0.2)' }}
+            >
+              <Trophy className="w-5 h-5 text-[#FF4500]" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em]">{shortClassName(WEIGHT_CLASSES[selectedClass].full)}</p>
+              <p className="text-lg font-black text-white leading-tight">Leaderboard</p>
+              <p className="text-xs font-semibold text-[#9A9AAA]">{rankings.length} fighters ranked</p>
+            </div>
+          </div>
+
+          <div className="border-t border-[#252528] p-3">
+            <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
+              {([['class', 'My Class'], ['open', 'Pound for Pound']] as const).map(([v, l]) => (
+                <button key={v} onClick={() => setBoardView(v)}
+                  className={`flex-1 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${boardView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>{l}</button>
+              ))}
+            </div>
+          </div>
         </div>
+
         <div className="flex flex-col gap-1.5">
           {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
           {boardView === 'open' && <p className="text-[10px] text-[#48484A] text-center mt-2">Cross-class · pound-for-pound (size-adjusted)</p>}
