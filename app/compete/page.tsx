@@ -81,7 +81,7 @@ function shortClassName(full: string) {
   return full.split('·')[0].trim()
 }
 
-// Hero eyebrow: "Middle  ·  150–175 lbs" -> "Middle Weight 150–175"
+// Hero eyebrow: "Middle  ·  150–174 lbs" -> "Middle Weight 150–174"
 // (classes already containing "weight", e.g. Lightweight, aren't doubled up)
 function classWeightLabel(idx: number) {
   const { full, label } = WEIGHT_CLASSES[idx]

@@ -588,13 +588,13 @@ comparing — that converts "per weight class" into one formula. Not yet impleme
   and an **Open (pound-for-pound)** ranking are planned — see "Competition structure" below.
 - #1 position = top of leaderboard in your class
 
-**Weight classes:**
+**Weight classes:** (round-number boundaries land in the heavier class — 200 → Heavy)
 ```
 Lightweight:   < 135 lbs
-Light Middle:  135–150 lbs
-Middle:        150–175 lbs
-Light Heavy:   175–200 lbs
-Heavy:         200–220 lbs
+Light Middle:  135–149 lbs
+Middle:        150–174 lbs
+Light Heavy:   175–199 lbs
+Heavy:         200–219 lbs
 Super Heavy:   220+ lbs
 ```
 

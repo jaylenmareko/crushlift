@@ -1,20 +1,21 @@
 // Shared belt/weight-class data + helpers — used by both /belts and /compete pages.
 
+// Round-number boundaries land in the HEAVIER class: 200 → Heavy, 175 → Light Heavy, etc.
 export function getWeightClass(w: number) {
   if (w < 135) return { index: 0, full: 'Lightweight  ·  < 135 lbs' }
-  if (w < 151) return { index: 1, full: 'Light Middle  ·  135–150 lbs' }
-  if (w < 176) return { index: 2, full: 'Middle  ·  150–175 lbs' }
-  if (w < 201) return { index: 3, full: 'Light Heavy  ·  175–200 lbs' }
-  if (w < 221) return { index: 4, full: 'Heavy  ·  200–220 lbs' }
+  if (w < 150) return { index: 1, full: 'Light Middle  ·  135–149 lbs' }
+  if (w < 175) return { index: 2, full: 'Middle  ·  150–174 lbs' }
+  if (w < 200) return { index: 3, full: 'Light Heavy  ·  175–199 lbs' }
+  if (w < 220) return { index: 4, full: 'Heavy  ·  200–219 lbs' }
   return { index: 5, full: 'Super Heavy  ·  220+ lbs' }
 }
 
 export const WEIGHT_CLASSES = [
   { label: '< 135',   full: 'Lightweight  ·  < 135 lbs' },
-  { label: '135–150', full: 'Light Middle  ·  135–150 lbs' },
-  { label: '150–175', full: 'Middle  ·  150–175 lbs' },
-  { label: '175–200', full: 'Light Heavy  ·  175–200 lbs' },
-  { label: '200–220', full: 'Heavy  ·  200–220 lbs' },
+  { label: '135–149', full: 'Light Middle  ·  135–149 lbs' },
+  { label: '150–174', full: 'Middle  ·  150–174 lbs' },
+  { label: '175–199', full: 'Light Heavy  ·  175–199 lbs' },
+  { label: '200–219', full: 'Heavy  ·  200–219 lbs' },
   { label: '220+',    full: 'Super Heavy  ·  220+ lbs' },
 ]
 
