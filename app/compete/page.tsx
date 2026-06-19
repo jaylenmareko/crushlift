@@ -521,7 +521,6 @@ export default function CompetePage() {
 
         <div className="flex flex-col gap-1.5">
           {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
-          {boardView === 'open' && <p className="text-[10px] text-[#48484A] text-center mt-2">Cross-class · pound-for-pound (size-adjusted)</p>}
         </div>
         </motion.div>
         )}
