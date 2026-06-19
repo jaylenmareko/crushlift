@@ -581,6 +581,12 @@ comparing — that converts "per weight class" into one formula. Not yet impleme
 
 ## Battle / Rankings System
 
+> **⚠️ DROPPED 2026-06-19 — Open / Pound-for-Pound board.** The cross-class P4P (DOTS) leaderboard and
+> superfights were removed from the UI: the score (strength-per-bodyweight) measured a different thing than
+> the app's W/L-record competition and confused users. The Leaderboard tab now shows **one board: your weight
+> class, ordered by W/L record.** `lib/dots.ts` stays in the repo as unused foundation. Everything below about
+> Open/P4P/superfights is historical context, NOT current behavior.
+
 - 1v1 challenges. Two battle formats:
   - **Most Weight** — both do the declared lift; whoever moves more weight wins.
   - **Most Reps** — both do the declared lift; whoever does more reps wins.

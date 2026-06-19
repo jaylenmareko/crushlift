@@ -7,7 +7,6 @@ import BottomNav from '@/components/BottomNav'
 import WeightGate from '@/components/WeightGate'
 import { useUserWeight } from '@/lib/hooks/useUserWeight'
 import { WEIGHT_CLASSES, BIG_SIX } from '@/lib/belts'
-import { p4pDisplay, pound4poundScore } from '@/lib/dots'
 
 const RANKINGS_DATA: Record<number, { pos: number; name: string; record: string; you: boolean; streak?: number; trend?: number }[]> = {
   0: [
@@ -57,25 +56,6 @@ const OUTGOING_CHALLENGES: { to: string; lift: string; format: 'weight' | 'reps'
   { to: 'Devon L.', lift: 'Bench Press', format: 'weight' },
   { to: 'Hector V.', lift: 'Pull-up', format: 'reps' },
 ]
-
-// Open / pound-for-pound roster — everyone across all classes (cls = weight-class index).
-// Fights here are superfights, ranked by a real DOTS score: each fighter's best lift (lbs)
-// adjusted for their bodyweight (bw, lbs). A smaller lifter can out-rank a bigger one.
-type OpenFighter = { name: string; cls: number; bw: number; lift: number; record: string; you: boolean; streak?: number }
-const OPEN_ROSTER: OpenFighter[] = [
-  { name: 'Tank G.',   cls: 4, bw: 215, lift: 545, record: '30-1', you: false, streak: 12 },
-  { name: 'Goliath',   cls: 5, bw: 240, lift: 575, record: '25-0', you: false, streak: 9 },
-  { name: 'Big K.',    cls: 3, bw: 195, lift: 500, record: '22-0', you: false, streak: 7 },
-  { name: 'Marcus T.', cls: 2, bw: 170, lift: 455, record: '21-2', you: false, streak: 8 },
-  { name: 'Leon T.',   cls: 1, bw: 148, lift: 420, record: '18-1', you: false },
-  { name: 'Cam R.',    cls: 0, bw: 132, lift: 365, record: '14-2', you: false },
-  { name: 'You',       cls: 2, bw: 165, lift: 300, record: '2-1',  you: true },
-]
-// Ranked by pound-for-pound score (highest first), then numbered.
-const OPEN_RANKINGS = [...OPEN_ROSTER]
-  .map(f => ({ ...f, score: p4pDisplay(f.lift, f.bw) }))
-  .sort((a, b) => pound4poundScore(b.lift, b.bw) - pound4poundScore(a.lift, a.bw))
-  .map((f, i) => ({ ...f, pos: i + 1 }))
 
 function shortClassName(full: string) {
   return full.split('·')[0].trim()
@@ -128,13 +108,11 @@ export default function CompetePage() {
   } = useUserWeight()
 
   const [challengeOpponent, setChallengeOpponent] = useState<string | null>(null)
-  const [challengeSuperfight, setChallengeSuperfight] = useState(false)
   const [challengeOpen, setChallengeOpen] = useState(false)
   const [challengeLift, setChallengeLift] = useState<string | null>(null)
   const [challengeFormat, setChallengeFormat] = useState<'weight' | 'reps'>('weight')
   const [activeTab, setActiveTab] = useState<TabId>('rank')
   const [tabDir, setTabDir] = useState(0)
-  const [boardView, setBoardView] = useState<'class' | 'open'>('class')
   const [challengeView, setChallengeView] = useState<'incoming' | 'outgoing'>('incoming')
 
   function changeTab(id: TabId) {
@@ -156,9 +134,8 @@ export default function CompetePage() {
   // you + the people directly above/below you, for the rank-tab mini board
   const neighborhood = yourEntry ? rankings.slice(Math.max(0, youIdx - 1), youIdx + 2) : []
 
-  function openChallenge(name: string | null, superfight = false) {
+  function openChallenge(name: string | null) {
     setChallengeOpponent(name)
-    setChallengeSuperfight(superfight)
     setChallengeLift(null)
     setChallengeFormat('weight')
     setChallengeOpen(true)
@@ -217,54 +194,6 @@ export default function CompetePage() {
             ? <motion.span animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} className="text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</motion.span>
             : <Swords className="w-3.5 h-3.5 text-[#48484A]" />}
         </div>
-      </motion.button>
-    )
-  }
-
-  const renderOpenRow = (entry: (typeof OPEN_RANKINGS)[number], i: number) => {
-    const rankColor =
-      entry.pos === 1 ? '#FFC107' :
-      entry.pos === 2 ? '#D1D5DB' :
-      entry.pos === 3 ? '#F59E0B' : '#636366'
-    const av = entry.you ? '#FF4500' : avatarColor(entry.name)
-    const sameClass = entry.cls === selectedClass
-    const rowStyle =
-      entry.you ? { backgroundColor: '#FF450014', borderColor: '#FF450045' }
-      : entry.pos <= 3 ? { backgroundColor: `${rankColor}12`, borderColor: 'transparent' }
-      : { backgroundColor: '#25252880', borderColor: 'transparent' }
-    return (
-      <motion.button
-        key={entry.pos}
-        disabled={entry.you}
-        whileTap={entry.you ? undefined : { scale: 0.98 }}
-        onClick={() => { if (!entry.you) openChallenge(entry.name, !sameClass) }}
-        initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-        className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-left border"
-        style={rowStyle}
-      >
-        <div className="w-5 flex items-center justify-center flex-shrink-0">
-          {entry.pos === 1
-            ? <Crown className="w-4 h-4" style={{ color: rankColor }} />
-            : <span className="text-xs font-black tabular-nums" style={{ color: rankColor }}>{entry.pos}</span>}
-        </div>
-        <div
-          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-black"
-          style={{ backgroundColor: `${av}22`, color: av, border: `1.5px solid ${av}55` }}
-        >
-          {initials(entry.you ? 'You' : entry.name)}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <p className="text-sm font-bold text-white truncate">{entry.you ? 'You' : entry.name}</p>
-            <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[#252528] text-[#9A9AAA] uppercase tracking-wider flex-shrink-0">{shortClassName(WEIGHT_CLASSES[entry.cls].full)}</span>
-          </div>
-          {(entry.streak ?? 0) >= 5 && <p className="flex items-center gap-0.5 text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider mt-0.5"><Flame className="w-3 h-3" />{entry.streak} win streak</p>}
-        </div>
-        <div className="text-right flex-shrink-0">
-          <p className="text-sm font-black tabular-nums text-white leading-none">{entry.score}</p>
-          <p className="text-[9px] font-bold text-[#636366] uppercase tracking-wider mt-0.5">P4P</p>
-        </div>
-        {entry.you ? null : <Swords className="w-3.5 h-3.5 text-[#48484A] flex-shrink-0" />}
       </motion.button>
     )
   }
@@ -508,19 +437,10 @@ export default function CompetePage() {
             <span className="text-3xl font-black text-white leading-none tracking-tight">Leaderboard</span>
             <p className="text-xs font-bold text-[#636366] mt-2">{rankings.length} fighters ranked</p>
           </div>
-
-          <div className="border-t border-[#252528] p-3">
-            <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
-              {([['class', 'My Class'], ['open', 'Pound for Pound']] as const).map(([v, l]) => (
-                <button key={v} onClick={() => setBoardView(v)}
-                  className={`flex-1 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${boardView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>{l}</button>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
+          {rankings.map(renderLeaderRow)}
         </div>
         </motion.div>
         )}
@@ -577,7 +497,7 @@ export default function CompetePage() {
               <div className="flex items-center justify-between px-5 pt-2 pb-4 flex-shrink-0">
                 <div>
                   <h2 className="text-xl font-bold">Challenge</h2>
-                  <p className="text-[#9A9AAA] text-sm">{challengeOpponent ? (challengeSuperfight ? `${challengeOpponent} · Superfight (P4P)` : challengeOpponent) : 'Pick someone from the leaderboard'}</p>
+                  <p className="text-[#9A9AAA] text-sm">{challengeOpponent ?? 'Pick someone from the leaderboard'}</p>
                 </div>
                 <button onClick={() => setChallengeOpen(false)} className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA] hover:text-white flex-shrink-0">
                   <X className="w-4 h-4" />
