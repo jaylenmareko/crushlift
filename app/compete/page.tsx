@@ -425,7 +425,7 @@ export default function CompetePage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-white truncate flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse flex-shrink-0" />
-                    {c.from} challenged you
+                    {c.from}
                   </p>
                   <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5 truncate">{c.lift} · {c.format === 'weight' ? 'most weight' : 'most reps'}</p>
                 </div>
@@ -451,7 +451,7 @@ export default function CompetePage() {
                   {initials(c.to)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white truncate">You challenged {c.to}</p>
+                  <p className="text-sm font-bold text-white truncate">{c.to}</p>
                   <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5 truncate">
                     {c.lift} · {c.format === 'weight' ? 'most weight' : 'most reps'} · <span className="text-[#F59E0B] font-bold">awaiting response</span>
                   </p>
@@ -470,8 +470,10 @@ export default function CompetePage() {
 
         <motion.button whileTap={{ scale: 0.97 }}
           onClick={() => openChallenge(null)}
-          className="w-full bg-[#FF4500] text-white font-black py-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.25)]"
+          className="relative w-full overflow-hidden bg-gradient-to-b from-[#FF5A1A] to-[#FF4500] text-white font-black uppercase tracking-wide py-4 rounded-2xl text-[15px] flex items-center justify-center gap-2 border border-[#FF6B35]/40 shadow-[0_10px_30px_rgba(255,69,0,0.5)]"
         >
+          {/* top sheen */}
+          <span className="absolute inset-x-0 top-0 h-px bg-white/30" />
           <Swords className="w-4 h-4" />
           New Challenge
         </motion.button>
