@@ -81,6 +81,15 @@ function shortClassName(full: string) {
   return full.split('·')[0].trim()
 }
 
+// Hero eyebrow: "Middle  ·  150–175 lbs" -> "Middle Weight 150–175"
+// (classes already containing "weight", e.g. Lightweight, aren't doubled up)
+function classWeightLabel(idx: number) {
+  const { full, label } = WEIGHT_CLASSES[idx]
+  const name = shortClassName(full)
+  const withWeight = /weight/i.test(name) ? name : `${name} Weight`
+  return `${withWeight} ${label}`
+}
+
 // Initials for avatars: "Marcus T." -> "MT", "You" -> "Y"
 function initials(name: string) {
   const p = name.replace(/\./g, '').trim().split(/\s+/)
@@ -302,7 +311,7 @@ export default function CompetePage() {
             >
               {initials('You')}
             </div>
-            <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.2em] mb-2">{shortClassName(WEIGHT_CLASSES[selectedClass].full)}</span>
+            <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.2em] mb-2">{classWeightLabel(selectedClass)}</span>
             {yourEntry ? (
               <>
                 <span className="text-7xl font-black text-[#FF4500] leading-none tracking-tight drop-shadow-[0_2px_20px_rgba(255,69,0,0.35)]">#{yourEntry.pos}</span>
@@ -495,7 +504,7 @@ export default function CompetePage() {
             >
               <Trophy className="w-7 h-7 text-[#FF4500]" />
             </div>
-            <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.2em] mb-2">{shortClassName(WEIGHT_CLASSES[selectedClass].full)}</span>
+            <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.2em] mb-2">{classWeightLabel(selectedClass)}</span>
             <span className="text-3xl font-black text-white leading-none tracking-tight">Leaderboard</span>
             <p className="text-xs font-bold text-[#636366] mt-2">{rankings.length} fighters ranked</p>
           </div>
