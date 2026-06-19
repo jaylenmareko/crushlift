@@ -472,7 +472,7 @@ export default function CompetePage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-white truncate">{c.to}</p>
                   <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5 truncate">
-                    {c.lift} · {c.format === 'weight' ? 'most weight' : 'most reps'} · <span className="text-[#F59E0B] font-bold">awaiting response</span>
+                    {c.lift} · {c.format === 'weight' ? 'most weight' : 'most reps'} · <span className="text-[#F59E0B] font-bold">awaiting...</span>
                   </p>
                 </div>
                 <motion.button whileTap={{ scale: 0.9 }} aria-label="Cancel challenge"
