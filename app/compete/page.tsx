@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Swords, Crown, ChevronRight, Check, X, ArrowUp, Flame, Trophy, Medal } from 'lucide-react'
+import { Swords, Crown, ChevronRight, Check, X, ArrowUp, Trophy, Medal } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
 import WeightGate from '@/components/WeightGate'
 import { useUserWeight } from '@/lib/hooks/useUserWeight'
@@ -221,11 +221,6 @@ export default function CompetePage() {
           {isChamp && (
             <p className="text-[10px] font-black uppercase tracking-widest mt-0.5" style={{ color: rankColor }}>Champion</p>
           )}
-          {(entry.streak ?? 0) >= 3 && (
-            <p className="flex items-center gap-0.5 text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider mt-0.5">
-              <Flame className="w-3 h-3" />{entry.streak} win streak
-            </p>
-          )}
         </div>
         {/* Record */}
         <span
@@ -279,7 +274,6 @@ export default function CompetePage() {
             <p className="text-sm font-bold text-white truncate">{entry.you ? 'You' : entry.name}</p>
             <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[#252528] text-[#9A9AAA] uppercase tracking-wider flex-shrink-0">{shortClassName(WEIGHT_CLASSES[entry.cls].full)}</span>
           </div>
-          {(entry.streak ?? 0) >= 5 && <p className="flex items-center gap-0.5 text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider mt-0.5"><Flame className="w-3 h-3" />{entry.streak} win streak</p>}
         </div>
         <span className="w-11 text-right text-sm font-bold tabular-nums text-[#9A9AAA] flex-shrink-0">{entry.record}</span>
         <div className="w-7 flex justify-end flex-shrink-0">
