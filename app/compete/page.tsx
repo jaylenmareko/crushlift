@@ -182,13 +182,15 @@ export default function CompetePage() {
     const rankColor =
       entry.pos === 1 ? '#FFC107' :
       entry.pos === 2 ? '#D1D5DB' :
-      entry.pos === 3 ? '#F59E0B' : '#636366'
+      entry.pos === 3 ? '#CD853F' : '#636366'
     const isRival = rival?.pos === entry.pos
+    const isChamp = entry.pos === 1 && !entry.you
     const av = entry.you ? '#FF4500' : avatarColor(entry.name)
     const rowStyle =
       entry.you  ? { backgroundColor: '#FF450014', borderColor: '#FF450045' }
       : isRival  ? { backgroundColor: '#FF45000F', borderColor: '#FF450033' }
-      : entry.pos <= 3 ? { backgroundColor: `${rankColor}12`, borderColor: 'transparent' }
+      : entry.pos === 1 ? { backgroundColor: '#FFC10712', borderColor: '#FFC10740' }
+      : entry.pos <= 3 ? { backgroundColor: `${rankColor}08`, borderColor: 'transparent' }
       : { backgroundColor: '#25252880', borderColor: 'transparent' }
     return (
       <motion.button
@@ -197,31 +199,44 @@ export default function CompetePage() {
         whileTap={entry.you ? undefined : { scale: 0.98 }}
         onClick={() => { if (!entry.you) openChallenge(entry.name) }}
         initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-        className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-left border"
+        className={`w-full flex items-center gap-3 rounded-xl text-left border ${isChamp ? 'px-3.5 py-3.5' : 'px-2.5 py-2.5'}`}
         style={rowStyle}
       >
-        <div className="w-5 flex items-center justify-center flex-shrink-0">
+        {/* Position / crown */}
+        <div className={`flex items-center justify-center flex-shrink-0 ${isChamp ? 'w-6' : 'w-5'}`}>
           {entry.pos === 1
-            ? <Crown className="w-4 h-4" style={{ color: rankColor }} />
+            ? <Crown className={isChamp ? 'w-5 h-5' : 'w-4 h-4'} style={{ color: rankColor }} />
             : <span className="text-xs font-black tabular-nums" style={{ color: rankColor }}>{entry.pos}</span>}
         </div>
+        {/* Avatar */}
         <div
-          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-black"
-          style={{ backgroundColor: `${av}22`, color: av, border: `1.5px solid ${av}55` }}
+          className={`rounded-full flex items-center justify-center flex-shrink-0 font-black ${isChamp ? 'w-11 h-11 text-sm' : 'w-9 h-9 text-[11px]'}`}
+          style={{ backgroundColor: `${av}22`, color: av, border: `${isChamp ? '2px' : '1.5px'} solid ${av}55` }}
         >
           {initials(entry.you ? 'You' : entry.name)}
         </div>
+        {/* Name + labels */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-white truncate">{entry.you ? 'You' : entry.name}</p>
-          {(entry.streak ?? 0) >= 3
-            ? <p className="flex items-center gap-0.5 text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider"><Flame className="w-3 h-3" />{entry.streak} win streak</p>
-            : null}
+          <p className={`font-bold text-white truncate ${isChamp ? 'text-base' : 'text-sm'}`}>{entry.you ? 'You' : entry.name}</p>
+          {isChamp && (
+            <p className="text-[10px] font-black uppercase tracking-widest mt-0.5" style={{ color: rankColor }}>Champion</p>
+          )}
+          {(entry.streak ?? 0) >= 3 && (
+            <p className="flex items-center gap-0.5 text-[10px] font-bold text-[#F59E0B] uppercase tracking-wider mt-0.5">
+              <Flame className="w-3 h-3" />{entry.streak} win streak
+            </p>
+          )}
         </div>
-        <span className="w-11 text-right text-sm font-bold tabular-nums text-[#9A9AAA] flex-shrink-0">{entry.record}</span>
+        {/* Record */}
+        <span
+          className={`text-right font-bold tabular-nums flex-shrink-0 ${isChamp ? 'text-base w-12' : 'w-11 text-sm text-[#9A9AAA]'}`}
+          style={isChamp ? { color: rankColor } : undefined}
+        >{entry.record}</span>
+        {/* Action */}
         <div className="w-[64px] flex justify-end flex-shrink-0">
           {entry.you ? null : isRival
             ? <motion.span animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} className="text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</motion.span>
-            : <Swords className="w-3.5 h-3.5 text-[#48484A]" />}
+            : <span className="text-[10px] font-semibold text-[#636366] flex items-center gap-1 border border-[#2A2A2E] rounded-lg px-2 py-1.5"><Swords className="w-3 h-3" />Fight</span>}
         </div>
       </motion.button>
     )
@@ -342,11 +357,11 @@ export default function CompetePage() {
           {/* Stat strip */}
           <div className="relative grid grid-cols-3 border-t border-[#252528]">
             <div className="py-3.5 text-center">
-              <p className="text-2xl font-black text-[#22C55E] leading-none tabular-nums">{yWins}</p>
+              <p className={`text-2xl font-black leading-none tabular-nums ${wNum > 0 ? 'text-[#22C55E]' : 'text-[#9A9AAA]'}`}>{yWins}</p>
               <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1.5">Wins</p>
             </div>
             <div className="py-3.5 text-center border-x border-[#252528]">
-              <p className="text-2xl font-black text-[#EF4444] leading-none tabular-nums">{yLosses}</p>
+              <p className={`text-2xl font-black leading-none tabular-nums ${lNum > 0 ? 'text-[#EF4444]' : 'text-[#9A9AAA]'}`}>{yLosses}</p>
               <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1.5">Losses</p>
             </div>
             <div className="py-3.5 text-center">
@@ -357,8 +372,11 @@ export default function CompetePage() {
 
           {/* Climb hook */}
           <button
-            onClick={() => rival && openChallenge(rival.name)}
-            disabled={!rival}
+            onClick={() => {
+              if (rival) openChallenge(rival.name)
+              else if (!yourEntry) changeTab('leaderboard')
+            }}
+            disabled={!rival && !!yourEntry}
             className="relative w-full flex items-center gap-2 px-4 py-3.5 border-t border-[#252528] text-left disabled:cursor-default hover:bg-[#FF4500]/5 transition-colors"
           >
             {rival ? (
@@ -373,7 +391,11 @@ export default function CompetePage() {
                 <span className="text-sm font-bold text-white flex-1">You&apos;re #1 — defend your crown</span>
               </>
             ) : (
-              <span className="text-sm font-semibold text-[#9A9AAA] flex-1">Win a battle to get ranked</span>
+              <>
+                <Swords className="w-4 h-4 text-[#FF4500]/70 flex-shrink-0" />
+                <span className="text-sm font-bold text-[#9A9AAA] flex-1">Win a battle to enter the rankings</span>
+                <ChevronRight className="w-4 h-4 text-[#48484A]" />
+              </>
             )}
           </button>
         </div>
@@ -403,30 +425,24 @@ export default function CompetePage() {
         {activeTab === 'challenges' && (
         <motion.div key="challenges" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
 
-        {/* Hero card — same visual language as Rank + Leaderboard tabs */}
-        <div className="relative -mx-11 bg-gradient-to-b from-[#202023] to-[#161618] border-y border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
-          <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-44 bg-[#FF4500]/15 blur-[80px] pointer-events-none rounded-full" />
-
-          <div className="relative pt-6 pb-5 flex flex-col items-center text-center">
-            <div
-              className="w-16 h-16 rounded-full flex items-center justify-center mb-3"
-              style={{ backgroundColor: '#FF45001f', border: '2px solid #FF450066', boxShadow: '0 0 24px rgba(255,69,0,0.25)' }}
-            >
-              <Swords className="w-7 h-7 text-[#FF4500]" />
+        {/* Compact section header */}
+        <div className="relative -mx-11 bg-[#161618] border-b border-[#252528] overflow-hidden">
+          <div className="h-[3px] bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
+          <div className="flex items-center gap-3 px-5 pt-4 pb-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: '#FF45001f', border: '1.5px solid #FF450044' }}>
+              <Swords className="w-4 h-4 text-[#FF4500]" />
             </div>
-            <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.2em] mb-2">1v1 Battles</span>
-            <span className="text-3xl font-black text-white leading-none tracking-tight">Challenges</span>
-            <p className="text-xs font-bold text-[#636366] mt-2">
-              {PENDING_CHALLENGES.length > 0 ? `${PENDING_CHALLENGES.length} incoming · ` : ''}{OUTGOING_CHALLENGES.length} outgoing
-            </p>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.15em] leading-none mb-0.5">1v1 Battles</p>
+              <p className="text-xl font-black text-white leading-tight">Challenges</p>
+            </div>
           </div>
-
-          <div className="border-t border-[#252528] p-3">
+          <div className="px-3 pb-3">
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
               {([['incoming', 'Incoming', PENDING_CHALLENGES.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length]] as const).map(([v, label, count]) => (
                 <button key={v} onClick={() => setChallengeView(v)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold transition-all ${challengeView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold transition-all ${challengeView === v ? 'bg-[#1C1C1E] text-[#FF4500] shadow-sm' : 'text-[#636366]'}`}>
                   {label}
                   {count > 0 && (
                     <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${challengeView === v ? 'bg-[#FF4500] text-white' : 'bg-[#252528] text-[#9A9AAA]'}`}>{count}</span>
@@ -441,27 +457,42 @@ export default function CompetePage() {
         <motion.div key={challengeView} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }} className="flex flex-col gap-2">
           {challengeView === 'incoming' ? (
             PENDING_CHALLENGES.length > 0 ? PENDING_CHALLENGES.map((c, i) => (
-              <div key={i} className="rounded-2xl bg-[#FF4500]/8 border border-[#FF4500]/25 p-3 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black"
-                  style={{ backgroundColor: `${avatarColor(c.from)}22`, color: avatarColor(c.from), border: `1.5px solid ${avatarColor(c.from)}55` }}>
-                  {initials(c.from)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white truncate flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse flex-shrink-0" />
-                    {c.from}
-                  </p>
-                  <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5 truncate">{c.lift} · {c.format === 'weight' ? 'most weight' : 'most reps'}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <motion.button whileTap={{ scale: 0.9 }} aria-label="Accept"
-                    className="w-10 h-10 rounded-xl bg-[#22C55E] flex items-center justify-center shadow-[0_2px_14px_rgba(34,197,94,0.4)]">
-                    <Check className="w-5 h-5 text-white" />
-                  </motion.button>
-                  <motion.button whileTap={{ scale: 0.9 }} aria-label="Decline"
-                    className="w-10 h-10 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA] hover:text-white">
-                    <X className="w-5 h-5" />
-                  </motion.button>
+              <div key={i} className="rounded-2xl overflow-hidden border border-[#FF4500]/30" style={{ background: 'linear-gradient(135deg, #1a0800 0%, #1C1C1E 65%)' }}>
+                <div className="h-[2px] bg-gradient-to-r from-[#FF4500] to-[#FF4500]/10" />
+                <div className="p-4">
+                  {/* Challenger info */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
+                      style={{ backgroundColor: `${avatarColor(c.from)}22`, color: avatarColor(c.from), border: `2px solid ${avatarColor(c.from)}55` }}>
+                      {initials(c.from)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse flex-shrink-0" />
+                        <p className="text-base font-black text-white">{c.from}</p>
+                      </div>
+                      <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">called you out</p>
+                    </div>
+                    <span className="text-[10px] font-black text-[#FF4500] bg-[#FF4500]/12 border border-[#FF4500]/30 px-2 py-1 rounded-lg uppercase tracking-wide flex-shrink-0">New</span>
+                  </div>
+                  {/* Lift + format pill */}
+                  <div className="flex items-center gap-2 bg-[#0D0D0F] border border-[#252528] rounded-xl px-3 py-2.5 mb-4">
+                    <Swords className="w-4 h-4 text-[#FF4500] flex-shrink-0" />
+                    <span className="text-sm font-black text-white">{c.lift}</span>
+                    <span className="text-[#3A3A3C] mx-0.5">·</span>
+                    <span className="text-sm font-semibold text-[#9A9AAA]">{c.format === 'weight' ? 'Most Weight' : 'Most Reps'}</span>
+                  </div>
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <motion.button whileTap={{ scale: 0.97 }} aria-label="Accept"
+                      className="flex-1 bg-[#FF4500] text-white font-black py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(255,69,0,0.3)]">
+                      <Check className="w-4 h-4" /> Accept
+                    </motion.button>
+                    <motion.button whileTap={{ scale: 0.97 }} aria-label="Decline"
+                      className="flex-1 bg-[#1C1C1E] border border-[#252528] text-[#9A9AAA] font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 hover:text-white transition-colors">
+                      <X className="w-4 h-4" /> Decline
+                    </motion.button>
+                  </div>
                 </div>
               </div>
             )) : (
@@ -497,28 +528,27 @@ export default function CompetePage() {
         {activeTab === 'leaderboard' && (
         <motion.div key="leaderboard" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
 
-        {/* Hero card — same visual language as Rank tab */}
-        <div className="relative -mx-11 bg-gradient-to-b from-[#202023] to-[#161618] border-y border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
-          <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-44 bg-[#FF4500]/15 blur-[80px] pointer-events-none rounded-full" />
-
-          <div className="relative pt-6 pb-5 flex flex-col items-center text-center">
-            <div
-              className="w-16 h-16 rounded-full flex items-center justify-center mb-3"
-              style={{ backgroundColor: '#FF45001f', border: '2px solid #FF450066', boxShadow: '0 0 24px rgba(255,69,0,0.25)' }}
-            >
-              <Trophy className="w-7 h-7 text-[#FF4500]" />
+        {/* Compact section header */}
+        <div className="relative -mx-11 bg-[#161618] border-b border-[#252528] overflow-hidden">
+          <div className="h-[3px] bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
+          <div className="flex items-center gap-3 px-5 pt-4 pb-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: '#FF45001f', border: '1.5px solid #FF450044' }}>
+              <Trophy className="w-4 h-4 text-[#FF4500]" />
             </div>
-            <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.2em] mb-2">{classWeightLabel(selectedClass)}</span>
-            <span className="text-3xl font-black text-white leading-none tracking-tight">Leaderboard</span>
-            <p className="text-xs font-bold text-[#636366] mt-2">{rankings.length} fighters ranked</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.15em] leading-none mb-0.5">{classWeightLabel(selectedClass)}</p>
+              <p className="text-xl font-black text-white leading-tight">Leaderboard</p>
+            </div>
+            <span className="text-[11px] font-bold text-[#636366] flex-shrink-0">
+              {boardView === 'class' ? rankings.length : OPEN_RANKINGS.length} fighters
+            </span>
           </div>
-
-          <div className="border-t border-[#252528] p-3">
+          <div className="px-3 pb-3">
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
               {([['class', 'My Class'], ['open', 'All Classes']] as const).map(([v, l]) => (
                 <button key={v} onClick={() => setBoardView(v)}
-                  className={`flex-1 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${boardView === v ? 'bg-[#1C1C1E] text-white shadow-sm' : 'text-[#636366]'}`}>{l}</button>
+                  className={`flex-1 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${boardView === v ? 'bg-[#1C1C1E] text-[#FF4500] shadow-sm' : 'text-[#636366]'}`}>{l}</button>
               ))}
             </div>
           </div>
