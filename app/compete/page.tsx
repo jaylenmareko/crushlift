@@ -404,15 +404,6 @@ export default function CompetePage() {
           </div>
         )}
 
-        {/* Primary CTA — go pick someone to fight from the leaderboard */}
-        <motion.button whileTap={{ scale: 0.97 }}
-          onClick={() => changeTab('leaderboard')}
-          className="relative w-full overflow-hidden bg-gradient-to-b from-[#FF5A1A] to-[#FF4500] text-white font-black uppercase tracking-wide py-4 rounded-2xl text-[15px] flex items-center justify-center gap-2 border border-[#FF6B35]/40 shadow-[0_10px_30px_rgba(255,69,0,0.5)]"
-        >
-          <span className="absolute inset-x-0 top-0 h-px bg-white/30" />
-          <Swords className="w-4 h-4" />
-          Challenge Someone
-        </motion.button>
         </motion.div>
         )}
 
@@ -551,6 +542,15 @@ export default function CompetePage() {
         <div className="flex flex-col gap-1.5">
           {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
         </div>
+
+        <motion.button whileTap={{ scale: 0.97 }}
+          onClick={() => openChallenge(null)}
+          className="relative w-full overflow-hidden bg-gradient-to-b from-[#FF5A1A] to-[#FF4500] text-white font-black uppercase tracking-wide py-4 rounded-2xl text-[15px] flex items-center justify-center gap-2 border border-[#FF6B35]/40 shadow-[0_10px_30px_rgba(255,69,0,0.5)]"
+        >
+          <span className="absolute inset-x-0 top-0 h-px bg-white/30" />
+          <Swords className="w-4 h-4" />
+          Challenge Someone
+        </motion.button>
         </motion.div>
         )}
 
