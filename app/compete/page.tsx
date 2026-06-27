@@ -309,14 +309,14 @@ export default function CompetePage() {
         <AnimatePresence mode="wait" custom={tabDir} initial={false}>
 
         {activeTab === 'rank' && (
-        <motion.div key="rank" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
+        <motion.div key="rank" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col flex-1">
         {/* HERO — where you stand + the climb hook (full-bleed to screen edges) */}
-        <div className="relative -mx-11 bg-gradient-to-b from-[#202023] to-[#161618] border-y border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+        <div className="relative -mx-11 bg-gradient-to-b from-[#202023] to-[#161618] border-y border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)] flex flex-col flex-1">
           <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
           {/* inner glow */}
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-44 bg-[#FF4500]/15 blur-[80px] pointer-events-none rounded-full" />
 
-          <div className="relative pt-6 pb-5 flex flex-col items-center text-center">
+          <div className="relative flex-1 flex flex-col items-center justify-center text-center py-8">
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center text-lg font-black mb-3"
               style={{ backgroundColor: '#FF45001f', color: '#FF4500', border: '2px solid #FF450066', boxShadow: '0 0 24px rgba(255,69,0,0.25)' }}
@@ -332,18 +332,11 @@ export default function CompetePage() {
             ) : (
               <span className="text-4xl font-black text-[#636366] leading-none">Unranked</span>
             )}
-            <div className="flex items-center gap-2 mt-3 empty:hidden">
-              {yourEntry?.trend ? (
-                <span className="inline-flex items-center gap-0.5 text-xs font-black text-[#22C55E] bg-[#22C55E]/10 px-2.5 py-1 rounded-lg">
-                  <ArrowUp className="w-3.5 h-3.5" />{yourEntry.trend} this week
-                </span>
-              ) : null}
-              {(yourEntry?.streak ?? 0) >= 2 ? (
-                <span className="inline-flex items-center gap-0.5 text-xs font-black text-[#F59E0B] bg-[#F59E0B]/10 px-2.5 py-1 rounded-lg">
-                  <Flame className="w-3.5 h-3.5" />{yourEntry?.streak} win streak
-                </span>
-              ) : null}
-            </div>
+            {yourEntry?.trend ? (
+              <span className="inline-flex items-center gap-0.5 text-xs font-black text-[#22C55E] bg-[#22C55E]/10 px-2.5 py-1 rounded-lg mt-3">
+                <ArrowUp className="w-3.5 h-3.5" />{yourEntry.trend} this week
+              </span>
+            ) : null}
           </div>
 
           {/* Stat strip */}
