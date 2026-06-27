@@ -159,8 +159,6 @@ export default function CompetePage() {
   const wNum = parseInt(yWins) || 0
   const lNum = parseInt(yLosses) || 0
   const winRate = wNum + lNum > 0 ? Math.round((wNum / (wNum + lNum)) * 100) : 0
-  // you + the people directly above/below you, for the rank-tab mini board
-  const neighborhood = yourEntry ? rankings.slice(Math.max(0, youIdx - 1), youIdx + 2) : []
 
   function openChallenge(name: string | null, superfight = false) {
     setChallengeOpponent(name)
@@ -394,17 +392,7 @@ export default function CompetePage() {
           </button>
         </div>
 
-        {/* Your position — you + the lifters directly around you */}
-        {neighborhood.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <p className="text-[11px] font-bold text-[#9A9AAA] uppercase tracking-widest px-1">Your Position</p>
-            <div className="flex flex-col gap-1.5">
-              {neighborhood.map(renderLeaderRow)}
-            </div>
-          </div>
-        )}
-
-        </motion.div>
+</motion.div>
         )}
 
         {activeTab === 'challenges' && (
