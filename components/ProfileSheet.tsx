@@ -50,12 +50,13 @@ interface Props {
   onChallenge?: (name: string) => void
   sentRequests?: Set<string>
   onAddFriend?: (name: string) => void
+  isFriend?: boolean
   weightClassIndex?: number
   record?: string
   rank?: number
 }
 
-export default function ProfileSheet({ name, onClose, onChallenge, sentRequests, onAddFriend, weightClassIndex = 2, record, rank }: Props) {
+export default function ProfileSheet({ name, onClose, onChallenge, sentRequests, onAddFriend, isFriend = false, weightClassIndex = 2, record, rank }: Props) {
   if (!name) return null
 
   const av = avatarColor(name)
@@ -142,7 +143,11 @@ export default function ProfileSheet({ name, onClose, onChallenge, sentRequests,
                 </motion.button>
               )}
               {onAddFriend && (
-                isSent ? (
+                isFriend ? (
+                  <div className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-[#22C55E]/30 bg-[#22C55E]/10 text-[#22C55E] text-sm font-bold">
+                    <UserCheck className="w-4 h-4" /> Friends
+                  </div>
+                ) : isSent ? (
                   <div className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-[#3A3A3C] bg-[#1C1C1E] text-[#9A9AAA] text-sm font-bold">
                     <UserCheck className="w-4 h-4" /> Request Sent
                   </div>

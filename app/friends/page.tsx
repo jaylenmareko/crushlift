@@ -300,6 +300,7 @@ export default function FriendsPage() {
         name={profileName}
         onClose={() => setProfileName(null)}
         sentRequests={sentNames}
+        isFriend={profileName ? friends.includes(profileName) : false}
         onAddFriend={name => { addFriendByName(name); setProfileName(null) }}
       />
     </div>
