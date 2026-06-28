@@ -332,8 +332,9 @@ export default function CompetePage() {
       <motion.div
         key={entry.pos}
         initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.045, type: 'spring', stiffness: 320, damping: 26 }}
-        className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl border"
+        className={`w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl border ${!entry.you ? 'cursor-pointer' : ''}`}
         style={rowStyle}
+        onClick={() => { if (!entry.you) { setProfileName(entry.name); setProfileOpen(true) } }}
       >
         <div className="w-5 flex items-center justify-center flex-shrink-0">
           {entry.pos === 1
@@ -352,7 +353,7 @@ export default function CompetePage() {
         </div>
         <span className="w-11 text-right text-sm font-bold tabular-nums text-[#9A9AAA] flex-shrink-0">{entry.record}</span>
         <div className="w-7 flex justify-end flex-shrink-0">
-          {entry.you ? null : <button onClick={() => openChallenge(entry.name, !sameClass)} className="active:scale-95 transition-transform"><Swords className="w-3.5 h-3.5 text-[#9A9AAA]" /></button>}
+          {entry.you ? null : <button onClick={e => { e.stopPropagation(); openChallenge(entry.name, !sameClass) }} className="active:scale-95 transition-transform"><Swords className="w-3.5 h-3.5 text-[#9A9AAA]" /></button>}
         </div>
       </motion.div>
     )
