@@ -68,6 +68,17 @@ const OPEN_ROSTER: OpenFighter[] = [
   { name: 'You',       cls: 2, bw: 165, lift: 300, record: '2-1',  you: true  },
 ]
 
+// Dummy per-lift belt tiers keyed by fighter name (replaced by real data once battles schema is live)
+const FIGHTER_BELTS: Record<string, Record<string, string>> = {
+  'Marcus T.': { 'Bench Press': 'Gold',   'Squat': 'Platinum', 'Deadlift': 'Gold',   'Overhead Press': 'Silver', 'Pull-up': 'Gold',   'Power Clean': 'Silver' },
+  'Dre W.':    { 'Bench Press': 'Silver',  'Squat': 'Gold',     'Deadlift': 'Silver', 'Overhead Press': 'Bronze', 'Pull-up': 'Silver', 'Power Clean': 'Bronze' },
+  'Kyle B.':   { 'Bench Press': 'Bronze',  'Squat': 'Silver',   'Deadlift': 'Bronze', 'Overhead Press': 'Iron',   'Pull-up': 'Bronze', 'Power Clean': 'Iron'   },
+  'Jordan S.': { 'Bench Press': 'Iron',    'Squat': 'Bronze',   'Deadlift': 'Iron',   'Overhead Press': 'Iron',   'Pull-up': 'Iron',   'Power Clean': 'Iron'   },
+  'Tyler M.':  { 'Bench Press': 'Iron',    'Squat': 'Iron',     'Deadlift': 'Iron',   'Overhead Press': 'Iron',   'Pull-up': 'Iron',   'Power Clean': 'Iron'   },
+  'Chris A.':  { 'Bench Press': 'Iron',    'Squat': 'Iron',     'Deadlift': 'Iron',   'Overhead Press': 'Iron',   'Pull-up': 'Iron',   'Power Clean': 'Iron'   },
+}
+const YOU_BELTS: Record<string, string> = { 'Bench Press': 'Iron', 'Squat': 'Bronze', 'Deadlift': 'Bronze', 'Overhead Press': 'Iron', 'Pull-up': 'Iron', 'Power Clean': 'Iron' }
+
 function recordParts(r: string) {
   const [w, l] = r.split('-').map(n => parseInt(n) || 0)
   return { w, l, rate: w + l > 0 ? w / (w + l) : 0 }
@@ -158,6 +169,8 @@ export default function CompetePage() {
   const [rankSettled, setRankSettled] = useState(false)
   const [classBrowserOpen, setClassBrowserOpen] = useState(false)
   const [browsingClass, setBrowsingClass] = useState<number | null>(null)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [profileName, setProfileName] = useState<string | null>(null)
 
   const activeClass = browsingClass !== null ? browsingClass : selectedClass
   const rankings  = RANKINGS_DATA[activeClass] ?? []
@@ -247,8 +260,9 @@ export default function CompetePage() {
       <motion.div
         key={entry.pos}
         initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.045, type: 'spring', stiffness: 320, damping: 26 }}
-        className={`relative w-full flex items-center gap-3 rounded-xl border ${isChamp ? 'px-3.5 py-3.5' : 'px-2.5 py-2.5'}`}
+        className={`relative w-full flex items-center gap-3 rounded-xl border cursor-pointer ${isChamp ? 'px-3.5 py-3.5' : 'px-2.5 py-2.5'}`}
         style={rowStyle}
+        onClick={() => { if (!entry.you) { setProfileName(entry.name); setProfileOpen(true) } }}
       >
         {/* Rival heartbeat border */}
         {isRival && (
@@ -285,9 +299,9 @@ export default function CompetePage() {
                   animate={{ scale: [1, 1.55], opacity: [0.7, 0] }}
                   transition={{ duration: 1.1, repeat: Infinity, ease: 'easeOut', repeatDelay: 0.5 }}
                 />
-                <motion.button onClick={() => openChallenge(entry.name)} whileTap={{ scale: 0.95 }} animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} className="relative text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</motion.button>
+                <motion.button onClick={e => { e.stopPropagation(); openChallenge(entry.name) }} whileTap={{ scale: 0.95 }} animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} className="relative text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</motion.button>
               </div>
-            : <button onClick={() => openChallenge(entry.name)} className="text-[10px] font-semibold text-[#9A9AAA] flex items-center gap-1 border border-[#3A3A3C] rounded-lg px-2 py-1.5 active:scale-95 transition-transform"><Swords className="w-3 h-3" />Fight</button>}
+            : <button onClick={e => { e.stopPropagation(); openChallenge(entry.name) }} className="text-[10px] font-semibold text-[#9A9AAA] flex items-center gap-1 border border-[#3A3A3C] rounded-lg px-2 py-1.5 active:scale-95 transition-transform"><Swords className="w-3 h-3" />Fight</button>}
         </div>
       </motion.div>
     )
@@ -641,15 +655,6 @@ export default function CompetePage() {
             {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
           </div>
 
-          {/* "You are here" anchor */}
-          {yourEntry && (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#FF450010] border border-[#FF450030]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse flex-shrink-0" />
-              <span className="text-xs font-bold text-[#FF4500]">You · #{yourEntry.pos}</span>
-              <span className="text-xs text-[#636366] ml-auto">{yourEntry.record}</span>
-            </div>
-          )}
-
           <motion.button whileTap={{ scale: 0.97 }}
             onClick={handleChallengeSomeone}
             className="relative w-full overflow-hidden bg-gradient-to-b from-[#FF5A1A] to-[#FF4500] text-white font-black uppercase tracking-wide py-4 rounded-2xl text-[15px] flex items-center justify-center gap-2 border border-[#FF6B35]/40 shadow-[0_10px_30px_rgba(255,69,0,0.5)]"
@@ -778,6 +783,84 @@ export default function CompetePage() {
             </motion.div>
           </>
         )}
+      </AnimatePresence>
+
+      {/* Profile sheet */}
+      <AnimatePresence>
+        {profileOpen && profileName && (() => {
+          const entry = [...rankings, ...OPEN_RANKINGS].find(r => r.name === profileName)
+          const belts = FIGHTER_BELTS[profileName] ?? {}
+          const av = avatarColor(profileName)
+          const { w, l, rate } = recordParts(entry?.record ?? '0-0')
+          const wc = WEIGHT_CLASSES[(entry && 'cls' in entry) ? (entry as typeof OPEN_RANKINGS[number]).cls : activeClass]
+          return (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setProfileOpen(false)} className="fixed inset-0 bg-black/85 z-[60]" />
+              <motion.div
+                initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+                className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[900px] bg-[#0D0D0F] border-t border-[#252528] rounded-t-3xl z-[70]"
+              >
+                <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-[#3A3A3C]" /></div>
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 pt-3 pb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center text-base font-black flex-shrink-0"
+                      style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
+                      {initials(profileName)}
+                    </div>
+                    <div>
+                      <p className="text-lg font-black text-white">{profileName}</p>
+                      <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">{shortClassName(wc?.full ?? '')} · #{entry?.pos ?? '—'}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setProfileOpen(false)} className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA]">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* W/L strip */}
+                <div className="grid grid-cols-3 border-t border-b border-[#252528] mx-5 rounded-xl overflow-hidden mb-5">
+                  {[['Wins', w, '#22C55E'], ['Losses', l, '#EF4444'], ['Win Rate', `${Math.round(rate * 100)}%`, '#FF4500']].map(([label, val, color]) => (
+                    <div key={label as string} className="py-3 text-center">
+                      <p className="text-xl font-black leading-none" style={{ color: color as string }}>{val}</p>
+                      <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1">{label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Belt tiers */}
+                <div className="px-5 mb-6">
+                  <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-3">Belts</p>
+                  <div className="flex flex-col gap-2">
+                    {['Bench Press','Squat','Deadlift','Overhead Press','Pull-up','Power Clean'].map(lift => {
+                      const tierName = belts[lift] ?? 'Unranked'
+                      const tier = [...[{name:'Legend',color:'#FFC107'},{name:'Master',color:'#8B5CF6'},{name:'Elite',color:'#EF4444'},{name:'Lifter',color:'#3B82F6'},{name:'Bronze',color:'#22C55E'},{name:'Iron',color:'#D1D5DB'}]].find(t => t.name === tierName) ?? { name: 'Unranked', color: '#48484A' }
+                      return (
+                        <div key={lift} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#161618] border border-[#252528]">
+                          <span className="text-sm font-semibold text-white">{lift}</span>
+                          <span className="text-xs font-black px-2.5 py-1 rounded-lg" style={{ backgroundColor: `${tier.color}20`, color: tier.color }}>{tier.name}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Challenge CTA */}
+                <div className="px-5 pb-8">
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { setProfileOpen(false); openChallenge(profileName) }}
+                    className="w-full bg-[#FF4500] text-white font-black py-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.3)]"
+                  >
+                    <Swords className="w-4 h-4" /> Challenge {profileName.split(' ')[0]}
+                  </motion.button>
+                </div>
+              </motion.div>
+            </>
+          )
+        })()}
       </AnimatePresence>
 
       {/* Class browser sheet */}
