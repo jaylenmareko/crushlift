@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, UserPlus, Search, Clock, X, UserCheck, Loader2 } from 'lucide-react'
+import { Users, UserPlus, Search, Clock, X, UserCheck, Loader2, Bell } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
 import ProfileSheet from '@/components/ProfileSheet'
 import { createClient } from '@/lib/supabase/client'
@@ -45,10 +45,15 @@ const DUMMY_PENDING: FriendRequest[] = [
   { name: 'Kyle B.', sentAt: Date.now() - 1000 * 60 * 47 },
   { name: 'Jordan S.', sentAt: Date.now() - 1000 * 60 * 60 * 3 },
 ]
+const DUMMY_INCOMING: FriendRequest[] = [
+  { name: 'Chris A.', sentAt: Date.now() - 1000 * 60 * 12 },
+  { name: 'Eli R.', sentAt: Date.now() - 1000 * 60 * 60 * 7 },
+]
 
 export default function FriendsPage() {
   const [query, setQuery] = useState('')
   const [outgoing, setOutgoing] = useState<FriendRequest[]>([])
+  const [incoming, setIncoming] = useState<FriendRequest[]>([])
   const [friends, setFriends] = useState<string[]>([])
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
@@ -60,9 +65,11 @@ export default function FriendsPage() {
   useEffect(() => {
     try {
       const storedOutgoing = JSON.parse(localStorage.getItem('trainmaxxing_friend_requests') ?? 'null')
+      const storedIncoming = JSON.parse(localStorage.getItem('trainmaxxing_incoming_requests') ?? 'null')
       const storedFriends  = JSON.parse(localStorage.getItem('trainmaxxing_friends') ?? 'null')
       const storedSent     = JSON.parse(localStorage.getItem('trainmaxxing_sent_requests') ?? 'null')
       setOutgoing(storedOutgoing ?? DUMMY_PENDING)
+      setIncoming(storedIncoming ?? DUMMY_INCOMING)
       setFriends(storedFriends   ?? DUMMY_FRIENDS)
       setSentIds(new Set(storedSent ?? []))
     } catch {}
@@ -122,14 +129,36 @@ export default function FriendsPage() {
     } catch {}
   }
 
+  function acceptIncoming(name: string) {
+    const updatedIncoming = incoming.filter(r => r.name !== name)
+    const updatedFriends = [...friends, name]
+    setIncoming(updatedIncoming)
+    setFriends(updatedFriends)
+    localStorage.setItem('trainmaxxing_incoming_requests', JSON.stringify(updatedIncoming))
+    localStorage.setItem('trainmaxxing_friends', JSON.stringify(updatedFriends))
+  }
+
+  function declineIncoming(name: string) {
+    const updated = incoming.filter(r => r.name !== name)
+    setIncoming(updated)
+    localStorage.setItem('trainmaxxing_incoming_requests', JSON.stringify(updated))
+  }
+
   const showSearch = query.trim().length > 0
-  const filteredFriends = friends.filter(f => f.toLowerCase().includes(query.toLowerCase()))
 
   return (
     <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav">
       <header className="px-5 pt-12 pb-4">
         <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em] mb-1">Trainmaxxing</p>
-        <h1 className="text-3xl font-black text-white">Friends</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-black text-white">Friends</h1>
+          {incoming.length > 0 && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#FF4500]/10 border border-[#FF4500]/20">
+              <Bell className="w-3.5 h-3.5 text-[#FF4500]" />
+              <span className="text-xs font-black text-[#FF4500]">{incoming.length}</span>
+            </div>
+          )}
+        </div>
         <p className="text-[#9A9AAA] text-sm mt-1 font-semibold">Challenge. Compete. Push each other.</p>
       </header>
 
@@ -168,11 +197,8 @@ export default function FriendsPage() {
                     const av = avatarColor(r.username)
                     const alreadySent = sentIds.has(r.id)
                     return (
-                      <motion.div
-                        key={r.id}
-                        initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3"
-                      >
+                      <motion.div key={r.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3">
                         <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
                           style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
                           {initials(r.username)}
@@ -186,11 +212,8 @@ export default function FriendsPage() {
                             <UserCheck className="w-4 h-4" /> Sent
                           </div>
                         ) : (
-                          <motion.button
-                            whileTap={{ scale: 0.93 }}
-                            onClick={() => sendRequest(r)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#FF4500] text-white text-xs font-black flex-shrink-0"
-                          >
+                          <motion.button whileTap={{ scale: 0.93 }} onClick={() => sendRequest(r)}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#FF4500] text-white text-xs font-black flex-shrink-0">
                             <UserPlus className="w-3.5 h-3.5" /> Add
                           </motion.button>
                         )}
@@ -208,89 +231,136 @@ export default function FriendsPage() {
           )}
         </AnimatePresence>
 
-        {/* Pending outgoing requests */}
-        {!showSearch && outgoing.length > 0 && (
-          <div className="mb-6">
-            <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-3">
-              Pending · {outgoing.length}
-            </p>
-            <div className="flex flex-col gap-2">
-              <AnimatePresence>
-                {outgoing.map(req => {
-                  const av = avatarColor(req.name)
-                  return (
-                    <motion.div
-                      key={req.name}
-                      layout
-                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40, scale: 0.95 }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-                      className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3 cursor-pointer"
-                      onClick={() => setProfileName(req.name)}
-                    >
-                      <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
-                        style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
-                        {initials(req.name)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{req.name}</p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <Clock className="w-3 h-3 text-[#F59E0B]" />
-                          <span className="text-xs font-semibold text-[#F59E0B]">Awaiting · {timeAgo(req.sentAt)}</span>
+        {!showSearch && (
+          <>
+            {/* Incoming */}
+            {incoming.length > 0 && (
+              <div className="mb-6">
+                <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest mb-3">
+                  Incoming · {incoming.length}
+                </p>
+                <div className="flex flex-col gap-2">
+                  <AnimatePresence>
+                    {incoming.map(req => {
+                      const av = avatarColor(req.name)
+                      return (
+                        <motion.div key={req.name} layout
+                          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -40, scale: 0.95 }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+                          className="rounded-2xl bg-[#1C1C1E] border border-[#FF4500]/20 overflow-hidden"
+                        >
+                          <button onClick={() => setProfileName(req.name)} className="w-full flex items-center gap-3 p-3 text-left">
+                            <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
+                              style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
+                              {initials(req.name)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-white truncate">{req.name}</p>
+                              <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">{timeAgo(req.sentAt)}</p>
+                            </div>
+                          </button>
+                          <div className="flex gap-2 px-3 pb-3">
+                            <motion.button whileTap={{ scale: 0.95 }}
+                              onClick={() => acceptIncoming(req.name)}
+                              className="flex-1 bg-[#FF4500] text-white text-xs font-black py-2.5 rounded-xl flex items-center justify-center gap-1.5">
+                              <UserCheck className="w-3.5 h-3.5" /> Accept
+                            </motion.button>
+                            <motion.button whileTap={{ scale: 0.95 }}
+                              onClick={() => declineIncoming(req.name)}
+                              className="flex-1 bg-[#161618] border border-[#3A3A3C] text-[#9A9AAA] text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5">
+                              <X className="w-3.5 h-3.5" /> Decline
+                            </motion.button>
+                          </div>
+                        </motion.div>
+                      )
+                    })}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
+
+            {/* Pending (outgoing) */}
+            {outgoing.length > 0 && (
+              <div className="mb-6">
+                <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-3">
+                  Pending · {outgoing.length}
+                </p>
+                <div className="flex flex-col gap-2">
+                  <AnimatePresence>
+                    {outgoing.map(req => {
+                      const av = avatarColor(req.name)
+                      return (
+                        <motion.div key={req.name} layout
+                          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40, scale: 0.95 }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+                          className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3 cursor-pointer"
+                          onClick={() => setProfileName(req.name)}
+                        >
+                          <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
+                            style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
+                            {initials(req.name)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-white truncate">{req.name}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <Clock className="w-3 h-3 text-[#F59E0B]" />
+                              <span className="text-xs font-semibold text-[#F59E0B]">Awaiting · {timeAgo(req.sentAt)}</span>
+                            </div>
+                          </div>
+                          <motion.button whileTap={{ scale: 0.9 }}
+                            onClick={e => { e.stopPropagation(); cancelRequest(req.name) }}
+                            className="w-9 h-9 rounded-xl bg-[#161618] border border-[#3A3A3C] flex items-center justify-center text-[#9A9AAA] flex-shrink-0">
+                            <X className="w-4 h-4" />
+                          </motion.button>
+                        </motion.div>
+                      )
+                    })}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
+
+            {/* Friends */}
+            {friends.length > 0 && (
+              <div>
+                <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-3">
+                  Friends · {friends.length}
+                </p>
+                <div className="flex flex-col gap-2">
+                  {friends.map(name => {
+                    const av = avatarColor(name)
+                    return (
+                      <div key={name} onClick={() => setProfileName(name)}
+                        className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3 cursor-pointer">
+                        <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
+                          style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
+                          {initials(name)}
                         </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{name}</p>
+                          <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">Friend</p>
+                        </div>
+                        <UserCheck className="w-4 h-4 text-[#22C55E] flex-shrink-0" />
                       </div>
-                      <motion.button
-                        whileTap={{ scale: 0.9 }}
-                        onClick={e => { e.stopPropagation(); cancelRequest(req.name) }}
-                        className="w-9 h-9 rounded-xl bg-[#161618] border border-[#3A3A3C] flex items-center justify-center text-[#9A9AAA] flex-shrink-0"
-                      >
-                        <X className="w-4 h-4" />
-                      </motion.button>
-                    </motion.div>
-                  )
-                })}
-              </AnimatePresence>
-            </div>
-          </div>
-        )}
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
-        {/* Friends list */}
-        {!showSearch && friends.length > 0 && (
-          <div>
-            <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-3">
-              Friends · {friends.length}
-            </p>
-            <div className="flex flex-col gap-2">
-              {filteredFriends.map(name => {
-                const av = avatarColor(name)
-                return (
-                  <div key={name} onClick={() => setProfileName(name)} className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3 cursor-pointer">
-                    <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
-                      style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
-                      {initials(name)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-white truncate">{name}</p>
-                      <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">Friend</p>
-                    </div>
-                    <UserCheck className="w-4 h-4 text-[#22C55E] flex-shrink-0" />
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!showSearch && friends.length === 0 && outgoing.length === 0 && (
-          <div className="flex flex-col items-center justify-center text-center pt-16">
-            <div className="w-20 h-20 rounded-full bg-[#1C1C1E] border border-[#252528] flex items-center justify-center mb-5">
-              <Users className="w-9 h-9 text-[#3A3A3C]" />
-            </div>
-            <p className="font-black text-white text-lg mb-1">No friends yet</p>
-            <p className="text-sm font-semibold text-[#9A9AAA] max-w-[240px] leading-snug">
-              Search by username above or tap a fighter on the leaderboard to add them.
-            </p>
-          </div>
+            {/* Empty state */}
+            {friends.length === 0 && outgoing.length === 0 && incoming.length === 0 && (
+              <div className="flex flex-col items-center justify-center text-center pt-16">
+                <div className="w-20 h-20 rounded-full bg-[#1C1C1E] border border-[#252528] flex items-center justify-center mb-5">
+                  <Users className="w-9 h-9 text-[#3A3A3C]" />
+                </div>
+                <p className="font-black text-white text-lg mb-1">No friends yet</p>
+                <p className="text-sm font-semibold text-[#9A9AAA] max-w-[240px] leading-snug">
+                  Search by username above or tap a fighter on the leaderboard to add them.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
