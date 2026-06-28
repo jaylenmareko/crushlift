@@ -101,21 +101,6 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
 }
 
-// Smooth ambient float — mirror repeat eliminates the loop-reset jump
-function Float({ children, amplitude = 6, duration = 4, delay = 0, className = '', style }: {
-  children: React.ReactNode; amplitude?: number; duration?: number; delay?: number; className?: string; style?: React.CSSProperties
-}) {
-  return (
-    <motion.div
-      className={className}
-      style={style}
-      animate={{ y: [0, -amplitude] }}
-      transition={{ duration, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut', delay }}
-    >
-      {children}
-    </motion.div>
-  )
-}
 
 // SVG progress ring around the rank avatar
 function RankRing({ progress }: { progress: number }) {
@@ -381,7 +366,7 @@ export default function CompetePage() {
 
           <div className="relative flex-1 flex flex-col items-center justify-center text-center py-8">
             {/* Avatar + progress ring — floats on its own phase */}
-            <Float amplitude={7} duration={3.5} className="relative mb-4" style={{ width: 80, height: 80 }}>
+            <div className="relative mb-4" style={{ width: 80, height: 80 }}>
               <RankRing progress={ringProgress} />
               <div
                 className="absolute top-[8px] left-[8px] w-16 h-16 rounded-full flex items-center justify-center text-lg font-black"
@@ -401,12 +386,11 @@ export default function CompetePage() {
                   />
                 )}
               </AnimatePresence>
-            </Float>
+            </div>
 
             <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.2em] mb-2">{classWeightLabel(selectedClass)}</span>
 
-            {/* Rank number floats at a slightly different phase */}
-            <Float amplitude={5} duration={4.2} delay={0.4}>
+            <>
               {yourEntry ? (
                 <>
                   <motion.span
@@ -423,10 +407,9 @@ export default function CompetePage() {
               ) : (
                 <span className="text-4xl font-black text-[#636366] leading-none">Unranked</span>
               )}
-            </Float>
+            </>
 
-            {/* Badges float last, different phase again */}
-            <Float amplitude={4} duration={4.8} delay={0.8} className="flex items-center gap-2 mt-3 flex-wrap justify-center">
+            <div className="flex items-center gap-2 mt-3 flex-wrap justify-center">
               {yourEntry?.trend ? (
                 <span className="inline-flex items-center gap-0.5 text-xs font-black text-[#22C55E] bg-[#22C55E]/10 px-2.5 py-1 rounded-lg">
                   <ArrowUp className="w-3.5 h-3.5" />{yourEntry.trend} this week
@@ -435,7 +418,7 @@ export default function CompetePage() {
               <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg ${LAST_BATTLE.result === 'W' ? 'text-[#22C55E] bg-[#22C55E]/10' : 'text-[#EF4444] bg-[#EF4444]/10'}`}>
                 Last: {LAST_BATTLE.result} · {LAST_BATTLE.opponent}
               </span>
-            </Float>
+            </div>
           </div>
 
           {/* Stat strip */}
@@ -516,7 +499,6 @@ export default function CompetePage() {
           {challengeView === 'incoming' ? (
             activePending.length > 0
               ? (
-                <Float amplitude={6} duration={3.8} delay={0.2}>
                 <AnimatePresence>
                   {PENDING_CHALLENGES.map((c, i) => dismissed.has(i) ? null : (
                     <motion.div
@@ -575,7 +557,6 @@ export default function CompetePage() {
                     </motion.div>
                   ))}
                 </AnimatePresence>
-                </Float>
               )
               : (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center py-12 gap-2">
@@ -586,7 +567,7 @@ export default function CompetePage() {
               )
           ) : (
             OUTGOING_CHALLENGES.length > 0
-              ? <Float amplitude={3} duration={7} delay={0.5} className="flex flex-col gap-2">{OUTGOING_CHALLENGES.map((c, i) => (
+              ? <div className="flex flex-col gap-2">{OUTGOING_CHALLENGES.map((c, i) => (
                 <div key={i} className="rounded-2xl bg-[#1C1C1E] border border-[#252528] p-3 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black"
                     style={{ backgroundColor: `${avatarColor(c.to)}22`, color: avatarColor(c.to), border: `1.5px solid ${avatarColor(c.to)}55` }}>
@@ -602,7 +583,7 @@ export default function CompetePage() {
                     <X className="w-5 h-5" />
                   </motion.button>
                 </div>
-              ))}</Float>
+              ))}</div>
               : (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center py-12 gap-2">
                   <Swords className="w-8 h-8 text-[#3A3A3C]" />
@@ -646,7 +627,7 @@ export default function CompetePage() {
           </div>
         </div>
 
-        <Float amplitude={5} duration={4.5} delay={0.3} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
           </div>
@@ -668,7 +649,7 @@ export default function CompetePage() {
             <Swords className="w-4 h-4" />
             Challenge Someone
           </motion.button>
-        </Float>
+        </div>
         </motion.div>
         )}
 
