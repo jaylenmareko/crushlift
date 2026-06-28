@@ -101,15 +101,15 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
 }
 
-// Gentle ambient float — content bobs slowly at independent phases
-function Float({ children, amplitude = 3, duration = 5, delay = 0, className = '' }: {
+// Smooth ambient float — mirror repeat = no jump at loop boundary
+function Float({ children, amplitude = 3, duration = 6, delay = 0, className = '' }: {
   children: React.ReactNode; amplitude?: number; duration?: number; delay?: number; className?: string
 }) {
   return (
     <motion.div
       className={className}
-      animate={{ y: [0, -amplitude, 0] }}
-      transition={{ duration, repeat: Infinity, ease: 'easeInOut', delay }}
+      animate={{ y: [0, -amplitude] }}
+      transition={{ duration, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut', delay }}
     >
       {children}
     </motion.div>
@@ -374,11 +374,11 @@ export default function CompetePage() {
         {/* ── RANK TAB ── */}
         {activeTab === 'rank' && (
         <motion.div key="rank" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col flex-1">
-        <div className="relative -mx-11 bg-gradient-to-b from-[#202023] to-[#161618] border-y border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)] flex flex-col flex-1">
+        <Float amplitude={3} duration={7} className="relative -mx-11 bg-gradient-to-b from-[#202023] to-[#161618] border-y border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)] flex flex-col flex-1">
           <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-44 bg-[#FF4500]/15 blur-[80px] pointer-events-none rounded-full" />
 
-          <motion.div className="relative flex-1 flex flex-col items-center justify-center text-center py-8" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}>
+          <div className="relative flex-1 flex flex-col items-center justify-center text-center py-8">
             {/* Avatar + progress ring */}
             <div className="relative mb-4" style={{ width: 80, height: 80 }}>
               <RankRing progress={ringProgress} />
@@ -432,10 +432,10 @@ export default function CompetePage() {
                 Last: {LAST_BATTLE.result} · {LAST_BATTLE.opponent}
               </span>
             </div>
-          </motion.div>
+          </div>
 
           {/* Stat strip */}
-          <motion.div className="relative grid grid-cols-3 border-t border-[#252528]" animate={{ y: [0, -2, 0] }} transition={{ duration: 4.8, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}>
+          <div className="relative grid grid-cols-3 border-t border-[#252528]">
             <div className="py-3.5 text-center">
               <p className={`text-2xl font-black leading-none tabular-nums ${wNum > 0 ? 'text-[#22C55E]' : 'text-[#9A9AAA]'}`}>{yWins}</p>
               <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1.5">Wins</p>
@@ -448,7 +448,7 @@ export default function CompetePage() {
               <p className="text-2xl font-black text-white leading-none tabular-nums">{winRate}<span className="text-sm text-[#636366]">%</span></p>
               <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1.5">Win Rate</p>
             </div>
-          </motion.div>
+          </div>
 
           {/* Climb hook */}
           <button
@@ -475,7 +475,7 @@ export default function CompetePage() {
               </>
             )}
           </button>
-        </div>
+        </Float>
         </motion.div>
         )}
 
@@ -582,7 +582,7 @@ export default function CompetePage() {
               )
           ) : (
             OUTGOING_CHALLENGES.length > 0
-              ? <Float amplitude={2} duration={5} delay={0.3} className="flex flex-col gap-2">{OUTGOING_CHALLENGES.map((c, i) => (
+              ? <Float amplitude={3} duration={7} delay={0.5} className="flex flex-col gap-2">{OUTGOING_CHALLENGES.map((c, i) => (
                 <div key={i} className="rounded-2xl bg-[#1C1C1E] border border-[#252528] p-3 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black"
                     style={{ backgroundColor: `${avatarColor(c.to)}22`, color: avatarColor(c.to), border: `1.5px solid ${avatarColor(c.to)}55` }}>
@@ -642,12 +642,12 @@ export default function CompetePage() {
           </div>
         </div>
 
-        <Float amplitude={2} duration={5.2} delay={0.1} className="flex flex-col gap-1.5">
-          {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
-        </Float>
+        <Float amplitude={2} duration={7} delay={0.5} className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
+          </div>
 
-        {/* "You are here" anchor */}
-        <Float amplitude={2} duration={4.6} delay={0.5} className="flex flex-col gap-3">
+          {/* "You are here" anchor */}
           {yourEntry && (
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#FF450010] border border-[#FF450030]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse flex-shrink-0" />
@@ -656,14 +656,14 @@ export default function CompetePage() {
             </div>
           )}
 
-        <motion.button whileTap={{ scale: 0.97 }}
-          onClick={handleChallengeSomeone}
-          className="relative w-full overflow-hidden bg-gradient-to-b from-[#FF5A1A] to-[#FF4500] text-white font-black uppercase tracking-wide py-4 rounded-2xl text-[15px] flex items-center justify-center gap-2 border border-[#FF6B35]/40 shadow-[0_10px_30px_rgba(255,69,0,0.5)]"
-        >
-          <span className="absolute inset-x-0 top-0 h-px bg-white/30" />
-          <Swords className="w-4 h-4" />
-          Challenge Someone
-        </motion.button>
+          <motion.button whileTap={{ scale: 0.97 }}
+            onClick={handleChallengeSomeone}
+            className="relative w-full overflow-hidden bg-gradient-to-b from-[#FF5A1A] to-[#FF4500] text-white font-black uppercase tracking-wide py-4 rounded-2xl text-[15px] flex items-center justify-center gap-2 border border-[#FF6B35]/40 shadow-[0_10px_30px_rgba(255,69,0,0.5)]"
+          >
+            <span className="absolute inset-x-0 top-0 h-px bg-white/30" />
+            <Swords className="w-4 h-4" />
+            Challenge Someone
+          </motion.button>
         </Float>
         </motion.div>
         )}
