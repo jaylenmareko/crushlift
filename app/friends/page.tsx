@@ -39,6 +39,12 @@ function avatarColor(name: string) {
   return COLORS[h % COLORS.length]
 }
 
+const DUMMY_FRIENDS = ['Marcus T.', 'Dre W.', 'Tyler M.']
+const DUMMY_PENDING: FriendRequest[] = [
+  { name: 'Kyle B.', sentAt: Date.now() - 1000 * 60 * 47 },
+  { name: 'Jordan S.', sentAt: Date.now() - 1000 * 60 * 60 * 3 },
+]
+
 export default function FriendsPage() {
   const [query, setQuery] = useState('')
   const [outgoing, setOutgoing] = useState<FriendRequest[]>([])
@@ -51,9 +57,12 @@ export default function FriendsPage() {
 
   useEffect(() => {
     try {
-      setOutgoing(JSON.parse(localStorage.getItem('trainmaxxing_friend_requests') ?? '[]'))
-      setFriends(JSON.parse(localStorage.getItem('trainmaxxing_friends') ?? '[]'))
-      setSentIds(new Set(JSON.parse(localStorage.getItem('trainmaxxing_sent_requests') ?? '[]')))
+      const storedOutgoing = JSON.parse(localStorage.getItem('trainmaxxing_friend_requests') ?? 'null')
+      const storedFriends  = JSON.parse(localStorage.getItem('trainmaxxing_friends') ?? 'null')
+      const storedSent     = JSON.parse(localStorage.getItem('trainmaxxing_sent_requests') ?? 'null')
+      setOutgoing(storedOutgoing ?? DUMMY_PENDING)
+      setFriends(storedFriends   ?? DUMMY_FRIENDS)
+      setSentIds(new Set(storedSent ?? []))
     } catch {}
   }, [])
 
