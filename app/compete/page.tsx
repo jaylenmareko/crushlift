@@ -191,11 +191,8 @@ export default function CompetePage() {
       : entry.pos <= 3 ? { backgroundColor: `${rankColor}08`, borderColor: 'transparent' }
       : { backgroundColor: '#25252880', borderColor: 'transparent' }
     return (
-      <motion.button
+      <motion.div
         key={entry.pos}
-        disabled={entry.you}
-        whileTap={entry.you ? undefined : { scale: 0.98 }}
-        onClick={() => { if (!entry.you) openChallenge(entry.name) }}
         initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
         className={`w-full flex items-center gap-3 rounded-xl text-left border ${isChamp ? 'px-3.5 py-3.5' : 'px-2.5 py-2.5'}`}
         style={rowStyle}
@@ -228,10 +225,10 @@ export default function CompetePage() {
         {/* Action */}
         <div className="w-[64px] flex justify-end flex-shrink-0">
           {entry.you ? null : isRival
-            ? <motion.span animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} className="text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</motion.span>
-            : <span className="text-[10px] font-semibold text-[#636366] flex items-center gap-1 border border-[#2A2A2E] rounded-lg px-2 py-1.5"><Swords className="w-3 h-3" />Fight</span>}
+            ? <motion.button onClick={() => openChallenge(entry.name)} whileTap={{ scale: 0.95 }} animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} className="text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</motion.button>
+            : <button onClick={() => openChallenge(entry.name)} className="text-[10px] font-semibold text-[#9A9AAA] flex items-center gap-1 border border-[#3A3A3C] rounded-lg px-2 py-1.5 active:scale-95 transition-transform"><Swords className="w-3 h-3" />Fight</button>}
         </div>
-      </motion.button>
+      </motion.div>
     )
   }
 
@@ -247,11 +244,8 @@ export default function CompetePage() {
       : entry.pos <= 3 ? { backgroundColor: `${rankColor}12`, borderColor: 'transparent' }
       : { backgroundColor: '#25252880', borderColor: 'transparent' }
     return (
-      <motion.button
+      <motion.div
         key={entry.pos}
-        disabled={entry.you}
-        whileTap={entry.you ? undefined : { scale: 0.98 }}
-        onClick={() => { if (!entry.you) openChallenge(entry.name, !sameClass) }}
         initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
         className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-left border"
         style={rowStyle}
@@ -275,9 +269,9 @@ export default function CompetePage() {
         </div>
         <span className="w-11 text-right text-sm font-bold tabular-nums text-[#9A9AAA] flex-shrink-0">{entry.record}</span>
         <div className="w-7 flex justify-end flex-shrink-0">
-          {entry.you ? null : <Swords className="w-3.5 h-3.5 text-[#48484A]" />}
+          {entry.you ? null : <button onClick={() => openChallenge(entry.name, !sameClass)} className="active:scale-95 transition-transform"><Swords className="w-3.5 h-3.5 text-[#9A9AAA]" /></button>}
         </div>
-      </motion.button>
+      </motion.div>
     )
   }
 
