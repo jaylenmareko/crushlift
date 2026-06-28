@@ -187,6 +187,13 @@ export default function CompetePage() {
     ? Math.min(0.95, wNum / Math.max(1, rivalWins))
     : yourEntry ? 1 : 0
 
+  const profileEntry = profileName ? [...rankings, ...OPEN_RANKINGS].find(r => r.name === profileName) : null
+  const profileBelts = profileName ? (FIGHTER_BELTS[profileName] ?? {}) : {}
+  const profileAv = profileName ? avatarColor(profileName) : '#FF4500'
+  const profileRecord = recordParts(profileEntry?.record ?? '0-0')
+  const profileWc = WEIGHT_CLASSES[(profileEntry && 'cls' in profileEntry) ? (profileEntry as typeof OPEN_RANKINGS[number]).cls : activeClass]
+  const PROFILE_TIERS = [{name:'Legend',color:'#FFC107'},{name:'Master',color:'#8B5CF6'},{name:'Elite',color:'#EF4444'},{name:'Lifter',color:'#3B82F6'},{name:'Bronze',color:'#22C55E'},{name:'Iron',color:'#D1D5DB'},{name:'Unranked',color:'#48484A'}]
+
   // Count rank down from pos+5 → actual pos every time the Rank tab is entered
   useEffect(() => {
     if (activeTab !== 'rank') return
@@ -787,80 +794,80 @@ export default function CompetePage() {
 
       {/* Profile sheet */}
       <AnimatePresence>
-        {profileOpen && profileName && (() => {
-          const entry = [...rankings, ...OPEN_RANKINGS].find(r => r.name === profileName)
-          const belts = FIGHTER_BELTS[profileName] ?? {}
-          const av = avatarColor(profileName)
-          const { w, l, rate } = recordParts(entry?.record ?? '0-0')
-          const wc = WEIGHT_CLASSES[(entry && 'cls' in entry) ? (entry as typeof OPEN_RANKINGS[number]).cls : activeClass]
-          return (
-            <>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setProfileOpen(false)} className="fixed inset-0 bg-black/85 z-[60]" />
-              <motion.div
-                initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-                transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[900px] bg-[#0D0D0F] border-t border-[#252528] rounded-t-3xl z-[70]"
+        {profileOpen && profileName && (
+          <motion.div key="profile-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setProfileOpen(false)} className="fixed inset-0 bg-black/85 z-[60]" />
+        )}
+        {profileOpen && profileName && (
+          <motion.div
+            key="profile-sheet"
+            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[900px] bg-[#0D0D0F] border-t border-[#252528] rounded-t-3xl z-[70]"
+          >
+            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-[#3A3A3C]" /></div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-3 pb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center text-base font-black flex-shrink-0"
+                  style={{ backgroundColor: `${profileAv}22`, color: profileAv, border: `2px solid ${profileAv}55` }}>
+                  {initials(profileName)}
+                </div>
+                <div>
+                  <p className="text-lg font-black text-white">{profileName}</p>
+                  <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">{shortClassName(profileWc?.full ?? '')} · #{profileEntry?.pos ?? '—'}</p>
+                </div>
+              </div>
+              <button onClick={() => setProfileOpen(false)} className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* W/L strip */}
+            <div className="grid grid-cols-3 border-t border-b border-[#252528] mx-5 rounded-xl overflow-hidden mb-5">
+              <div className="py-3 text-center">
+                <p className="text-xl font-black leading-none text-[#22C55E]">{profileRecord.w}</p>
+                <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1">Wins</p>
+              </div>
+              <div className="py-3 text-center">
+                <p className="text-xl font-black leading-none text-[#EF4444]">{profileRecord.l}</p>
+                <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1">Losses</p>
+              </div>
+              <div className="py-3 text-center">
+                <p className="text-xl font-black leading-none text-[#FF4500]">{Math.round(profileRecord.rate * 100)}%</p>
+                <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1">Win Rate</p>
+              </div>
+            </div>
+
+            {/* Belt tiers */}
+            <div className="px-5 mb-6">
+              <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-3">Belts</p>
+              <div className="flex flex-col gap-2">
+                {['Bench Press','Squat','Deadlift','Overhead Press','Pull-up','Power Clean'].map(lift => {
+                  const tierName = profileBelts[lift] ?? 'Unranked'
+                  const tier = PROFILE_TIERS.find(t => t.name === tierName) ?? PROFILE_TIERS[PROFILE_TIERS.length - 1]
+                  return (
+                    <div key={lift} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#161618] border border-[#252528]">
+                      <span className="text-sm font-semibold text-white">{lift}</span>
+                      <span className="text-xs font-black px-2.5 py-1 rounded-lg" style={{ backgroundColor: `${tier.color}20`, color: tier.color }}>{tier.name}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Challenge CTA */}
+            <div className="px-5 pb-8">
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => { setProfileOpen(false); openChallenge(profileName) }}
+                className="w-full bg-[#FF4500] text-white font-black py-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.3)]"
               >
-                <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-[#3A3A3C]" /></div>
-
-                {/* Header */}
-                <div className="flex items-center justify-between px-5 pt-3 pb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center text-base font-black flex-shrink-0"
-                      style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
-                      {initials(profileName)}
-                    </div>
-                    <div>
-                      <p className="text-lg font-black text-white">{profileName}</p>
-                      <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">{shortClassName(wc?.full ?? '')} · #{entry?.pos ?? '—'}</p>
-                    </div>
-                  </div>
-                  <button onClick={() => setProfileOpen(false)} className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA]">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* W/L strip */}
-                <div className="grid grid-cols-3 border-t border-b border-[#252528] mx-5 rounded-xl overflow-hidden mb-5">
-                  {[['Wins', w, '#22C55E'], ['Losses', l, '#EF4444'], ['Win Rate', `${Math.round(rate * 100)}%`, '#FF4500']].map(([label, val, color]) => (
-                    <div key={label as string} className="py-3 text-center">
-                      <p className="text-xl font-black leading-none" style={{ color: color as string }}>{val}</p>
-                      <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1">{label}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Belt tiers */}
-                <div className="px-5 mb-6">
-                  <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-3">Belts</p>
-                  <div className="flex flex-col gap-2">
-                    {['Bench Press','Squat','Deadlift','Overhead Press','Pull-up','Power Clean'].map(lift => {
-                      const tierName = belts[lift] ?? 'Unranked'
-                      const tier = [...[{name:'Legend',color:'#FFC107'},{name:'Master',color:'#8B5CF6'},{name:'Elite',color:'#EF4444'},{name:'Lifter',color:'#3B82F6'},{name:'Bronze',color:'#22C55E'},{name:'Iron',color:'#D1D5DB'}]].find(t => t.name === tierName) ?? { name: 'Unranked', color: '#48484A' }
-                      return (
-                        <div key={lift} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#161618] border border-[#252528]">
-                          <span className="text-sm font-semibold text-white">{lift}</span>
-                          <span className="text-xs font-black px-2.5 py-1 rounded-lg" style={{ backgroundColor: `${tier.color}20`, color: tier.color }}>{tier.name}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Challenge CTA */}
-                <div className="px-5 pb-8">
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => { setProfileOpen(false); openChallenge(profileName) }}
-                    className="w-full bg-[#FF4500] text-white font-black py-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.3)]"
-                  >
-                    <Swords className="w-4 h-4" /> Challenge {profileName.split(' ')[0]}
-                  </motion.button>
-                </div>
-              </motion.div>
-            </>
-          )
-        })()}
+                <Swords className="w-4 h-4" /> Challenge {profileName.split(' ')[0]}
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Class browser sheet */}
