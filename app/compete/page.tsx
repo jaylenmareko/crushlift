@@ -160,6 +160,17 @@ export default function CompetePage() {
   const lNum = parseInt(yLosses) || 0
   const winRate = wNum + lNum > 0 ? Math.round((wNum / (wNum + lNum)) * 100) : 0
 
+  // Auto-pick the most sensible opponent for a blind challenge.
+  // Simple heuristic for MVP — replace with matchmaking spec later.
+  function autoPickOpponent(): string {
+    const candidates = rankings.filter(r => !r.you)
+    if (rival) return rival.name                                    // person directly above you — natural target
+    if (yourEntry && youIdx < rankings.length - 1) return rankings[youIdx + 1].name  // #1 — pick the challenger below
+    if (candidates.length > 0) return candidates[candidates.length - 1].name          // unranked — easiest match at bottom
+    const openCandidates = OPEN_RANKINGS.filter(r => !r.you)
+    return openCandidates[openCandidates.length - 1]?.name ?? ''
+  }
+
   function openChallenge(name: string | null, superfight = false) {
     setChallengeOpponent(name)
     setChallengeSuperfight(superfight)
@@ -519,7 +530,7 @@ export default function CompetePage() {
         </div>
 
         <motion.button whileTap={{ scale: 0.97 }}
-          onClick={() => openChallenge(null)}
+          onClick={() => openChallenge(autoPickOpponent())}
           className="relative w-full overflow-hidden bg-gradient-to-b from-[#FF5A1A] to-[#FF4500] text-white font-black uppercase tracking-wide py-4 rounded-2xl text-[15px] flex items-center justify-center gap-2 border border-[#FF6B35]/40 shadow-[0_10px_30px_rgba(255,69,0,0.5)]"
         >
           <span className="absolute inset-x-0 top-0 h-px bg-white/30" />
@@ -581,7 +592,7 @@ export default function CompetePage() {
               <div className="flex items-center justify-between px-5 pt-2 pb-4 flex-shrink-0">
                 <div>
                   <h2 className="text-xl font-bold">Challenge</h2>
-                  <p className="text-[#9A9AAA] text-sm">{challengeOpponent ? (challengeSuperfight ? `${challengeOpponent} · Superfight (P4P)` : challengeOpponent) : 'Pick someone from the leaderboard'}</p>
+                  <p className="text-[#9A9AAA] text-sm">{challengeOpponent ? (challengeSuperfight ? `${challengeOpponent} · Superfight (P4P)` : challengeOpponent) : ''}</p>
                 </div>
                 <button onClick={() => setChallengeOpen(false)} className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA] hover:text-white flex-shrink-0">
                   <X className="w-4 h-4" />
