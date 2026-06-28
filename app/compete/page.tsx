@@ -396,20 +396,20 @@ export default function CompetePage() {
         {activeTab === 'challenges' && (
         <motion.div key="challenges" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
 
-        {/* Compact section header */}
+        {/* Section header */}
         <div className="relative -mx-11 bg-[#161618] border-b border-[#252528] overflow-hidden">
           <div className="h-[3px] bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
-          <div className="flex items-center gap-3 px-5 pt-4 pb-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+          <div className="flex items-center gap-4 px-5 pt-6 pb-4">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: '#FF45001f', border: '1.5px solid #FF450044' }}>
-              <Swords className="w-4 h-4 text-[#FF4500]" />
+              <Swords className="w-5 h-5 text-[#FF4500]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.15em] leading-none mb-0.5">1v1 Battles</p>
-              <p className="text-xl font-black text-white leading-tight">Challenges</p>
+              <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.15em] leading-none mb-1">1v1 Battles</p>
+              <p className="text-2xl font-black text-white leading-tight">Challenges</p>
             </div>
           </div>
-          <div className="px-3 pb-3">
+          <div className="px-5 pb-5">
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
               {([['incoming', 'Incoming', PENDING_CHALLENGES.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length]] as const).map(([v, label, count]) => (
                 <button key={v} onClick={() => setChallengeView(v)}
@@ -499,23 +499,23 @@ export default function CompetePage() {
         {activeTab === 'leaderboard' && (
         <motion.div key="leaderboard" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col gap-3">
 
-        {/* Compact section header */}
+        {/* Section header */}
         <div className="relative -mx-11 bg-[#161618] border-b border-[#252528] overflow-hidden">
           <div className="h-[3px] bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
-          <div className="flex items-center gap-3 px-5 pt-4 pb-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+          <div className="flex items-center gap-4 px-5 pt-6 pb-4">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: '#FF45001f', border: '1.5px solid #FF450044' }}>
-              <Trophy className="w-4 h-4 text-[#FF4500]" />
+              <Trophy className="w-5 h-5 text-[#FF4500]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.15em] leading-none mb-0.5">{classWeightLabel(selectedClass)}</p>
-              <p className="text-xl font-black text-white leading-tight">Leaderboard</p>
+              <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.15em] leading-none mb-1">{classWeightLabel(selectedClass)}</p>
+              <p className="text-2xl font-black text-white leading-tight">Leaderboard</p>
             </div>
-            <span className="text-[11px] font-bold text-[#636366] flex-shrink-0">
+            <span className="text-xs font-bold text-[#9A9AAA] flex-shrink-0">
               {boardView === 'class' ? rankings.length : OPEN_RANKINGS.length} fighters
             </span>
           </div>
-          <div className="px-3 pb-3">
+          <div className="px-5 pb-5">
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
               {([['class', 'My Class'], ['open', 'All Classes']] as const).map(([v, l]) => (
                 <button key={v} onClick={() => setBoardView(v)}
