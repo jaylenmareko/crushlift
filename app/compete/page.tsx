@@ -538,6 +538,7 @@ export default function CompetePage() {
                       <div className="h-[2px] bg-gradient-to-r from-[#FF4500] to-[#FF4500]/10" />
                       <div className="p-4">
                         <div className="flex items-center gap-3 mb-3">
+                          <button onClick={() => { setProfileName(c.from); setProfileOpen(true) }} className="flex items-center gap-3 flex-1 min-w-0 text-left active:opacity-70 transition-opacity">
                           <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
                             style={{ backgroundColor: `${avatarColor(c.from)}22`, color: avatarColor(c.from), border: `2px solid ${avatarColor(c.from)}55` }}>
                             {initials(c.from)}
@@ -549,6 +550,7 @@ export default function CompetePage() {
                             </div>
                             <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">called you out</p>
                           </div>
+                          </button>
                           {/* Countdown */}
                           <div className="flex flex-col items-end flex-shrink-0">
                             <span className="text-xs font-black text-[#F59E0B] tabular-nums">{c.hoursLeft}h left</span>
@@ -593,16 +595,18 @@ export default function CompetePage() {
             OUTGOING_CHALLENGES.length > 0
               ? <div className="flex flex-col gap-2">{OUTGOING_CHALLENGES.map((c, i) => (
                 <div key={i} className="rounded-2xl bg-[#1C1C1E] border border-[#252528] p-3 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black"
-                    style={{ backgroundColor: `${avatarColor(c.to)}22`, color: avatarColor(c.to), border: `1.5px solid ${avatarColor(c.to)}55` }}>
-                    {initials(c.to)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white truncate">{c.to}</p>
-                    <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5 truncate">
-                      {c.lift} · {c.format === 'weight' ? 'most weight' : 'most reps'} · <span className="text-[#F59E0B] font-bold">awaiting...</span>
-                    </p>
-                  </div>
+                  <button onClick={() => { setProfileName(c.to); setProfileOpen(true) }} className="flex items-center gap-3 flex-1 min-w-0 text-left active:opacity-70 transition-opacity">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black"
+                      style={{ backgroundColor: `${avatarColor(c.to)}22`, color: avatarColor(c.to), border: `1.5px solid ${avatarColor(c.to)}55` }}>
+                      {initials(c.to)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{c.to}</p>
+                      <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5 truncate">
+                        {c.lift} · {c.format === 'weight' ? 'most weight' : 'most reps'} · <span className="text-[#F59E0B] font-bold">awaiting...</span>
+                      </p>
+                    </div>
+                  </button>
                   <motion.button whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA] hover:text-white flex-shrink-0">
                     <X className="w-5 h-5" />
                   </motion.button>
