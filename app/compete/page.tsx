@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Swords, Crown, ChevronRight, Check, X, ArrowUp, Trophy, Medal } from 'lucide-react'
+import { Swords, Crown, ChevronRight, Check, X, ArrowUp, Trophy, Medal, Filter } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
 import WeightGate from '@/components/WeightGate'
 import { useUserWeight } from '@/lib/hooks/useUserWeight'
@@ -156,8 +156,11 @@ export default function CompetePage() {
   const [matchState, setMatchState] = useState<'idle' | 'finding'>('idle')
   const [dismissed, setDismissed] = useState<Set<number>>(new Set())
   const [rankSettled, setRankSettled] = useState(false)
+  const [classBrowserOpen, setClassBrowserOpen] = useState(false)
+  const [browsingClass, setBrowsingClass] = useState<number | null>(null)
 
-  const rankings  = RANKINGS_DATA[selectedClass] ?? []
+  const activeClass = browsingClass !== null ? browsingClass : selectedClass
+  const rankings  = RANKINGS_DATA[activeClass] ?? []
   const youIdx    = rankings.findIndex(r => r.you)
   const yourEntry = youIdx >= 0 ? rankings[youIdx] : null
   const rival     = youIdx > 0 ? rankings[youIdx - 1] : null
@@ -605,16 +608,22 @@ export default function CompetePage() {
           <div className="h-[3px] bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
           <div className="px-6 pt-7 pb-2 flex items-end justify-between">
             <div>
-              <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em] mb-1">{classWeightLabel(selectedClass)}</p>
+              <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em] mb-1">
+                {browsingClass !== null ? shortClassName(WEIGHT_CLASSES[browsingClass].full) : classWeightLabel(selectedClass)}
+              </p>
               <p className="text-3xl font-black text-white">Leaderboard</p>
             </div>
-            <span className="text-xs font-bold text-[#9A9AAA] pb-1">
-              {boardView === 'class' ? rankings.length : OPEN_RANKINGS.length} fighters
-            </span>
+            <button
+              onClick={() => setClassBrowserOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#3A3A3C] bg-[#1C1C1E] text-[#9A9AAA] text-xs font-bold mb-1 active:scale-95 transition-transform"
+            >
+              <Filter className="w-3 h-3" />
+              {browsingClass !== null ? WEIGHT_CLASSES[browsingClass].label : 'Classes'}
+            </button>
           </div>
           <div className="px-6 pt-3 pb-6">
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
-              {([['class', 'My Class'], ['open', 'All Classes']] as const).map(([v, l]) => (
+              {([['class', 'My Weight Class'], ['open', 'All Classes']] as const).map(([v, l]) => (
                 <button key={v} onClick={() => setBoardView(v)}
                   className={`relative flex-1 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap ${boardView === v ? 'text-[#FF4500]' : 'text-[#636366]'}`}>
                   {boardView === v && (
@@ -765,6 +774,68 @@ export default function CompetePage() {
                   <Swords className="w-4 h-4" />
                   Send Challenge
                 </motion.button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Class browser sheet */}
+      <AnimatePresence>
+        {classBrowserOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setClassBrowserOpen(false)}
+              className="fixed inset-0 bg-black/80 z-[60]"
+            />
+            <motion.div
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[900px] bg-[#0D0D0F] border-t border-[#252528] rounded-t-3xl z-[70]"
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-[#3A3A3C]" />
+              </div>
+              <div className="flex items-center justify-between px-5 pt-2 pb-4">
+                <div>
+                  <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em] mb-1">Leaderboard</p>
+                  <h2 className="text-xl font-bold text-white">Weight Classes</h2>
+                </div>
+                <button onClick={() => setClassBrowserOpen(false)} className="w-9 h-9 rounded-xl bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA]">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="px-5 pb-8 flex flex-col gap-2">
+                {/* "My class" reset option */}
+                <button
+                  onClick={() => { setBrowsingClass(null); setClassBrowserOpen(false) }}
+                  className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border transition-colors ${browsingClass === null ? 'border-[#FF4500] bg-[#FF4500]/10' : 'border-[#252528] bg-[#161618]'}`}
+                >
+                  <div className="text-left">
+                    <p className={`text-sm font-bold ${browsingClass === null ? 'text-[#FF4500]' : 'text-white'}`}>My Weight Class</p>
+                    <p className="text-xs text-[#9A9AAA] mt-0.5">{classWeightLabel(selectedClass)}</p>
+                  </div>
+                  {browsingClass === null && <Check className="w-4 h-4 text-[#FF4500]" />}
+                </button>
+                <div className="h-px bg-[#252528] my-1" />
+                {WEIGHT_CLASSES.map((wc, i) => {
+                  const count = (RANKINGS_DATA[i] ?? []).length
+                  const isActive = browsingClass === i
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => { setBrowsingClass(i); setBoardView('class'); setClassBrowserOpen(false) }}
+                      className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border transition-colors ${isActive ? 'border-[#FF4500] bg-[#FF4500]/10' : 'border-[#252528] bg-[#161618]'}`}
+                    >
+                      <div className="text-left">
+                        <p className={`text-sm font-bold ${isActive ? 'text-[#FF4500]' : 'text-white'}`}>{shortClassName(wc.full)}</p>
+                        <p className="text-xs text-[#9A9AAA] mt-0.5">{wc.label} lbs · {count} fighter{count !== 1 ? 's' : ''}</p>
+                      </div>
+                      {isActive && <Check className="w-4 h-4 text-[#FF4500]" />}
+                    </button>
+                  )
+                })}
               </div>
             </motion.div>
           </>
