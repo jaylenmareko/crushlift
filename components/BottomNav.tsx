@@ -14,7 +14,7 @@ const TABS = [
 
 export default function BottomNav({ active }: { active: string }) {
   return (
-    <nav className="md:hidden fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[900px] bg-[#0D0D0F]/95 border-t border-[#252528] z-30 backdrop-blur-md">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[900px] bg-[#0D0D0F]/95 border-t border-[#252528] z-30 backdrop-blur-md">
       <div className="flex items-center">
         {TABS.map(({ href, icon: Icon, label, key }) => {
           const isActive = active === key
