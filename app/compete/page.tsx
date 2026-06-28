@@ -154,6 +154,7 @@ export default function CompetePage() {
   const [displayRank, setDisplayRank] = useState(0)
   const [matchState, setMatchState] = useState<'idle' | 'finding'>('idle')
   const [dismissed, setDismissed] = useState<Set<number>>(new Set())
+  const [rankSettled, setRankSettled] = useState(false)
 
   const rankings  = RANKINGS_DATA[selectedClass] ?? []
   const youIdx    = rankings.findIndex(r => r.you)
@@ -172,15 +173,16 @@ export default function CompetePage() {
   // Count rank down from pos+5 → actual pos every time the Rank tab is entered
   useEffect(() => {
     if (activeTab !== 'rank') return
+    setRankSettled(false)
     if (!yourEntry) { setDisplayRank(0); return }
     const target = yourEntry.pos
     let cur = Math.min(rankings.length, target + 5)
     setDisplayRank(cur)
-    if (cur === target) return
+    if (cur === target) { setTimeout(() => setRankSettled(true), 80); return }
     const id = setInterval(() => {
       cur -= 1
       setDisplayRank(cur)
-      if (cur <= target) clearInterval(id)
+      if (cur <= target) { clearInterval(id); setRankSettled(true) }
     }, 80)
     return () => clearInterval(id)
   }, [activeTab]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -240,7 +242,7 @@ export default function CompetePage() {
     return (
       <motion.div
         key={entry.pos}
-        initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
+        initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.045, type: 'spring', stiffness: 320, damping: 26 }}
         className={`relative w-full flex items-center gap-3 rounded-xl border ${isChamp ? 'px-3.5 py-3.5' : 'px-2.5 py-2.5'}`}
         style={rowStyle}
       >
@@ -273,7 +275,14 @@ export default function CompetePage() {
         >{entry.record}</span>
         <div className="w-[64px] flex justify-end flex-shrink-0">
           {entry.you ? null : isRival
-            ? <motion.button onClick={() => openChallenge(entry.name)} whileTap={{ scale: 0.95 }} animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} className="text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</motion.button>
+            ? <div className="relative">
+                <motion.div
+                  className="absolute inset-[-5px] rounded-xl border border-[#FF4500]/70 pointer-events-none"
+                  animate={{ scale: [1, 1.55], opacity: [0.7, 0] }}
+                  transition={{ duration: 1.1, repeat: Infinity, ease: 'easeOut', repeatDelay: 0.5 }}
+                />
+                <motion.button onClick={() => openChallenge(entry.name)} whileTap={{ scale: 0.95 }} animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} className="relative text-[10px] font-black text-white px-2.5 py-1.5 rounded-lg bg-[#FF4500] flex items-center gap-1 shadow-[0_2px_12px_rgba(255,69,0,0.4)]"><Swords className="w-3 h-3" />FIGHT</motion.button>
+              </div>
             : <button onClick={() => openChallenge(entry.name)} className="text-[10px] font-semibold text-[#9A9AAA] flex items-center gap-1 border border-[#3A3A3C] rounded-lg px-2 py-1.5 active:scale-95 transition-transform"><Swords className="w-3 h-3" />Fight</button>}
         </div>
       </motion.div>
@@ -294,7 +303,7 @@ export default function CompetePage() {
     return (
       <motion.div
         key={entry.pos}
-        initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
+        initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.045, type: 'spring', stiffness: 320, damping: 26 }}
         className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl border"
         style={rowStyle}
       >
@@ -364,6 +373,18 @@ export default function CompetePage() {
               >
                 {initials('You')}
               </div>
+              <AnimatePresence>
+                {rankSettled && (
+                  <motion.div
+                    key="settle-ripple"
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{ background: 'rgba(255,69,0,0.35)' }}
+                    initial={{ scale: 1, opacity: 1 }}
+                    animate={{ scale: 2.8, opacity: 0 }}
+                    transition={{ duration: 0.65, ease: 'easeOut' }}
+                  />
+                )}
+              </AnimatePresence>
             </div>
 
             <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.2em] mb-2">{classWeightLabel(selectedClass)}</span>
@@ -457,10 +478,13 @@ export default function CompetePage() {
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
               {([['incoming', 'Incoming', activePending.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length]] as const).map(([v, label, count]) => (
                 <button key={v} onClick={() => setChallengeView(v)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold transition-all ${challengeView === v ? 'bg-[#1C1C1E] text-[#FF4500] shadow-sm' : 'text-[#636366]'}`}>
-                  {label}
+                  className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold ${challengeView === v ? 'text-[#FF4500]' : 'text-[#636366]'}`}>
+                  {challengeView === v && (
+                    <motion.div layoutId="challenge-pill" className="absolute inset-0 rounded-lg bg-[#1C1C1E] shadow-sm" transition={{ type: 'spring', stiffness: 450, damping: 38 }} />
+                  )}
+                  <span className="relative z-10">{label}</span>
                   {count > 0 && (
-                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${challengeView === v ? 'bg-[#FF4500] text-white' : 'bg-[#252528] text-[#9A9AAA]'}`}>{count}</span>
+                    <span className={`relative z-10 text-[10px] font-black px-1.5 py-0.5 rounded-md transition-colors ${challengeView === v ? 'bg-[#FF4500] text-white' : 'bg-[#252528] text-[#9A9AAA]'}`}>{count}</span>
                   )}
                 </button>
               ))}
@@ -478,8 +502,10 @@ export default function CompetePage() {
                     <motion.div
                       key={i}
                       layout
+                      initial={{ opacity: 0, y: 22, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                      transition={{ duration: 0.25 }}
+                      transition={{ type: 'spring', stiffness: 280, damping: 22 }}
                       className="rounded-2xl overflow-hidden border border-[#FF4500]/30"
                       style={{ background: 'linear-gradient(135deg, #1a0800 0%, #1C1C1E 65%)' }}
                     >
@@ -588,7 +614,12 @@ export default function CompetePage() {
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
               {([['class', 'My Class'], ['open', 'All Classes']] as const).map(([v, l]) => (
                 <button key={v} onClick={() => setBoardView(v)}
-                  className={`flex-1 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${boardView === v ? 'bg-[#1C1C1E] text-[#FF4500] shadow-sm' : 'text-[#636366]'}`}>{l}</button>
+                  className={`relative flex-1 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap ${boardView === v ? 'text-[#FF4500]' : 'text-[#636366]'}`}>
+                  {boardView === v && (
+                    <motion.div layoutId="board-pill" className="absolute inset-0 rounded-lg bg-[#1C1C1E] shadow-sm" transition={{ type: 'spring', stiffness: 450, damping: 38 }} />
+                  )}
+                  <span className="relative z-10">{l}</span>
+                </button>
               ))}
             </div>
           </div>
@@ -632,11 +663,18 @@ export default function CompetePage() {
               <button
                 key={tab.id}
                 onClick={() => changeTab(tab.id)}
-                className={`relative flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${active ? 'bg-[#1C1C1E] text-[#FF4500] shadow-sm' : 'text-[#636366]'}`}
+                className={`relative flex-1 flex flex-col items-center gap-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest ${active ? 'text-[#FF4500]' : 'text-[#636366]'}`}
               >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-                {showDot && <span className="absolute top-1 right-[28%] w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse" />}
+                {active && (
+                  <motion.div
+                    layoutId="compete-tab-pill"
+                    className="absolute inset-0 rounded-lg bg-[#1C1C1E] shadow-sm"
+                    transition={{ type: 'spring', stiffness: 450, damping: 38 }}
+                  />
+                )}
+                <Icon className="w-4 h-4 relative z-10" />
+                <span className="relative z-10">{tab.label}</span>
+                {showDot && <span className="absolute top-1 right-[28%] w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse z-20" />}
               </button>
             )
           })}
