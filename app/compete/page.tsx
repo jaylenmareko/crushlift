@@ -101,6 +101,21 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
 }
 
+// Gentle ambient float — content bobs slowly at independent phases
+function Float({ children, amplitude = 3, duration = 5, delay = 0, className = '' }: {
+  children: React.ReactNode; amplitude?: number; duration?: number; delay?: number; className?: string
+}) {
+  return (
+    <motion.div
+      className={className}
+      animate={{ y: [0, -amplitude, 0] }}
+      transition={{ duration, repeat: Infinity, ease: 'easeInOut', delay }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
 // SVG progress ring around the rank avatar
 function RankRing({ progress }: { progress: number }) {
   const size = 80, r = 36
@@ -363,7 +378,7 @@ export default function CompetePage() {
           <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-44 bg-[#FF4500]/15 blur-[80px] pointer-events-none rounded-full" />
 
-          <div className="relative flex-1 flex flex-col items-center justify-center text-center py-8">
+          <motion.div className="relative flex-1 flex flex-col items-center justify-center text-center py-8" animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}>
             {/* Avatar + progress ring */}
             <div className="relative mb-4" style={{ width: 80, height: 80 }}>
               <RankRing progress={ringProgress} />
@@ -417,10 +432,10 @@ export default function CompetePage() {
                 Last: {LAST_BATTLE.result} · {LAST_BATTLE.opponent}
               </span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Stat strip */}
-          <div className="relative grid grid-cols-3 border-t border-[#252528]">
+          <motion.div className="relative grid grid-cols-3 border-t border-[#252528]" animate={{ y: [0, -2, 0] }} transition={{ duration: 4.8, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}>
             <div className="py-3.5 text-center">
               <p className={`text-2xl font-black leading-none tabular-nums ${wNum > 0 ? 'text-[#22C55E]' : 'text-[#9A9AAA]'}`}>{yWins}</p>
               <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1.5">Wins</p>
@@ -433,7 +448,7 @@ export default function CompetePage() {
               <p className="text-2xl font-black text-white leading-none tabular-nums">{winRate}<span className="text-sm text-[#636366]">%</span></p>
               <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mt-1.5">Win Rate</p>
             </div>
-          </div>
+          </motion.div>
 
           {/* Climb hook */}
           <button
@@ -497,6 +512,7 @@ export default function CompetePage() {
           {challengeView === 'incoming' ? (
             activePending.length > 0
               ? (
+                <Float amplitude={3} duration={4.5} delay={0.2}>
                 <AnimatePresence>
                   {PENDING_CHALLENGES.map((c, i) => dismissed.has(i) ? null : (
                     <motion.div
@@ -555,6 +571,7 @@ export default function CompetePage() {
                     </motion.div>
                   ))}
                 </AnimatePresence>
+                </Float>
               )
               : (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center py-12 gap-2">
@@ -565,7 +582,7 @@ export default function CompetePage() {
               )
           ) : (
             OUTGOING_CHALLENGES.length > 0
-              ? OUTGOING_CHALLENGES.map((c, i) => (
+              ? <Float amplitude={2} duration={5} delay={0.3} className="flex flex-col gap-2">{OUTGOING_CHALLENGES.map((c, i) => (
                 <div key={i} className="rounded-2xl bg-[#1C1C1E] border border-[#252528] p-3 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black"
                     style={{ backgroundColor: `${avatarColor(c.to)}22`, color: avatarColor(c.to), border: `1.5px solid ${avatarColor(c.to)}55` }}>
@@ -581,7 +598,7 @@ export default function CompetePage() {
                     <X className="w-5 h-5" />
                   </motion.button>
                 </div>
-              ))
+              ))}</Float>
               : (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center py-12 gap-2">
                   <Swords className="w-8 h-8 text-[#3A3A3C]" />
@@ -625,18 +642,19 @@ export default function CompetePage() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        <Float amplitude={2} duration={5.2} delay={0.1} className="flex flex-col gap-1.5">
           {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
-        </div>
+        </Float>
 
         {/* "You are here" anchor */}
-        {yourEntry && (
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#FF450010] border border-[#FF450030]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse flex-shrink-0" />
-            <span className="text-xs font-bold text-[#FF4500]">You · #{yourEntry.pos}</span>
-            <span className="text-xs text-[#636366] ml-auto">{yourEntry.record}</span>
-          </div>
-        )}
+        <Float amplitude={2} duration={4.6} delay={0.5} className="flex flex-col gap-3">
+          {yourEntry && (
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#FF450010] border border-[#FF450030]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500] animate-pulse flex-shrink-0" />
+              <span className="text-xs font-bold text-[#FF4500]">You · #{yourEntry.pos}</span>
+              <span className="text-xs text-[#636366] ml-auto">{yourEntry.record}</span>
+            </div>
+          )}
 
         <motion.button whileTap={{ scale: 0.97 }}
           onClick={handleChallengeSomeone}
@@ -646,6 +664,7 @@ export default function CompetePage() {
           <Swords className="w-4 h-4" />
           Challenge Someone
         </motion.button>
+        </Float>
         </motion.div>
         )}
 
