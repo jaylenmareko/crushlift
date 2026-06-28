@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, UserPlus, Search, Clock, X, UserCheck, Loader2 } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
+import ProfileSheet from '@/components/ProfileSheet'
 import { createClient } from '@/lib/supabase/client'
 
 interface FriendRequest {
@@ -52,6 +53,7 @@ export default function FriendsPage() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [sentIds, setSentIds] = useState<Set<string>>(new Set())
+  const [profileName, setProfileName] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const supabase = createClient()
 
@@ -83,6 +85,18 @@ export default function FriendsPage() {
       setSearching(false)
     }, 300)
   }, [query])
+
+  const sentNames = new Set(outgoing.map(r => r.name))
+
+  function addFriendByName(name: string) {
+    const existing = JSON.parse(localStorage.getItem('trainmaxxing_friend_requests') ?? '[]')
+    const already = existing.some((r: { name: string }) => r.name === name)
+    if (!already) {
+      existing.push({ name, sentAt: Date.now() })
+      localStorage.setItem('trainmaxxing_friend_requests', JSON.stringify(existing))
+      setOutgoing(existing)
+    }
+  }
 
   function sendRequest(result: SearchResult) {
     const displayName = result.first_name ? `${result.first_name} (@${result.username})` : `@${result.username}`
@@ -210,7 +224,8 @@ export default function FriendsPage() {
                       layout
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40, scale: 0.95 }}
                       transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-                      className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3"
+                      className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3 cursor-pointer"
+                      onClick={() => setProfileName(req.name)}
                     >
                       <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
                         style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
@@ -225,7 +240,7 @@ export default function FriendsPage() {
                       </div>
                       <motion.button
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => cancelRequest(req.name)}
+                        onClick={e => { e.stopPropagation(); cancelRequest(req.name) }}
                         className="w-9 h-9 rounded-xl bg-[#161618] border border-[#3A3A3C] flex items-center justify-center text-[#9A9AAA] flex-shrink-0"
                       >
                         <X className="w-4 h-4" />
@@ -248,7 +263,7 @@ export default function FriendsPage() {
               {filteredFriends.map(name => {
                 const av = avatarColor(name)
                 return (
-                  <div key={name} className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3">
+                  <div key={name} onClick={() => setProfileName(name)} className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3 cursor-pointer">
                     <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
                       style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
                       {initials(name)}
@@ -280,6 +295,13 @@ export default function FriendsPage() {
       </div>
 
       <BottomNav active="friends" />
+
+      <ProfileSheet
+        name={profileName}
+        onClose={() => setProfileName(null)}
+        sentRequests={sentNames}
+        onAddFriend={name => { addFriendByName(name); setProfileName(null) }}
+      />
     </div>
   )
 }
