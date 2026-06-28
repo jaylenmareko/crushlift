@@ -101,13 +101,14 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
 }
 
-// Smooth ambient float — mirror repeat = no jump at loop boundary
-function Float({ children, amplitude = 3, duration = 6, delay = 0, className = '' }: {
-  children: React.ReactNode; amplitude?: number; duration?: number; delay?: number; className?: string
+// Smooth ambient float — mirror repeat eliminates the loop-reset jump
+function Float({ children, amplitude = 6, duration = 4, delay = 0, className = '', style }: {
+  children: React.ReactNode; amplitude?: number; duration?: number; delay?: number; className?: string; style?: React.CSSProperties
 }) {
   return (
     <motion.div
       className={className}
+      style={style}
       animate={{ y: [0, -amplitude] }}
       transition={{ duration, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut', delay }}
     >
@@ -374,13 +375,13 @@ export default function CompetePage() {
         {/* ── RANK TAB ── */}
         {activeTab === 'rank' && (
         <motion.div key="rank" custom={tabDir} variants={tabVariants} initial="enter" animate="center" exit="exit" transition={tabTransition} className="flex flex-col flex-1">
-        <Float amplitude={3} duration={7} className="relative -mx-11 bg-gradient-to-b from-[#202023] to-[#161618] border-y border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)] flex flex-col flex-1">
+        <div className="relative -mx-11 bg-gradient-to-b from-[#202023] to-[#161618] border-y border-[#2A2A2E] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)] flex flex-col flex-1">
           <div className="h-1 bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-44 bg-[#FF4500]/15 blur-[80px] pointer-events-none rounded-full" />
 
           <div className="relative flex-1 flex flex-col items-center justify-center text-center py-8">
-            {/* Avatar + progress ring */}
-            <div className="relative mb-4" style={{ width: 80, height: 80 }}>
+            {/* Avatar + progress ring — floats on its own phase */}
+            <Float amplitude={7} duration={3.5} className="relative mb-4" style={{ width: 80, height: 80 }}>
               <RankRing progress={ringProgress} />
               <div
                 className="absolute top-[8px] left-[8px] w-16 h-16 rounded-full flex items-center justify-center text-lg font-black"
@@ -400,29 +401,32 @@ export default function CompetePage() {
                   />
                 )}
               </AnimatePresence>
-            </div>
+            </Float>
 
             <span className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.2em] mb-2">{classWeightLabel(selectedClass)}</span>
 
-            {yourEntry ? (
-              <>
-                <motion.span
-                  key={displayRank}
-                  initial={{ scale: 0.88, opacity: 0.6 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.06 }}
-                  className="text-7xl font-black text-[#FF4500] leading-none tracking-tight drop-shadow-[0_2px_20px_rgba(255,69,0,0.35)] tabular-nums"
-                >
-                  #{displayRank || yourEntry.pos}
-                </motion.span>
-                <p className="text-xs font-bold text-[#636366] mt-2">of {rankings.length} in your class</p>
-              </>
-            ) : (
-              <span className="text-4xl font-black text-[#636366] leading-none">Unranked</span>
-            )}
+            {/* Rank number floats at a slightly different phase */}
+            <Float amplitude={5} duration={4.2} delay={0.4}>
+              {yourEntry ? (
+                <>
+                  <motion.span
+                    key={displayRank}
+                    initial={{ scale: 0.88, opacity: 0.6 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.06 }}
+                    className="text-7xl font-black text-[#FF4500] leading-none tracking-tight drop-shadow-[0_2px_20px_rgba(255,69,0,0.35)] tabular-nums"
+                  >
+                    #{displayRank || yourEntry.pos}
+                  </motion.span>
+                  <p className="text-xs font-bold text-[#636366] mt-2">of {rankings.length} in your class</p>
+                </>
+              ) : (
+                <span className="text-4xl font-black text-[#636366] leading-none">Unranked</span>
+              )}
+            </Float>
 
-            {/* Badges row */}
-            <div className="flex items-center gap-2 mt-3 flex-wrap justify-center">
+            {/* Badges float last, different phase again */}
+            <Float amplitude={4} duration={4.8} delay={0.8} className="flex items-center gap-2 mt-3 flex-wrap justify-center">
               {yourEntry?.trend ? (
                 <span className="inline-flex items-center gap-0.5 text-xs font-black text-[#22C55E] bg-[#22C55E]/10 px-2.5 py-1 rounded-lg">
                   <ArrowUp className="w-3.5 h-3.5" />{yourEntry.trend} this week
@@ -431,7 +435,7 @@ export default function CompetePage() {
               <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg ${LAST_BATTLE.result === 'W' ? 'text-[#22C55E] bg-[#22C55E]/10' : 'text-[#EF4444] bg-[#EF4444]/10'}`}>
                 Last: {LAST_BATTLE.result} · {LAST_BATTLE.opponent}
               </span>
-            </div>
+            </Float>
           </div>
 
           {/* Stat strip */}
@@ -475,7 +479,7 @@ export default function CompetePage() {
               </>
             )}
           </button>
-        </Float>
+        </div>
         </motion.div>
         )}
 
@@ -512,7 +516,7 @@ export default function CompetePage() {
           {challengeView === 'incoming' ? (
             activePending.length > 0
               ? (
-                <Float amplitude={3} duration={4.5} delay={0.2}>
+                <Float amplitude={6} duration={3.8} delay={0.2}>
                 <AnimatePresence>
                   {PENDING_CHALLENGES.map((c, i) => dismissed.has(i) ? null : (
                     <motion.div
@@ -642,7 +646,7 @@ export default function CompetePage() {
           </div>
         </div>
 
-        <Float amplitude={2} duration={7} delay={0.5} className="flex flex-col gap-3">
+        <Float amplitude={5} duration={4.5} delay={0.3} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             {boardView === 'class' ? rankings.map(renderLeaderRow) : OPEN_RANKINGS.map(renderOpenRow)}
           </div>
