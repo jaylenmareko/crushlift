@@ -399,17 +399,11 @@ export default function CompetePage() {
         {/* Section header */}
         <div className="relative -mx-11 bg-[#161618] border-b border-[#252528] overflow-hidden">
           <div className="h-[3px] bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
-          <div className="flex items-center gap-4 px-5 pt-6 pb-4">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: '#FF45001f', border: '1.5px solid #FF450044' }}>
-              <Swords className="w-5 h-5 text-[#FF4500]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.15em] leading-none mb-1">1v1 Battles</p>
-              <p className="text-2xl font-black text-white leading-tight">Challenges</p>
-            </div>
+          <div className="px-6 pt-7 pb-2">
+            <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em] mb-1">1v1 Battles</p>
+            <p className="text-3xl font-black text-white">Challenges</p>
           </div>
-          <div className="px-5 pb-5">
+          <div className="px-6 pt-3 pb-6">
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
               {([['incoming', 'Incoming', PENDING_CHALLENGES.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length]] as const).map(([v, label, count]) => (
                 <button key={v} onClick={() => setChallengeView(v)}
@@ -502,20 +496,16 @@ export default function CompetePage() {
         {/* Section header */}
         <div className="relative -mx-11 bg-[#161618] border-b border-[#252528] overflow-hidden">
           <div className="h-[3px] bg-gradient-to-r from-[#F59E0B] via-[#FF4500] to-[#FF4500]" />
-          <div className="flex items-center gap-4 px-5 pt-6 pb-4">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: '#FF45001f', border: '1.5px solid #FF450044' }}>
-              <Trophy className="w-5 h-5 text-[#FF4500]" />
+          <div className="px-6 pt-7 pb-2 flex items-end justify-between">
+            <div>
+              <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-[0.2em] mb-1">{classWeightLabel(selectedClass)}</p>
+              <p className="text-3xl font-black text-white">Leaderboard</p>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-[0.15em] leading-none mb-1">{classWeightLabel(selectedClass)}</p>
-              <p className="text-2xl font-black text-white leading-tight">Leaderboard</p>
-            </div>
-            <span className="text-xs font-bold text-[#9A9AAA] flex-shrink-0">
+            <span className="text-xs font-bold text-[#9A9AAA] pb-1">
               {boardView === 'class' ? rankings.length : OPEN_RANKINGS.length} fighters
             </span>
           </div>
-          <div className="px-5 pb-5">
+          <div className="px-6 pt-3 pb-6">
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
               {([['class', 'My Class'], ['open', 'All Classes']] as const).map(([v, l]) => (
                 <button key={v} onClick={() => setBoardView(v)}
