@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, ChevronLeft, Check, Eye, EyeOff } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Check, Eye, EyeOff, Camera, User } from 'lucide-react'
 import type { OnboardingData } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
 
@@ -119,6 +119,9 @@ export default function OnboardingPage() {
   const [signupError, setSignupError] = useState('')
   const [loading, setLoading] = useState(false)
   const [dir, setDir] = useState(1)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!injuryRef.current) return
@@ -247,6 +250,17 @@ export default function OnboardingPage() {
         setSignupError(taken ? 'That username is taken — pick another.' : profileError.message)
         setLoading(false)
         return
+      }
+      // Upload avatar photo fire-and-forget
+      if (photoFile && authData.user) {
+        const ext = photoFile.type === 'image/png' ? 'png' : 'jpg'
+        const path = `${authData.user.id}/avatar.${ext}`
+        supabase.storage.from('pr-media').upload(path, photoFile, { contentType: photoFile.type, upsert: true })
+          .then(({ error }) => {
+            if (!error) {
+              supabase.from('profiles').update({ avatar_url: path }).eq('id', authData.user!.id).then(() => {})
+            }
+          })
       }
     }
     sessionStorage.setItem('trainmaxxing_onboarding', JSON.stringify(buildPayload()))
@@ -682,6 +696,47 @@ export default function OnboardingPage() {
                     hasValue ? (valid ? 'border-[#22C55E]' : 'border-red-500/60') : 'border-[#252528]'
                   return (
                     <div className="flex flex-col gap-3">
+                      {/* Photo picker */}
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          setPhotoFile(file)
+                          const reader = new FileReader()
+                          reader.onload = ev => setPhotoPreview(ev.target?.result as string)
+                          reader.readAsDataURL(file)
+                        }}
+                      />
+                      <div className="flex flex-col items-center gap-2 mb-2">
+                        <motion.button
+                          whileTap={{ scale: 0.96 }}
+                          type="button"
+                          onClick={() => photoInputRef.current?.click()}
+                          className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-[#3A3A3C] bg-[#1C1C1E] flex items-center justify-center group hover:border-[#FF4500] transition-colors"
+                        >
+                          {photoPreview ? (
+                            <>
+                              <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Camera className="w-6 h-6 text-white" />
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1">
+                              <User className="w-8 h-8 text-[#3A3A3C] group-hover:text-[#FF4500] transition-colors" />
+                              <Camera className="w-4 h-4 text-[#3A3A3C] group-hover:text-[#FF4500] transition-colors" />
+                            </div>
+                          )}
+                        </motion.button>
+                        <p className="text-xs font-semibold text-[#9A9AAA]">
+                          {photoPreview ? 'Tap to change photo' : 'Add a profile photo'}
+                          <span className="text-[#48484A] ml-1">· Optional</span>
+                        </p>
+                      </div>
                       <div>
                         <label className="text-[11px] font-bold text-[#FF4500]/70 uppercase tracking-widest block mb-2">Username</label>
                         <div className="relative">
