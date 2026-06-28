@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Swords, Crown, ChevronRight, Check, X, ArrowUp, Trophy, Medal, Filter } from 'lucide-react'
+import { Swords, Crown, ChevronRight, Check, X, ArrowUp, Trophy, Medal, Filter, UserPlus, UserCheck } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
 import WeightGate from '@/components/WeightGate'
 import { useUserWeight } from '@/lib/hooks/useUserWeight'
@@ -171,6 +171,9 @@ export default function CompetePage() {
   const [browsingClass, setBrowsingClass] = useState<number | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [profileName, setProfileName] = useState<string | null>(null)
+  const [sentRequests, setSentRequests] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('trainmaxxing_sent_requests') ?? '[]')) } catch { return new Set() }
+  })
 
   const activeClass = browsingClass !== null ? browsingClass : selectedClass
   const rankings  = RANKINGS_DATA[activeClass] ?? []
@@ -860,8 +863,8 @@ export default function CompetePage() {
               </div>
             </div>
 
-            {/* Challenge CTA */}
-            <div className="px-5 pb-8">
+            {/* CTAs */}
+            <div className="px-5 pb-8 flex flex-col gap-2">
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { setProfileOpen(false); openChallenge(profileName) }}
@@ -869,6 +872,30 @@ export default function CompetePage() {
               >
                 <Swords className="w-4 h-4" /> Challenge {profileName.split(' ')[0]}
               </motion.button>
+              {sentRequests.has(profileName) ? (
+                <div className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-[#3A3A3C] bg-[#1C1C1E] text-[#9A9AAA] text-sm font-bold">
+                  <UserCheck className="w-4 h-4" /> Request Sent
+                </div>
+              ) : (
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    const updated = new Set(sentRequests).add(profileName)
+                    setSentRequests(updated)
+                    localStorage.setItem('trainmaxxing_sent_requests', JSON.stringify([...updated]))
+                    // Append to outgoing requests list for friends page
+                    const existing = JSON.parse(localStorage.getItem('trainmaxxing_friend_requests') ?? '[]')
+                    const already = existing.some((r: { name: string }) => r.name === profileName)
+                    if (!already) {
+                      existing.push({ name: profileName, sentAt: Date.now() })
+                      localStorage.setItem('trainmaxxing_friend_requests', JSON.stringify(existing))
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-[#3A3A3C] bg-[#1C1C1E] text-white text-sm font-bold hover:border-[#9A9AAA] transition-colors"
+                >
+                  <UserPlus className="w-4 h-4" /> Add Friend
+                </motion.button>
+              )}
             </div>
           </motion.div>
         )}
