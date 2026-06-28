@@ -61,4 +61,9 @@ export async function uploadPrSession(params: {
     plate_photos: Object.keys(platePhotoPaths).length > 0 ? platePhotoPaths : null,
     lift_video_url: liftVideoPath,
   })
+
+  // Recompute belt ranks in the background whenever a verified PR lands
+  if (params.verified) {
+    fetch('/api/compute-rank', { method: 'POST' }).catch(() => {})
+  }
 }
