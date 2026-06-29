@@ -57,6 +57,56 @@ const OUTGOING_CHALLENGES: { to: string; lift: string; format: 'weight' | 'reps'
   { to: 'Hector V.',  lift: 'Pull-up',     format: 'reps'   },
 ]
 
+const ACTIVE_MATCHES: {
+  opponent: string
+  lift: string
+  format: 'weight' | 'reps'
+  yourSubmitted: boolean
+  yourNumber: number | null
+  theirSubmitted: boolean
+  theirNumber: number | null
+  status: 'in_progress' | 'ready' | 'decided'
+  winner: string | null
+  daysLeft: number
+}[] = [
+  {
+    opponent: 'Kyle B.',
+    lift: 'Bench Press',
+    format: 'weight',
+    yourSubmitted: true,
+    yourNumber: 225,
+    theirSubmitted: false,
+    theirNumber: null,
+    status: 'in_progress',
+    winner: null,
+    daysLeft: 2,
+  },
+  {
+    opponent: 'Jordan S.',
+    lift: 'Pull-up',
+    format: 'reps',
+    yourSubmitted: true,
+    yourNumber: 14,
+    theirSubmitted: true,
+    theirNumber: 11,
+    status: 'ready',
+    winner: null,
+    daysLeft: 0,
+  },
+  {
+    opponent: 'Dre W.',
+    lift: 'Squat',
+    format: 'weight',
+    yourSubmitted: true,
+    yourNumber: 315,
+    theirSubmitted: true,
+    theirNumber: 340,
+    status: 'decided',
+    winner: 'Dre W.',
+    daysLeft: 0,
+  },
+]
+
 type OpenFighter = { name: string; cls: number; bw: number; lift: number; record: string; you: boolean }
 const OPEN_ROSTER: OpenFighter[] = [
   { name: 'Tank G.',   cls: 4, bw: 215, lift: 545, record: '30-1', you: false },
@@ -162,7 +212,7 @@ export default function CompetePage() {
   const [activeTab, setActiveTab] = useState<TabId>('rank')
   const [tabDir, setTabDir] = useState(0)
   const [boardView, setBoardView] = useState<'class' | 'open'>('class')
-  const [challengeView, setChallengeView] = useState<'incoming' | 'outgoing'>('incoming')
+  const [challengeView, setChallengeView] = useState<'incoming' | 'outgoing' | 'matches'>('incoming')
   const [displayRank, setDisplayRank] = useState(0)
   const [matchState, setMatchState] = useState<'idle' | 'finding'>('idle')
   const [dismissed, setDismissed] = useState<Set<number>>(new Set())
@@ -506,7 +556,7 @@ export default function CompetePage() {
           </div>
           <div className="px-6 pt-3 pb-6">
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
-              {([['incoming', 'Incoming', activePending.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length]] as const).map(([v, label, count]) => (
+              {([['incoming', 'Incoming', activePending.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length], ['matches', 'Matches', ACTIVE_MATCHES.length]] as const).map(([v, label, count]) => (
                 <button key={v} onClick={() => setChallengeView(v)}
                   className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold ${challengeView === v ? 'text-[#FF4500]' : 'text-[#636366]'}`}>
                   {challengeView === v && (
@@ -623,6 +673,93 @@ export default function CompetePage() {
                   <p className="text-xs text-[#48484A]">Challenge someone from the leaderboard</p>
                 </motion.div>
               )
+          )}
+
+          {challengeView === 'matches' && (
+            ACTIVE_MATCHES.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {ACTIVE_MATCHES.map((m, i) => {
+                  const av = avatarColor(m.opponent)
+                  const isDecided = m.status === 'decided'
+                  const isReady = m.status === 'ready'
+                  const youWon = m.winner === 'You'
+                  const unit = m.format === 'weight' ? 'lbs' : 'reps'
+                  return (
+                    <div key={i} className="rounded-2xl overflow-hidden border"
+                      style={{ borderColor: isDecided ? (youWon ? '#22C55E55' : '#EF444455') : isReady ? '#F59E0B55' : '#252528', background: isDecided ? (youWon ? '#0a1f0a' : '#1a0808') : '#1C1C1E' }}>
+                      {isDecided && <div className="h-[2px]" style={{ background: youWon ? '#22C55E' : '#EF4444' }} />}
+                      {isReady && <div className="h-[2px] bg-gradient-to-r from-[#F59E0B] to-[#F59E0B]/20" />}
+                      <div className="p-4">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-3">
+                          <button onClick={() => { setProfileName(m.opponent); setProfileOpen(true) }} className="flex items-center gap-2.5 text-left active:opacity-70 transition-opacity">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
+                              style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
+                              {initials(m.opponent)}
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-white">{m.opponent}</p>
+                              <p className="text-xs font-semibold text-[#9A9AAA]">{m.lift} · {m.format === 'weight' ? 'Most Weight' : 'Most Reps'}</p>
+                            </div>
+                          </button>
+                          {isDecided ? (
+                            <span className="text-xs font-black px-2.5 py-1 rounded-lg" style={{ backgroundColor: youWon ? '#22C55E20' : '#EF444420', color: youWon ? '#22C55E' : '#EF4444' }}>
+                              {youWon ? 'You Won' : 'You Lost'}
+                            </span>
+                          ) : isReady ? (
+                            <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-[#F59E0B]/15 text-[#F59E0B]">Judging</span>
+                          ) : (
+                            <span className="text-xs font-semibold text-[#636366]">{m.daysLeft}d left</span>
+                          )}
+                        </div>
+
+                        {/* Submissions */}
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                          {/* You */}
+                          <div className="rounded-xl bg-[#0D0D0F] border border-[#252528] p-2.5">
+                            <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mb-1">You</p>
+                            {m.yourSubmitted ? (
+                              <p className="text-lg font-black text-white">{m.yourNumber} <span className="text-xs font-semibold text-[#9A9AAA]">{unit}</span></p>
+                            ) : (
+                              <p className="text-xs font-semibold text-[#F59E0B]">Not submitted</p>
+                            )}
+                          </div>
+                          {/* Them */}
+                          <div className="rounded-xl bg-[#0D0D0F] border border-[#252528] p-2.5">
+                            <p className="text-[10px] font-bold text-[#636366] uppercase tracking-widest mb-1">{m.opponent.split(' ')[0]}</p>
+                            {m.theirSubmitted ? (
+                              <p className="text-lg font-black text-white">{m.theirNumber} <span className="text-xs font-semibold text-[#9A9AAA]">{unit}</span></p>
+                            ) : (
+                              <p className="text-xs font-semibold text-[#636366]">Waiting...</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* CTA */}
+                        {!m.yourSubmitted && (
+                          <motion.button whileTap={{ scale: 0.97 }}
+                            className="w-full bg-[#FF4500] text-white font-black py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(255,69,0,0.3)]">
+                            <Swords className="w-4 h-4" /> Submit Your Lift
+                          </motion.button>
+                        )}
+                        {isReady && (
+                          <div className="flex items-center justify-center gap-2 py-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] animate-pulse" />
+                            <p className="text-xs font-semibold text-[#F59E0B]">Both submitted — pending review</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center py-12 gap-2">
+                <Swords className="w-8 h-8 text-[#3A3A3C]" />
+                <p className="text-sm font-semibold text-[#636366]">No active matches</p>
+                <p className="text-xs text-[#48484A]">Accept a challenge to start competing</p>
+              </motion.div>
+            )
           )}
         </motion.div>
         </AnimatePresence>
