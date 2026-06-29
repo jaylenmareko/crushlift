@@ -18,7 +18,7 @@ interface SearchResult {
   first_name: string | null
 }
 
-type Tab = 'incoming' | 'pending' | 'friends'
+type Tab = 'incoming' | 'pending' | 'friends' | 'add'
 
 function timeAgo(ms: number) {
   const diff = Date.now() - ms
@@ -97,7 +97,7 @@ export default function FriendsPage() {
     }, 300)
   }, [query])
 
-  const TAB_ORDER: Tab[] = ['incoming', 'pending', 'friends']
+  const TAB_ORDER: Tab[] = ['incoming', 'pending', 'friends', 'add']
   function switchTab(t: Tab) {
     setTabDir(TAB_ORDER.indexOf(t) > TAB_ORDER.indexOf(tab) ? 1 : -1)
     setTab(t)
@@ -179,6 +179,7 @@ export default function FriendsPage() {
             ['incoming', 'Incoming', incoming.length],
             ['pending',  'Pending',  outgoing.length],
             ['friends',  'Friends',  friends.length],
+            ['add',      'Add',      0],
           ] as [Tab, string, number][]).map(([v, label, count]) => {
             const active = tab === v
             return (
@@ -191,7 +192,13 @@ export default function FriendsPage() {
                     transition={{ type: 'spring', stiffness: 450, damping: 38 }}
                   />
                 )}
-                <span className={`relative z-10 transition-colors ${active ? 'text-white' : 'text-[#636366]'}`}>{label}</span>
+                {v === 'add' ? (
+                  <span className={`relative z-10 transition-colors flex items-center gap-1 ${active ? 'text-[#FF4500]' : 'text-[#636366]'}`}>
+                    <UserPlus className="w-3.5 h-3.5" /> {label}
+                  </span>
+                ) : (
+                  <span className={`relative z-10 transition-colors ${active ? 'text-white' : 'text-[#636366]'}`}>{label}</span>
+                )}
                 {count > 0 && (
                   <span className={`relative z-10 text-[10px] font-black px-1.5 py-0.5 rounded-md ${
                     active
@@ -205,13 +212,14 @@ export default function FriendsPage() {
         </div>
       </div>
 
-      {/* Search — only on Friends tab */}
-      {tab === 'friends' && (
+      {/* Search — only on Add tab */}
+      {tab === 'add' && (
         <div className="px-5 mb-4">
           <div className="flex items-center gap-2 bg-[#1C1C1E] border border-[#252528] rounded-xl px-4 py-3.5">
             <Search className="w-4 h-4 text-[#636366] flex-shrink-0" />
             <input type="text" value={query} onChange={e => setQuery(e.target.value)}
               placeholder="Search by username..."
+              autoFocus
               className="flex-1 bg-transparent text-sm text-white placeholder-[#48484A] focus:outline-none" />
             {searching && <Loader2 className="w-4 h-4 text-[#636366] animate-spin flex-shrink-0" />}
             {query && !searching && (
@@ -325,7 +333,46 @@ export default function FriendsPage() {
 
             {/* Friends tab */}
             {tab === 'friends' && (
-              showSearch ? (
+              friends.length > 0 ? (
+                friends.map(name => {
+                  const av = avatarColor(name)
+                  return (
+                    <div key={name} onClick={() => setProfileName(name)}
+                      className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3 cursor-pointer">
+                      <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
+                        style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
+                        {initials(name)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-white truncate">{name}</p>
+                        <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">Friend</p>
+                      </div>
+                      <UserCheck className="w-4 h-4 text-[#22C55E] flex-shrink-0" />
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="flex flex-col items-center justify-center text-center pt-16">
+                  <div className="w-16 h-16 rounded-full bg-[#1C1C1E] border border-[#252528] flex items-center justify-center mb-4">
+                    <Users className="w-7 h-7 text-[#3A3A3C]" />
+                  </div>
+                  <p className="font-bold text-white mb-1">No friends yet</p>
+                  <p className="text-sm text-[#636366]">Go to Add to find people.</p>
+                </div>
+              )
+            )}
+
+            {/* Add tab */}
+            {tab === 'add' && (
+              query.trim().length === 0 ? (
+                <div className="flex flex-col items-center justify-center text-center pt-16">
+                  <div className="w-16 h-16 rounded-full bg-[#1C1C1E] border border-[#252528] flex items-center justify-center mb-4">
+                    <Search className="w-7 h-7 text-[#3A3A3C]" />
+                  </div>
+                  <p className="font-bold text-white mb-1">Find people</p>
+                  <p className="text-sm text-[#636366]">Type a username above to search.</p>
+                </div>
+              ) : (
                 <>
                   <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest mb-1">
                     {searching ? 'Searching...' : `Results · ${searchResults.length}`}
@@ -363,32 +410,6 @@ export default function FriendsPage() {
                     </div>
                   ) : null}
                 </>
-              ) : friends.length > 0 ? (
-                friends.map(name => {
-                  const av = avatarColor(name)
-                  return (
-                    <div key={name} onClick={() => setProfileName(name)}
-                      className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3 cursor-pointer">
-                      <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
-                        style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
-                        {initials(name)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{name}</p>
-                        <p className="text-xs font-semibold text-[#9A9AAA] mt-0.5">Friend</p>
-                      </div>
-                      <UserCheck className="w-4 h-4 text-[#22C55E] flex-shrink-0" />
-                    </div>
-                  )
-                })
-              ) : (
-                <div className="flex flex-col items-center justify-center text-center pt-16">
-                  <div className="w-16 h-16 rounded-full bg-[#1C1C1E] border border-[#252528] flex items-center justify-center mb-4">
-                    <Users className="w-7 h-7 text-[#3A3A3C]" />
-                  </div>
-                  <p className="font-bold text-white mb-1">No friends yet</p>
-                  <p className="text-sm text-[#636366]">Search above or add someone from the leaderboard.</p>
-                </div>
               )
             )}
 
