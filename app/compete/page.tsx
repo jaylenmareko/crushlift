@@ -556,7 +556,7 @@ export default function CompetePage() {
           </div>
           <div className="px-6 pt-3 pb-6">
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
-              {([['incoming', 'Incoming', activePending.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length], ['matches', 'Matches', ACTIVE_MATCHES.length]] as const).map(([v, label, count]) => (
+              {([['incoming', 'Incoming', activePending.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length], ['matches', 'Matches', ACTIVE_MATCHES.filter(m => m.status !== 'in_progress').length]] as const).map(([v, label, count]) => (
                 <button key={v} onClick={() => setChallengeView(v)}
                   className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold ${challengeView === v ? 'text-[#FF4500]' : 'text-[#636366]'}`}>
                   {challengeView === v && (
@@ -676,9 +676,9 @@ export default function CompetePage() {
           )}
 
           {challengeView === 'matches' && (
-            ACTIVE_MATCHES.length > 0 ? (
+            ACTIVE_MATCHES.filter(m => m.status !== 'in_progress').length > 0 ? (
               <div className="flex flex-col gap-3">
-                {ACTIVE_MATCHES.map((m, i) => {
+                {ACTIVE_MATCHES.filter(m => m.status !== 'in_progress').map((m, i) => {
                   const av = avatarColor(m.opponent)
                   const isDecided = m.status === 'decided'
                   const isReady = m.status === 'ready'
