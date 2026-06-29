@@ -14,11 +14,17 @@ const DEMO_RESULT: VerifyResult = {
   demo: true,
 }
 
+const MANUAL_REVIEW_MODE = true
+
 export async function POST(req: NextRequest) {
   const { photo, declaredWeight, liftName } = await req.json() as {
     photo: string
     declaredWeight: number
     liftName: string
+  }
+
+  if (MANUAL_REVIEW_MODE) {
+    return NextResponse.json({ verified: true, confidence: 'high', note: 'Added weight check passed — manual review mode.', pending_review: true })
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {

@@ -14,6 +14,8 @@ const DEMO_RESULT: VerifyResult = {
   demo: true,
 }
 
+const MANUAL_REVIEW_MODE = true
+
 export async function POST(req: NextRequest) {
   const { exerciseName, declaredWeight, reps, frames, platePhoto } = await req.json() as {
     exerciseName: string
@@ -21,6 +23,10 @@ export async function POST(req: NextRequest) {
     reps?: number
     frames: string[]
     platePhoto?: string | null
+  }
+
+  if (MANUAL_REVIEW_MODE) {
+    return NextResponse.json({ verified: false, confidence: 'high', note: 'Submitted for manual review.', pending_review: true })
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
