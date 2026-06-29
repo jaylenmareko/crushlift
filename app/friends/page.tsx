@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, UserPlus, Search, Clock, X, UserCheck, Loader2 } from 'lucide-react'
+import { Users, UserPlus, Search, X, UserCheck, Loader2 } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
 import ProfileSheet from '@/components/ProfileSheet'
 import { createClient } from '@/lib/supabase/client'
@@ -18,7 +18,7 @@ interface SearchResult {
   first_name: string | null
 }
 
-type Tab = 'incoming' | 'pending' | 'friends' | 'add'
+type Tab = 'incoming' | 'friends' | 'add'
 
 function timeAgo(ms: number) {
   const diff = Date.now() - ms
@@ -43,10 +43,6 @@ function avatarColor(name: string) {
 }
 
 const DUMMY_FRIENDS = ['Marcus T.', 'Dre W.', 'Tyler M.']
-const DUMMY_PENDING: FriendRequest[] = [
-  { name: 'Kyle B.', sentAt: Date.now() - 1000 * 60 * 47 },
-  { name: 'Jordan S.', sentAt: Date.now() - 1000 * 60 * 60 * 3 },
-]
 const DUMMY_INCOMING: FriendRequest[] = [
   { name: 'Chris A.', sentAt: Date.now() - 1000 * 60 * 12 },
   { name: 'Eli R.', sentAt: Date.now() - 1000 * 60 * 60 * 7 },
@@ -56,7 +52,6 @@ export default function FriendsPage() {
   const [tab, setTab] = useState<Tab>('incoming')
   const [tabDir, setTabDir] = useState(1)
   const [query, setQuery] = useState('')
-  const [outgoing, setOutgoing] = useState<FriendRequest[]>([])
   const [incoming, setIncoming] = useState<FriendRequest[]>([])
   const [friends, setFriends] = useState<string[]>([])
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
@@ -68,11 +63,9 @@ export default function FriendsPage() {
 
   useEffect(() => {
     try {
-      const storedOutgoing = JSON.parse(localStorage.getItem('trainmaxxing_friend_requests') ?? 'null')
       const storedIncoming = JSON.parse(localStorage.getItem('trainmaxxing_incoming_requests') ?? 'null')
       const storedFriends  = JSON.parse(localStorage.getItem('trainmaxxing_friends') ?? 'null')
       const storedSent     = JSON.parse(localStorage.getItem('trainmaxxing_sent_requests') ?? 'null')
-      setOutgoing(storedOutgoing ?? DUMMY_PENDING)
       setIncoming(storedIncoming ?? DUMMY_INCOMING)
       setFriends(storedFriends   ?? DUMMY_FRIENDS)
       setSentIds(new Set(storedSent ?? []))
@@ -97,7 +90,7 @@ export default function FriendsPage() {
     }, 300)
   }, [query])
 
-  const TAB_ORDER: Tab[] = ['incoming', 'pending', 'friends', 'add']
+  const TAB_ORDER: Tab[] = ['incoming', 'friends', 'add']
   function switchTab(t: Tab) {
     setTabDir(TAB_ORDER.indexOf(t) > TAB_ORDER.indexOf(tab) ? 1 : -1)
     setTab(t)
@@ -105,40 +98,16 @@ export default function FriendsPage() {
     setSearchResults([])
   }
 
-  const sentNames = new Set(outgoing.map(r => r.name))
-
   function addFriendByName(name: string) {
-    const existing = JSON.parse(localStorage.getItem('trainmaxxing_friend_requests') ?? '[]')
-    const already = existing.some((r: { name: string }) => r.name === name)
-    if (!already) {
-      existing.push({ name, sentAt: Date.now() })
-      localStorage.setItem('trainmaxxing_friend_requests', JSON.stringify(existing))
-      setOutgoing(existing)
-    }
+    const updatedFriends = [...friends, name]
+    setFriends(updatedFriends)
+    localStorage.setItem('trainmaxxing_friends', JSON.stringify(updatedFriends))
   }
 
   function sendRequest(result: SearchResult) {
-    const displayName = result.first_name ? `${result.first_name} (@${result.username})` : `@${result.username}`
     const updated = new Set(sentIds).add(result.id)
     setSentIds(updated)
     localStorage.setItem('trainmaxxing_sent_requests', JSON.stringify([...updated]))
-    const existing = JSON.parse(localStorage.getItem('trainmaxxing_friend_requests') ?? '[]')
-    const already = existing.some((r: { name: string }) => r.name === displayName)
-    if (!already) {
-      existing.push({ name: displayName, sentAt: Date.now() })
-      localStorage.setItem('trainmaxxing_friend_requests', JSON.stringify(existing))
-      setOutgoing(existing)
-    }
-  }
-
-  function cancelRequest(name: string) {
-    const updated = outgoing.filter(r => r.name !== name)
-    setOutgoing(updated)
-    localStorage.setItem('trainmaxxing_friend_requests', JSON.stringify(updated))
-    try {
-      const sent: string[] = JSON.parse(localStorage.getItem('trainmaxxing_sent_requests') ?? '[]')
-      localStorage.setItem('trainmaxxing_sent_requests', JSON.stringify(sent.filter(s => s !== name)))
-    } catch {}
   }
 
   function acceptIncoming(name: string) {
@@ -177,7 +146,6 @@ export default function FriendsPage() {
         <div className="flex bg-[#161618] rounded-xl p-1 border border-[#252528]">
           {([
             ['incoming', 'Incoming', incoming.length],
-            ['pending',  'Pending',  outgoing.length],
             ['friends',  'Friends',  friends.length],
             ['add',      'Add',      0],
           ] as [Tab, string, number][]).map(([v, label, count]) => {
@@ -287,50 +255,6 @@ export default function FriendsPage() {
               )
             )}
 
-            {/* Pending tab */}
-            {tab === 'pending' && (
-              outgoing.length > 0 ? (
-                <AnimatePresence>
-                  {outgoing.map(req => {
-                    const av = avatarColor(req.name)
-                    return (
-                      <motion.div key={req.name} layout
-                        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40, scale: 0.95 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-                        className="flex items-center gap-3 bg-[#1C1C1E] border border-[#252528] rounded-2xl p-3 cursor-pointer"
-                        onClick={() => setProfileName(req.name)}
-                      >
-                        <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black"
-                          style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
-                          {initials(req.name)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-white truncate">{req.name}</p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <Clock className="w-3 h-3 text-[#F59E0B]" />
-                            <span className="text-xs font-semibold text-[#F59E0B]">Awaiting · {timeAgo(req.sentAt)}</span>
-                          </div>
-                        </div>
-                        <motion.button whileTap={{ scale: 0.9 }}
-                          onClick={e => { e.stopPropagation(); cancelRequest(req.name) }}
-                          className="w-9 h-9 rounded-xl bg-[#161618] border border-[#3A3A3C] flex items-center justify-center text-[#9A9AAA] flex-shrink-0">
-                          <X className="w-4 h-4" />
-                        </motion.button>
-                      </motion.div>
-                    )
-                  })}
-                </AnimatePresence>
-              ) : (
-                <div className="flex flex-col items-center justify-center text-center pt-16">
-                  <div className="w-16 h-16 rounded-full bg-[#1C1C1E] border border-[#252528] flex items-center justify-center mb-4">
-                    <Clock className="w-7 h-7 text-[#3A3A3C]" />
-                  </div>
-                  <p className="font-bold text-white mb-1">No pending requests</p>
-                  <p className="text-sm text-[#636366]">Add someone from the leaderboard or search.</p>
-                </div>
-              )
-            )}
-
             {/* Friends tab */}
             {tab === 'friends' && (
               friends.length > 0 ? (
@@ -422,7 +346,6 @@ export default function FriendsPage() {
       <ProfileSheet
         name={profileName}
         onClose={() => setProfileName(null)}
-        sentRequests={sentNames}
         isFriend={profileName ? friends.includes(profileName) : false}
         onAddFriend={name => { addFriendByName(name); setProfileName(null) }}
       />
