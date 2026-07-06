@@ -7,6 +7,7 @@ import BottomNav from '@/components/BottomNav'
 import WeightGate from '@/components/WeightGate'
 import { useUserWeight } from '@/lib/hooks/useUserWeight'
 import { WEIGHT_CLASSES, BIG_SIX } from '@/lib/belts'
+import MatchDetailSheet, { type ActiveMatch } from '@/components/MatchDetailSheet'
 
 const RANKINGS_DATA: Record<number, { pos: number; name: string; record: string; you: boolean; trend?: number }[]> = {
   0: [
@@ -224,6 +225,8 @@ export default function CompetePage() {
   const [sentRequests, setSentRequests] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('trainmaxxing_sent_requests') ?? '[]')) } catch { return new Set() }
   })
+  const [localMatches, setLocalMatches] = useState<ActiveMatch[]>(ACTIVE_MATCHES)
+  const [selectedMatch, setSelectedMatch] = useState<ActiveMatch | null>(null)
 
   const activeClass = browsingClass !== null ? browsingClass : selectedClass
   const rankings  = RANKINGS_DATA[activeClass] ?? []
@@ -556,7 +559,7 @@ export default function CompetePage() {
           </div>
           <div className="px-6 pt-3 pb-6">
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
-              {([['incoming', 'Incoming', activePending.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length], ['matches', 'Matches', ACTIVE_MATCHES.filter(m => m.status !== 'in_progress').length]] as const).map(([v, label, count]) => (
+              {([['incoming', 'Incoming', activePending.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length], ['matches', 'Matches', localMatches.filter(m => m.status !== 'in_progress').length]] as const).map(([v, label, count]) => (
                 <button key={v} onClick={() => setChallengeView(v)}
                   className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold ${challengeView === v ? 'text-[#FF4500]' : 'text-[#636366]'}`}>
                   {challengeView === v && (
@@ -676,23 +679,23 @@ export default function CompetePage() {
           )}
 
           {challengeView === 'matches' && (
-            ACTIVE_MATCHES.filter(m => m.status !== 'in_progress').length > 0 ? (
+            localMatches.filter(m => m.status !== 'in_progress').length > 0 ? (
               <div className="flex flex-col gap-3">
-                {ACTIVE_MATCHES.filter(m => m.status !== 'in_progress').map((m, i) => {
+                {localMatches.filter(m => m.status !== 'in_progress').map((m, i) => {
                   const av = avatarColor(m.opponent)
                   const isDecided = m.status === 'decided'
                   const isReady = m.status === 'ready'
                   const youWon = m.winner === 'You'
                   const unit = m.format === 'weight' ? 'lbs' : 'reps'
                   return (
-                    <div key={i} className="rounded-2xl overflow-hidden border"
+                    <div key={i} onClick={() => setSelectedMatch(m)} className="cursor-pointer rounded-2xl overflow-hidden border active:scale-[0.98] transition-transform"
                       style={{ borderColor: isDecided ? (youWon ? '#22C55E55' : '#EF444455') : isReady ? '#F59E0B55' : '#252528', background: isDecided ? (youWon ? '#0a1f0a' : '#1a0808') : '#1C1C1E' }}>
                       {isDecided && <div className="h-[2px]" style={{ background: youWon ? '#22C55E' : '#EF4444' }} />}
                       {isReady && <div className="h-[2px] bg-gradient-to-r from-[#F59E0B] to-[#F59E0B]/20" />}
                       <div className="p-4">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-3">
-                          <button onClick={() => { setProfileName(m.opponent); setProfileOpen(true) }} className="flex items-center gap-2.5 text-left active:opacity-70 transition-opacity">
+                          <button onClick={(e) => { e.stopPropagation(); setProfileName(m.opponent); setProfileOpen(true) }} className="flex items-center gap-2.5 text-left active:opacity-70 transition-opacity">
                             <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
                               style={{ backgroundColor: `${av}22`, color: av, border: `2px solid ${av}55` }}>
                               {initials(m.opponent)}
@@ -1100,6 +1103,18 @@ export default function CompetePage() {
           </>
         )}
       </AnimatePresence>
+
+      <MatchDetailSheet
+        match={selectedMatch}
+        onClose={() => setSelectedMatch(null)}
+        onSubmitted={(num) => {
+          setLocalMatches(prev => prev.map(m =>
+            m === selectedMatch
+              ? { ...m, yourSubmitted: true, yourNumber: num, status: m.theirSubmitted ? 'ready' : 'in_progress' }
+              : m
+          ))
+        }}
+      />
     </div>
   )
 }
