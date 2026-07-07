@@ -2,18 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { X, Video, Square, Loader2, CheckCircle2, AlertTriangle, SwitchCamera } from 'lucide-react'
+import { X, Video, Square, Loader2, Clock, SwitchCamera } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { uploadPrSession } from '@/lib/upload-pr-media'
 
-type Stage = 'preview' | 'recording' | 'analyzing' | 'result'
-
-interface VerifyResult {
-  verified: boolean
-  confidence: 'high' | 'medium' | 'low'
-  note: string
-  demo?: boolean
-}
+type Stage = 'preview' | 'recording' | 'uploading' | 'submitted'
 
 interface Props {
   exerciseName: string
@@ -24,7 +17,7 @@ interface Props {
   onClose: () => void
 }
 
-const MAX_SECONDS = 180 // 3-minute hard cap, no visible pressure
+const MAX_SECONDS = 180
 
 function formatTime(s: number) {
   const m = Math.floor(s / 60)
@@ -32,25 +25,22 @@ function formatTime(s: number) {
 }
 
 export default function PRVerifyModal({ exerciseName, weight, reps, platePhotos, onDone, onClose }: Props) {
-  const videoRef        = useRef<HTMLVideoElement>(null)
-  const canvasRef       = useRef<HTMLCanvasElement>(null)
-  const streamRef       = useRef<MediaStream | null>(null)
-  const frameTimerRef   = useRef<ReturnType<typeof setInterval> | null>(null)
-  const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const videoRef         = useRef<HTMLVideoElement>(null)
+  const streamRef        = useRef<MediaStream | null>(null)
+  const elapsedTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const videoChunksRef  = useRef<Blob[]>([])
-  const videoMimeRef    = useRef<string>('video/webm')
-  const capturedRef     = useRef<string[]>([])
-  const elapsedRef      = useRef(0)
-  const stoppingRef     = useRef(false)
+  const videoChunksRef   = useRef<Blob[]>([])
+  const videoMimeRef     = useRef('video/webm')
+  const elapsedRef       = useRef(0)
+  const stoppingRef      = useRef(false)
 
-  const [stage, setStage]         = useState<Stage>('preview')
-  const [elapsed, setElapsed]     = useState(0)
-  const [result, setResult]       = useState<VerifyResult | null>(null)
-  const [camError, setCamError]   = useState(false)
+  const [stage, setStage]           = useState<Stage>('preview')
+  const [elapsed, setElapsed]       = useState(0)
+  const [camError, setCamError]     = useState(false)
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
 
   useEffect(() => {
+    if (stage !== 'preview' && stage !== 'recording') return
     let active = true
     if (videoRef.current) videoRef.current.srcObject = null
     const timer = setTimeout(() => {
@@ -69,35 +59,22 @@ export default function PRVerifyModal({ exerciseName, weight, reps, platePhotos,
     return () => {
       active = false
       clearTimeout(timer)
-      stopCamera()
+      streamRef.current?.getTracks().forEach(t => t.stop())
+      streamRef.current = null
       if (videoRef.current) videoRef.current.srcObject = null
     }
-  }, [facingMode])
+  }, [facingMode, stage])
 
   function stopCamera() {
     streamRef.current?.getTracks().forEach(t => t.stop())
     streamRef.current = null
-    if (frameTimerRef.current)   clearInterval(frameTimerRef.current)
     if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current)
   }
 
-  function captureFrame(): string | null {
-    const video  = videoRef.current
-    const canvas = canvasRef.current
-    if (!video || !canvas || video.readyState < 2) return null
-    canvas.width  = 640
-    canvas.height = Math.round((video.videoHeight / video.videoWidth) * 640)
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-    return canvas.toDataURL('image/jpeg', 0.7)
-  }
-
   function startRecording() {
-    capturedRef.current   = []
     videoChunksRef.current = []
-    elapsedRef.current    = 0
-    stoppingRef.current   = false
+    elapsedRef.current = 0
+    stoppingRef.current = false
     setElapsed(0)
     setStage('recording')
 
@@ -111,35 +88,21 @@ export default function PRVerifyModal({ exerciseName, weight, reps, platePhotos,
         mr.ondataavailable = e => { if (e.data.size > 0) videoChunksRef.current.push(e.data) }
         mr.start(1000)
         mediaRecorderRef.current = mr
-      } catch { /* MediaRecorder not supported — frames only */ }
+      } catch { /* MediaRecorder not supported */ }
     }
 
-    // Capture frames for Claude verification every 2.5s
-    frameTimerRef.current = setInterval(() => {
-      const f = captureFrame()
-      if (f) capturedRef.current.push(f)
-    }, 2500)
-
-    // Elapsed counter + hard cap
     elapsedTimerRef.current = setInterval(() => {
       elapsedRef.current += 1
       setElapsed(elapsedRef.current)
-      if (elapsedRef.current >= MAX_SECONDS) stopAndVerify()
+      if (elapsedRef.current >= MAX_SECONDS) stopAndSubmit()
     }, 1000)
   }
 
-  async function stopAndVerify() {
+  async function stopAndSubmit() {
     if (stoppingRef.current) return
     stoppingRef.current = true
+    if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current)
 
-    clearInterval(frameTimerRef.current!)
-    clearInterval(elapsedTimerRef.current!)
-
-    const finalFrame = captureFrame()
-    if (finalFrame) capturedRef.current.push(finalFrame)
-    if (capturedRef.current.length === 0) { setStage('preview'); return }
-
-    // Stop MediaRecorder and wait for it to flush all chunks
     const mr = mediaRecorderRef.current
     if (mr && mr.state !== 'inactive') {
       await new Promise<void>(resolve => {
@@ -148,62 +111,29 @@ export default function PRVerifyModal({ exerciseName, weight, reps, platePhotos,
       })
     }
 
-    sendForVerification(capturedRef.current)
-  }
-
-  async function sendForVerification(frames: string[]) {
-    setStage('analyzing')
     stopCamera()
-    try {
-      const res = await fetch('/api/verify-pr', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          exerciseName,
-          declaredWeight: weight,
-          reps,
-          frames,
-          platePhoto: platePhotos?.front ?? null,
-        }),
-      })
-      if (!res.ok) throw new Error('API error')
-      const data = await res.json()
-      setResult(data)
-      setStage('result')
-      uploadMedia(data).catch(() => {}) // fire and forget
-    } catch {
-      setResult({ verified: false, confidence: 'low', note: 'Could not verify — try again.' })
-      setStage('result')
-    }
-  }
+    setStage('uploading')
 
-  async function uploadMedia(verifyResult: VerifyResult) {
+    // Upload everything and save as pending review
     const { data: { user } } = await createClient().auth.getUser()
-    if (!user) return
-    const videoBlob = videoChunksRef.current.length > 0
-      ? new Blob(videoChunksRef.current, { type: videoMimeRef.current })
-      : null
-    await uploadPrSession({
-      userId: user.id,
-      exerciseName,
-      declaredWeight: weight,
-      declaredReps: reps ?? null,
-      verified: verifyResult.verified,
-      confidence: verifyResult.confidence,
-      aiNote: verifyResult.note,
-      platePhotos: platePhotos ?? null,
-      videoBlob,
-    })
-  }
+    if (user) {
+      const videoBlob = videoChunksRef.current.length > 0
+        ? new Blob(videoChunksRef.current, { type: videoMimeRef.current })
+        : null
+      await uploadPrSession({
+        userId: user.id,
+        exerciseName,
+        declaredWeight: weight,
+        declaredReps: reps ?? null,
+        verified: false,
+        confidence: 'high',
+        aiNote: 'Submitted for manual review.',
+        platePhotos: platePhotos ?? null,
+        videoBlob,
+      })
+    }
 
-  function retake() {
-    setResult(null)
-    capturedRef.current   = []
-    videoChunksRef.current = []
-    stoppingRef.current   = false
-    elapsedRef.current    = 0
-    setElapsed(0)
-    setStage('preview')
+    setStage('submitted')
   }
 
   function handleClose() {
@@ -211,13 +141,11 @@ export default function PRVerifyModal({ exerciseName, weight, reps, platePhotos,
     onClose()
   }
 
-  const color = result ? (result.verified ? '#22C55E' : '#F59E0B') : '#FF4500'
-
   return (
     <>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        onClick={handleClose}
+        onClick={stage === 'submitted' ? undefined : handleClose}
         className="fixed inset-0 bg-black/90 z-[60]"
       />
       <motion.div
@@ -231,21 +159,26 @@ export default function PRVerifyModal({ exerciseName, weight, reps, platePhotos,
 
         <div className="flex items-center justify-between px-5 pt-2 pb-4 flex-shrink-0">
           <div>
-            <p className="text-[10px] text-[#9A9AAA] font-semibold uppercase tracking-widest mb-0.5">PR Verify</p>
+            <p className="text-[10px] text-[#9A9AAA] font-semibold uppercase tracking-widest mb-0.5">
+              {stage === 'submitted' ? 'PR Submitted' : 'Step 2 of 2 · Record Lift'}
+            </p>
             <p className="font-bold text-base truncate max-w-[260px]">
               {exerciseName}
               {reps ? ` · ${reps} ${reps === 1 ? 'rep' : 'reps'}` : ''}
               {weight > 0 ? ` · ${weight} lbs` : ''}
             </p>
           </div>
-          <button onClick={handleClose} className="w-8 h-8 rounded-full bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA]">
-            <X className="w-4 h-4" />
-          </button>
+          {stage !== 'submitted' && (
+            <button onClick={handleClose} className="w-8 h-8 rounded-full bg-[#1C1C1E] border border-[#252528] flex items-center justify-center text-[#9A9AAA]">
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 pb-8">
 
-          {camError && (
+          {/* Camera error */}
+          {camError && stage !== 'submitted' && stage !== 'uploading' && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Video className="w-10 h-10 text-[#3A3A3C] mb-3" />
               <p className="text-sm font-semibold text-[#9A9AAA]">Camera access denied</p>
@@ -253,13 +186,12 @@ export default function PRVerifyModal({ exerciseName, weight, reps, platePhotos,
             </div>
           )}
 
+          {/* Camera view — preview + recording */}
           {!camError && (stage === 'preview' || stage === 'recording') && (
             <div className="flex flex-col gap-4">
               <div className="relative bg-[#1C1C1E] rounded-2xl overflow-hidden aspect-[3/4]">
                 <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-                <canvas ref={canvasRef} className="hidden" />
 
-                {/* Recording indicator */}
                 {stage === 'recording' && (
                   <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/60 rounded-xl px-3 py-1.5 backdrop-blur-sm">
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
@@ -267,24 +199,21 @@ export default function PRVerifyModal({ exerciseName, weight, reps, platePhotos,
                   </div>
                 )}
 
-                {/* Camera flip — only when not recording */}
                 {stage === 'preview' && (
-                  <button
-                    onClick={() => setFacingMode(m => m === 'environment' ? 'user' : 'environment')}
-                    className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white"
-                  >
-                    <SwitchCamera className="w-4 h-4" />
-                  </button>
-                )}
-
-                {/* Instruction overlay */}
-                {stage === 'preview' && (
-                  <div className="absolute bottom-3 inset-x-3">
-                    <div className="bg-black/60 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
-                      <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest mb-0.5">Set up your phone first</p>
-                      <p className="text-xs text-white/80">Prop it to your SIDE showing full body head to floor, then press Record</p>
+                  <>
+                    <button
+                      onClick={() => setFacingMode(m => m === 'environment' ? 'user' : 'environment')}
+                      className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white"
+                    >
+                      <SwitchCamera className="w-4 h-4" />
+                    </button>
+                    <div className="absolute bottom-3 inset-x-3">
+                      <div className="bg-black/80 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
+                        <p className="text-[10px] font-bold text-[#FF4500] uppercase tracking-widest mb-0.5">Set up your phone first</p>
+                        <p className="text-xs text-white/80">Prop it to your SIDE — full body head to floor, then press Record</p>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
 
@@ -302,57 +231,63 @@ export default function PRVerifyModal({ exerciseName, weight, reps, platePhotos,
               {stage === 'recording' && (
                 <motion.button
                   whileTap={{ scale: 0.97 }}
-                  onClick={stopAndVerify}
+                  onClick={stopAndSubmit}
                   className="w-full bg-red-500/15 border-2 border-red-500 text-white font-black py-[18px] rounded-2xl flex items-center justify-center gap-2"
                 >
                   <Square className="w-5 h-5 text-red-400 fill-red-400" />
-                  Stop &amp; Verify
+                  Stop &amp; Submit
                 </motion.button>
               )}
             </div>
           )}
 
-          {stage === 'analyzing' && (
+          {/* Uploading */}
+          {stage === 'uploading' && (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <Loader2 className="w-10 h-10 text-[#FF4500] animate-spin" />
               <div className="text-center">
-                <p className="font-bold text-white">Verifying your PR...</p>
-                <p className="text-xs text-[#9A9AAA] mt-1">Claude Vision is checking the rep</p>
+                <p className="font-bold text-white">Uploading your PR...</p>
+                <p className="text-xs text-[#9A9AAA] mt-1">Hang tight, almost done</p>
               </div>
             </div>
           )}
 
-          {stage === 'result' && result && (
+          {/* Submitted */}
+          {stage === 'submitted' && (
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
-              <div className="rounded-2xl border p-4 flex items-center gap-3" style={{ backgroundColor: `${color}10`, borderColor: `${color}30` }}>
-                {result.verified
-                  ? <CheckCircle2 className="w-6 h-6 flex-shrink-0" style={{ color }} />
-                  : <AlertTriangle className="w-6 h-6 flex-shrink-0" style={{ color }} />
-                }
-                <div>
-                  <p className="text-sm font-black" style={{ color }}>
-                    {result.verified ? 'PR Verified' : 'Could not verify'}
-                  </p>
-                  <p className="text-xs text-[#9A9AAA] mt-0.5">{result.note}</p>
-                  {result.demo && <p className="text-[10px] text-[#9A9AAA] mt-1">Demo — add ANTHROPIC_API_KEY for real verification</p>}
+              <div className="flex flex-col items-center py-8 gap-3">
+                <div className="w-16 h-16 rounded-2xl bg-[#F59E0B]/10 border border-[#F59E0B]/25 flex items-center justify-center">
+                  <Clock className="w-8 h-8 text-[#F59E0B]" />
                 </div>
+                <p className="text-xl font-black text-white text-center">Submitted for review</p>
+                <p className="text-sm font-semibold text-[#9A9AAA] text-center leading-relaxed px-4">
+                  Your PR and photos have been submitted. Your belt updates once it's approved.
+                </p>
               </div>
+
+              <div className="bg-[#1C1C1E] border border-[#252528] rounded-2xl p-4 flex flex-col gap-2">
+                <p className="text-[10px] font-bold text-[#9A9AAA] uppercase tracking-widest">What was submitted</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-white">{exerciseName}</span>
+                  <span className="text-sm font-black text-[#FF4500]">
+                    {reps ? `${reps} ${reps === 1 ? 'rep' : 'reps'}` : ''}{reps && weight > 0 ? ' · ' : ''}{weight > 0 ? `${weight} lbs` : ''}
+                  </span>
+                </div>
+                {platePhotos && (
+                  <p className="text-xs font-semibold text-[#636366]">3 plate photos · 1 lift video</p>
+                )}
+              </div>
+
               <motion.button
                 whileTap={{ scale: 0.97 }}
-                onClick={() => onDone(result.verified)}
+                onClick={() => onDone(false)}
                 className="w-full bg-[#FF4500] text-white font-black py-4 rounded-2xl text-sm shadow-[0_8px_32px_rgba(255,69,0,0.25)]"
               >
-                {result.verified ? 'Log PR' : 'Log Anyway (Unverified)'}
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={retake}
-                className="w-full bg-[#1C1C1E] border border-[#252528] text-[#9A9AAA] font-semibold py-3.5 rounded-2xl text-sm hover:text-white hover:border-[#3A3A3C] transition-all"
-              >
-                Record Again
+                Done
               </motion.button>
             </motion.div>
           )}
+
         </div>
       </motion.div>
     </>
