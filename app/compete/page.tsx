@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Swords, Crown, ChevronRight, Check, X, ArrowUp, Trophy, Medal, Filter, UserPlus, UserCheck } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
@@ -228,6 +228,85 @@ export default function CompetePage() {
   const [localMatches, setLocalMatches] = useState<ActiveMatch[]>(ACTIVE_MATCHES)
   const [selectedMatch, setSelectedMatch] = useState<ActiveMatch | null>(null)
 
+  // ── Real battles from DB ──────────────────────────────────────────────────
+  type RealBattle = {
+    id: string
+    challenger_id: string
+    opponent_id: string
+    lift: string
+    format: 'weight' | 'reps'
+    status: 'pending' | 'active' | 'completed' | 'declined' | 'expired'
+    challenger_value: number | null
+    opponent_value: number | null
+    winner_id: string | null
+    created_at: string
+    completed_at?: string | null
+    challenger: { id: string; username: string; weight: number | null }
+    opponent:   { id: string; username: string; weight: number | null }
+  }
+  const [realBattles, setRealBattles]   = useState<RealBattle[]>([])
+  const [myUserId, setMyUserId]         = useState<string | null>(null)
+  const [challengeSending, setChallengeSending] = useState(false)
+  const [challengeError, setChallengeError]     = useState<string | null>(null)
+
+  const fetchBattles = useCallback(async () => {
+    try {
+      const res = await fetch('/api/battles')
+      if (!res.ok) return
+      const { battles } = await res.json()
+      setRealBattles(battles ?? [])
+    } catch { /* no-op */ }
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/battles').then(r => r.ok ? r.json() : null).then(data => {
+      if (data?.battles) setRealBattles(data.battles)
+    }).catch(() => {})
+    // get current user id for participant checks
+    import('@/lib/supabase/client').then(({ createClient }) => {
+      createClient().auth.getUser().then(({ data }) => setMyUserId(data.user?.id ?? null))
+    })
+  }, [])
+
+  // Derived real data — falls back to dummy if DB is empty / migration not applied
+  const realIncoming = realBattles.filter(b =>
+    b.status === 'pending' && b.opponent_id === myUserId
+  )
+  const realOutgoing = realBattles.filter(b =>
+    b.status === 'pending' && b.challenger_id === myUserId
+  )
+  const realActive = realBattles.filter(b =>
+    b.status === 'active' || (b.status === 'completed' && b.completed_at)
+  )
+
+  function toActiveMatch(b: RealBattle): ActiveMatch {
+    const iAmChallenger = b.challenger_id === myUserId
+    const opponent      = iAmChallenger ? b.opponent : b.challenger
+    const yourVal       = iAmChallenger ? b.challenger_value : b.opponent_value
+    const theirVal      = iAmChallenger ? b.opponent_value   : b.challenger_value
+    const yourSub       = yourVal != null
+    const theirSub      = theirVal != null
+    const status        = b.status === 'completed'
+      ? 'decided'
+      : (yourSub && !theirSub) || (!yourSub && theirSub)
+        ? 'in_progress'
+        : yourSub && theirSub ? 'ready' : 'in_progress'
+    const winner = b.winner_id === myUserId ? 'You' : b.winner_id ? opponent.username : null
+    return {
+      opponent:      opponent.username,
+      lift:          b.lift,
+      format:        b.format,
+      yourSubmitted: yourSub,
+      yourNumber:    yourVal,
+      theirSubmitted: theirSub,
+      theirNumber:   theirVal,
+      status,
+      winner,
+      daysLeft:      0,
+      _battleId:     b.id,
+    } as ActiveMatch & { _battleId: string }
+  }
+
   const activeClass = browsingClass !== null ? browsingClass : selectedClass
   const rankings  = RANKINGS_DATA[activeClass] ?? []
   const youIdx    = rankings.findIndex(r => r.you)
@@ -299,7 +378,33 @@ export default function CompetePage() {
     }, 1300)
   }
 
-  function sendChallenge() {
+  async function sendChallenge() {
+    if (!challengeOpponent || !challengeLift) return
+    setChallengeError(null)
+    setChallengeSending(true)
+    try {
+      const res = await fetch('/api/battles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          opponent_username: challengeOpponent,
+          lift: challengeLift,
+          format: challengeFormat,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setChallengeError(data.error ?? 'Could not send challenge')
+        setChallengeSending(false)
+        return
+      }
+      await fetchBattles()
+    } catch {
+      setChallengeError('Network error — try again')
+      setChallengeSending(false)
+      return
+    }
+    setChallengeSending(false)
     setChallengeOpen(false)
     setChallengeView('outgoing')
     changeTab('challenges')
@@ -429,7 +534,24 @@ export default function CompetePage() {
     />
   )
 
-  const activePending = PENDING_CHALLENGES.filter((_, i) => !dismissed.has(i))
+  // Use real DB data when available, fall back to dummy
+  const activePending = realIncoming.length > 0
+    ? realIncoming.map(b => ({
+        from:      b.challenger.username,
+        lift:      b.lift,
+        format:    b.format,
+        hoursLeft: 23,
+        _id:       b.id,
+      }))
+    : PENDING_CHALLENGES.filter((_, i) => !dismissed.has(i))
+
+  const displayOutgoing = realOutgoing.length > 0
+    ? realOutgoing.map(b => ({ to: b.opponent.username, lift: b.lift, format: b.format, _id: b.id }))
+    : OUTGOING_CHALLENGES
+
+  const displayMatches = realActive.length > 0
+    ? realActive.map(toActiveMatch)
+    : localMatches
 
   return (
     <div className="mobile-container flex flex-col min-h-dvh bg-[#0D0D0F] has-bottom-nav relative overflow-hidden">
@@ -559,7 +681,7 @@ export default function CompetePage() {
           </div>
           <div className="px-6 pt-3 pb-6">
             <div className="flex bg-[#0D0D0F] rounded-xl p-1 border border-[#252528]">
-              {([['incoming', 'Incoming', activePending.length], ['outgoing', 'Outgoing', OUTGOING_CHALLENGES.length], ['matches', 'Matches', localMatches.filter(m => m.status !== 'in_progress').length]] as const).map(([v, label, count]) => (
+              {([['incoming', 'Incoming', activePending.length], ['outgoing', 'Outgoing', displayOutgoing.length], ['matches', 'Matches', displayMatches.filter(m => m.status !== 'in_progress').length]] as const).map(([v, label, count]) => (
                 <button key={v} onClick={() => setChallengeView(v)}
                   className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold ${challengeView === v ? 'text-[#FF4500]' : 'text-[#636366]'}`}>
                   {challengeView === v && (
@@ -623,14 +745,42 @@ export default function CompetePage() {
                         <div className="flex gap-2">
                           <motion.button
                             whileTap={{ scale: 0.93 }}
-                            onClick={() => setDismissed(prev => new Set([...prev, i]))}
+                            onClick={async () => {
+                              setDismissed(prev => new Set([...prev, i]))
+                              const battle = realIncoming[i] ?? (activePending[i] as { _id?: string } | undefined)
+                              if (battle && '_id' in battle && (battle as { _id?: string })._id) {
+                                await fetch(`/api/battles/${(battle as { _id: string })._id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ action: 'accept' }),
+                                })
+                                fetchBattles()
+                              } else if (realIncoming[i]) {
+                                await fetch(`/api/battles/${realIncoming[i].id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ action: 'accept' }),
+                                })
+                                fetchBattles()
+                              }
+                            }}
                             className="flex-1 bg-[#FF4500] text-white font-black py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(255,69,0,0.4)]"
                           >
                             <Check className="w-4 h-4" /> Accept
                           </motion.button>
                           <motion.button
                             whileTap={{ scale: 0.93 }}
-                            onClick={() => setDismissed(prev => new Set([...prev, i]))}
+                            onClick={async () => {
+                              setDismissed(prev => new Set([...prev, i]))
+                              if (realIncoming[i]) {
+                                await fetch(`/api/battles/${realIncoming[i].id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ action: 'decline' }),
+                                })
+                                fetchBattles()
+                              }
+                            }}
                             className="flex-1 bg-[#1C1C1E] border border-[#252528] text-[#9A9AAA] font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 hover:text-white transition-colors"
                           >
                             <X className="w-4 h-4" /> Decline
@@ -649,8 +799,8 @@ export default function CompetePage() {
                 </motion.div>
               )
           ) : (
-            OUTGOING_CHALLENGES.length > 0
-              ? <div className="flex flex-col gap-2">{OUTGOING_CHALLENGES.map((c, i) => (
+            displayOutgoing.length > 0
+              ? <div className="flex flex-col gap-2">{displayOutgoing.map((c, i) => (
                 <div key={i} className="rounded-2xl bg-[#1C1C1E] border border-[#252528] p-3 flex items-center gap-3">
                   <button onClick={() => { setProfileName(c.to); setProfileOpen(true) }} className="flex items-center gap-3 flex-1 min-w-0 text-left active:opacity-70 transition-opacity">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black"
@@ -679,9 +829,9 @@ export default function CompetePage() {
           )}
 
           {challengeView === 'matches' && (
-            localMatches.filter(m => m.status !== 'in_progress').length > 0 ? (
+            displayMatches.filter(m => m.status !== 'in_progress').length > 0 ? (
               <div className="flex flex-col gap-3">
-                {localMatches.filter(m => m.status !== 'in_progress').map((m, i) => {
+                {displayMatches.filter(m => m.status !== 'in_progress').map((m, i) => {
                   const av = avatarColor(m.opponent)
                   const isDecided = m.status === 'decided'
                   const isReady = m.status === 'ready'
@@ -925,14 +1075,17 @@ export default function CompetePage() {
                   ))}
                 </div>
 
+                {challengeError && (
+                  <p className="text-xs font-semibold text-[#EF4444] text-center mb-2">{challengeError}</p>
+                )}
                 <motion.button
                   whileTap={{ scale: 0.97 }}
-                  disabled={!challengeOpponent || !challengeLift}
+                  disabled={!challengeOpponent || !challengeLift || challengeSending}
                   onClick={sendChallenge}
                   className="w-full bg-[#FF4500] text-white font-black py-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-[0_8px_32px_rgba(255,69,0,0.25)] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Swords className="w-4 h-4" />
-                  Send Challenge
+                  {challengeSending ? 'Sending...' : 'Send Challenge'}
                 </motion.button>
               </div>
             </motion.div>
