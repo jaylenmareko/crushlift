@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import EditProfileModal from '@/components/EditProfileModal'
+import EditProfileModal from '@/frontend/components/EditProfileModal'
 
 type Item = {
   label: string

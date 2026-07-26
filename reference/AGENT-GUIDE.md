@@ -14,7 +14,7 @@ AI-powered workout PR verification + gamified ranking web app. Mobile-first. Dar
 3. Verified PRs earn belt tiers per lift (karate-style, never taken away)
 4. 1v1 battles with others in the same weight class determine leaderboard rank
 
-**Repo:** `jaylenmareko/crushlift` (app is called Trainmaxxing, repo name is legacy)
+**Repo:** `jaylenmareko/trainmaxxing` (public)
 **Supabase project ref:** `cheanydnmvqdvsexxdav` (project name "trainmaxxing"). ⚠️ NOT `rjqwjfzvhkdkdjldlnqs` — that's a stale older DB named "PJRoutes" in the same org; do not use it.
 
 ---
@@ -29,7 +29,7 @@ AI-powered workout PR verification + gamified ranking web app. Mobile-first. Dar
 | Animations | Framer Motion |
 | Icons | Lucide React |
 | AI | Anthropic Claude API (claude-sonnet-4-6) |
-| UI primitives | shadcn/ui (`components/ui/`) |
+| UI primitives | shadcn/ui (`frontend/components/ui/`) |
 
 ---
 
@@ -485,8 +485,8 @@ try {
 
 ## Supabase Patterns
 
-**Browser client:** `createClient()` from `@/lib/supabase/client`
-**Server (SSR/API routes):** `createClient()` from `@/lib/supabase/server`
+**Browser client:** `createClient()` from `@/frontend/lib/supabase/client`
+**Server (SSR/API routes):** `createClient()` from `@/backend/lib/supabase/server`
 
 **Storage — pr-media bucket:**
 - Private bucket (no public URLs)
@@ -660,12 +660,12 @@ small lifter and a big lifter compare fairly. One formula, no per-class lookup t
 > **2026-06-19 — Open board ranks by W/L record, NOT by a P4P score.** Briefly the Open board displayed a
 > DOTS strength score and ranked by it; that measured strength, not winning, and confused users. Now the
 > Open board (UI label **"All Classes"**, toggle next to "My Class" on the Leaderboard tab) lists everyone
-> across classes **ordered by W/L record** — no P4P number shown. DOTS (`lib/dots.ts`) is reserved for fairly
+> across classes **ordered by W/L record** — no P4P number shown. DOTS (`backend/services/dots.ts`) is reserved for fairly
 > deciding cross-class **superfight** outcomes at resolution time, not for ranking the board.
 
 **Backend foundation (in repo, NOT yet applied to the live DB):**
-- `lib/dots.ts` — DOTS pound-for-pound math, reserved for deciding cross-class superfight winners (not board ranking).
-- `lib/battles.ts` — Battle/Friendship types + pure `resolveBattle()` (raw for class, DOTS for superfight).
+- `backend/services/dots.ts` — DOTS pound-for-pound math, reserved for deciding cross-class superfight winners (not board ranking).
+- `backend/services/battles.ts` — Battle/Friendship types + pure `resolveBattle()` (raw for class, DOTS for superfight).
 - `artifacts/17-06-2026-battles-schema-draft.sql` — `battles` + `friendships` tables, RLS, derived `user_records` view. **DRAFT — do not run against production (cheanydnmvqdvsexxdav) until Jaylen approves.** Reuses `pr_verifications` as battle proof; W/L derived, not stored.
 
 **Status:** proposed. Compete still runs on dummy data (`RANKINGS_DATA` in `app/compete/page.tsx`).
@@ -704,10 +704,15 @@ Stripe columns (`subscription_status`, `stripe_customer_id`, `subscription_perio
 
 ## File Map (current)
 
+**Structure note (2026-07-26):** the app was reorganized into `frontend/` (browser UI + client-side data access) and `backend/` (domain logic + server-only data access). `app/` stays at the project root — Next.js App Router requires it there — but everything it imports comes from one of those two trees. Route handlers under `app/api/*/route.ts` are thin: parse request → call a `backend/services/*` function → respond. Full rationale in `FOLDER-STRUCTURE.md`.
+
 ```
 app/
   api/
     analyze-form/route.ts         — form technique scoring (Claude Vision, frames)
+    battles/route.ts, [id]/route.ts — battle CRUD
+    compute-rank/route.ts         — persist computed rank to profiles
+    exercise-demo/route.ts        — ExerciseDB demo GIF cache
     generate-plan/route.ts        — AI workout plan generation
     replace-exercise/route.ts     — swap exercise with Claude + onboarding context
     stripe/checkout/route.ts      — Stripe checkout session
@@ -716,11 +721,12 @@ app/
     verify-plates/route.ts        — verify barbell plate setup (3 photos)
     verify-pr/route.ts            — verify PR video frames (rep completion + cross-check)
     youtube-search/route.ts       — exercise demo video search
-  compete/page.tsx                — Belts + Rankings + Battles hub
-  friends/page.tsx                — Friends list (placeholder)
+  compete/page.tsx                — Rankings + Battles hub
+  ranks/page.tsx                  — Belt/rank display (split out from compete)
+  friends/page.tsx                — Friends list
   history/page.tsx                — Workout history
   login/page.tsx
-  onboarding/page.tsx             — 9-step onboarding
+  onboarding/page.tsx
   plan/
     generating/page.tsx           — Loading screen during plan gen
     page.tsx                      — Week view + workout launch
@@ -732,28 +738,45 @@ app/
     page.tsx                      — Active workout (sets, rest timer, form check)
   layout.tsx, page.tsx, template.tsx, globals.css, manifest.ts, favicon.ico
 
-components/
-  AddedWeightPhotoModal.tsx       — Photo verification for weighted bodyweight lifts
-  AppShell.tsx                    — Conditionally renders SideNav on app routes
-  BottomNav.tsx                   — 5-tab mobile nav
-  FormAnalysisModal.tsx           — In-workout form scoring modal
-  PaywallModal.tsx                — Subscription gate
-  PlateCheckModal.tsx             — 3-photo barbell plate verification
-  PRVerifyModal.tsx               — Video PR recording + verification
-  RankCard.tsx                    — Belt/rank display card
-  RepsWeightModal.tsx             — Reps + optional added weight input (bodyweight lifts)
-  SideNav.tsx                     — Desktop sidebar
-  ui/                             — shadcn primitives (badge, button, dialog, input, progress, sheet)
+frontend/
+  components/
+    AddedWeightPhotoModal.tsx     — Photo verification for weighted bodyweight lifts
+    AppShell.tsx                  — Conditionally renders SideNav on app routes
+    BottomNav.tsx                 — 5-tab mobile nav
+    ChangeWeightModal.tsx, EditProfileModal.tsx, ExerciseDemoModal.tsx
+    FormAnalysisModal.tsx         — In-workout form scoring modal
+    LoginSheet.tsx, MatchDetailSheet.tsx
+    PaywallModal.tsx              — Subscription gate
+    PlateCheckModal.tsx           — 3-photo barbell plate verification
+    ProfileSheet.tsx
+    PRVerifyModal.tsx             — Video PR recording + verification
+    RankCard.tsx                  — Belt/rank display card
+    RepsWeightModal.tsx           — Reps + optional added weight input (bodyweight lifts)
+    WeightGate.tsx
+    ui/                           — shadcn primitives (badge, button, dialog, input, progress, sheet)
+  hooks/
+    usePrLogger.tsx               — shared PR-verify flow, used by /ranks and /compete
+    useUserWeight.ts              — shared bodyweight state
+  lib/
+    supabase/client.ts            — Browser Supabase client
+    upload-pr-media.ts            — uploadPrSession(): upload plate photos + video, insert pr_verifications row (fire-and-forget, runs client-side)
+    avatar.ts                     — initials()/avatarColor() helpers
+    utils.ts                      — cn() and other shared utilities
 
-lib/
-  supabase/client.ts              — Browser Supabase client
-  supabase/server.ts              — SSR Supabase client
+backend/
+  services/
+    belts.ts                      — weight class assignment + belt tier thresholds
+    battles.ts                    — resolveBattle() (raw for class, DOTS for superfight) — not yet wired to a route
+    dots.ts                       — DOTS pound-for-pound math
+    xp.ts                         — XP / level calculation logic
+  lib/
+    supabase/server.ts            — SSR / route-handler Supabase client
+  middleware/
+    proxy.ts                      — Supabase session-refresh logic — NOT currently active (no root middleware.ts imports it)
   types.ts                        — OnboardingData, Plan, WorkoutSet, etc.
-  upload-pr-media.ts              — uploadPrSession(): upload plate photos + video, insert pr_verifications row
-  utils.ts                        — cn() and other shared utilities
-  xp.ts                           — XP / level calculation logic
 
 reference/
+  AGENT-GUIDE.md                  — this file
   ai-verification.md              — How each Claude verification route works
   env.md                          — Required env vars
 

@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Swords, Crown, ChevronRight, Check, X, ArrowUp, Trophy, Medal, Filter, UserPlus, UserCheck } from 'lucide-react'
-import BottomNav from '@/components/BottomNav'
-import WeightGate from '@/components/WeightGate'
-import { useUserWeight } from '@/lib/hooks/useUserWeight'
-import { WEIGHT_CLASSES, BIG_SIX } from '@/lib/belts'
-import MatchDetailSheet, { type ActiveMatch } from '@/components/MatchDetailSheet'
+import BottomNav from '@/frontend/components/BottomNav'
+import WeightGate from '@/frontend/components/WeightGate'
+import { useUserWeight } from '@/frontend/hooks/useUserWeight'
+import { WEIGHT_CLASSES, BIG_SIX } from '@/backend/services/belts'
+import MatchDetailSheet, { type ActiveMatch } from '@/frontend/components/MatchDetailSheet'
 
 const RANKINGS_DATA: Record<number, { pos: number; name: string; record: string; you: boolean; trend?: number }[]> = {
   0: [
@@ -263,7 +263,7 @@ export default function CompetePage() {
       if (data?.battles) setRealBattles(data.battles)
     }).catch(() => {})
     // get current user id for participant checks
-    import('@/lib/supabase/client').then(({ createClient }) => {
+    import('@/frontend/lib/supabase/client').then(({ createClient }) => {
       createClient().auth.getUser().then(({ data }) => setMyUserId(data.user?.id ?? null))
     })
   }, [])

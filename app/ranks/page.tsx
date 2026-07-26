@@ -3,17 +3,17 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trophy, Lock, ChevronDown, Scale, Clock } from 'lucide-react'
-import BottomNav from '@/components/BottomNav'
-import WeightGate from '@/components/WeightGate'
-import ChangeWeightModal from '@/components/ChangeWeightModal'
-import { createClient } from '@/lib/supabase/client'
-import { useUserWeight } from '@/lib/hooks/useUserWeight'
-import { usePrLogger } from '@/lib/hooks/usePrLogger'
+import BottomNav from '@/frontend/components/BottomNav'
+import WeightGate from '@/frontend/components/WeightGate'
+import ChangeWeightModal from '@/frontend/components/ChangeWeightModal'
+import { createClient } from '@/frontend/lib/supabase/client'
+import { useUserWeight } from '@/frontend/hooks/useUserWeight'
+import { usePrLogger } from '@/frontend/hooks/usePrLogger'
 import {
   TIERS, BIG_SIX, WEIGHT_THRESHOLDS, PULLUP_REP_THRESHOLDS,
   displayColor, shortDate, decayDate, computeLiftData, bestOf,
   getWeightClass,
-} from '@/lib/belts'
+} from '@/backend/services/belts'
 
 export default function RanksPage() {
   const {

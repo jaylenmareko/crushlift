@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/frontend/lib/supabase/client'
 
 // Edit display name + unique username. Writes to profiles (username has a unique index).
 export default function EditProfileModal({ open, onClose }: { open: boolean; onClose: () => void }) {

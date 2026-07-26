@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, UserPlus, Search, X, UserCheck, Loader2 } from 'lucide-react'
-import BottomNav from '@/components/BottomNav'
-import ProfileSheet from '@/components/ProfileSheet'
-import { createClient } from '@/lib/supabase/client'
+import BottomNav from '@/frontend/components/BottomNav'
+import ProfileSheet from '@/frontend/components/ProfileSheet'
+import { createClient } from '@/frontend/lib/supabase/client'
 
 interface FriendRequest {
   name: string

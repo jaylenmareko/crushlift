@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/backend/lib/supabase/server'
 
 // GET /api/battles — all battles for the current user, joined with opponent profile
 export async function GET() {

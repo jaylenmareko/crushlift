@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { CheckCircle2, ChevronRight, BarChart2 } from 'lucide-react'
-import type { WorkoutHistoryEntry } from '@/lib/types'
-import BottomNav from '@/components/BottomNav'
+import type { WorkoutHistoryEntry } from '@/backend/types'
+import BottomNav from '@/frontend/components/BottomNav'
 
 export default function WorkoutCompletePage() {
   const router = useRouter()

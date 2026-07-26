@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { LogOut, Crown, RefreshCw, Settings, Calendar, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import BottomNav from '@/components/BottomNav'
-import PaywallModal from '@/components/PaywallModal'
-import { initials, avatarColor } from '@/lib/avatar'
-import type { WorkoutHistoryEntry } from '@/lib/types'
+import { createClient } from '@/frontend/lib/supabase/client'
+import BottomNav from '@/frontend/components/BottomNav'
+import PaywallModal from '@/frontend/components/PaywallModal'
+import { initials, avatarColor } from '@/frontend/lib/avatar'
+import type { WorkoutHistoryEntry } from '@/backend/types'
 
 export default function ProfilePage() {
   const router = useRouter()

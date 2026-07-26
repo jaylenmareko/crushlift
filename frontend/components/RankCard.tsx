@@ -1,8 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { getRankInfo, computeTotalXP, computeStreak } from '@/lib/xp'
-import type { WorkoutHistoryEntry } from '@/lib/types'
+import { getRankInfo, computeTotalXP, computeStreak } from '@/backend/services/xp'
+import type { WorkoutHistoryEntry } from '@/backend/types'
 
 export default function RankCard({ history }: { history: WorkoutHistoryEntry[] }) {
   const totalXP = computeTotalXP(history)

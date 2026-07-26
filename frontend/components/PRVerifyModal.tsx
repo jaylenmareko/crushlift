@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { X, Video, Square, Loader2, Clock, SwitchCamera } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { uploadPrSession } from '@/lib/upload-pr-media'
+import { createClient } from '@/frontend/lib/supabase/client'
+import { uploadPrSession } from '@/frontend/lib/upload-pr-media'
 
 type Stage = 'preview' | 'recording' | 'uploading' | 'submitted'
 

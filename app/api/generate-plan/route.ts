@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import type { OnboardingData, PlanDay, WorkoutHistoryEntry } from '@/lib/types'
+import { createClient } from '@/backend/lib/supabase/server'
+import type { OnboardingData, PlanDay, WorkoutHistoryEntry } from '@/backend/types'
 
 // TODO: remove DUMMY_PLAN and uncomment Anthropic call once API is funded
 const DUMMY_PLAN: { days: PlanDay[] } = {

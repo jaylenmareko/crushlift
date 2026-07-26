@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/backend/lib/supabase/server'
 
 // PATCH /api/battles/[id]
 // body: { action: 'accept' | 'decline' | 'submit', value?: number }

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Video, Square, Clock, Loader2, SwitchCamera } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/frontend/lib/supabase/client'
 
 type Stage = 'detail' | 'camera' | 'uploading' | 'submitted'
 

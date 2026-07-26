@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Scale } from 'lucide-react'
-import BottomNav from '@/components/BottomNav'
+import BottomNav from '@/frontend/components/BottomNav'
 
 // Full-screen "what's your bodyweight" prompt — shown by /belts and /compete
 // before either page can place the user in a weight class.

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import type { PlanExercise } from '@/lib/types'
+import type { PlanExercise } from '@/backend/types'
 
 // TODO: replace with live Anthropic call once API is funded
 const ALTERNATIVES: Record<string, PlanExercise[]> = {

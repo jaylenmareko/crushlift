@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/frontend/lib/supabase/client'
 
 function dataUrlToBlob(dataUrl: string): Blob {
   const [header, data] = dataUrl.split(',')

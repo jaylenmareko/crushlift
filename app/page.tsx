@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Zap, Trophy, Swords, ChevronRight, Flame } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import LoginSheet from '@/components/LoginSheet'
+import { createClient } from '@/frontend/lib/supabase/client'
+import LoginSheet from '@/frontend/components/LoginSheet'
 
 const BELT_TIERS = [
   { label: 'Iron',     color: '#A1A1AA', dot: '#A1A1AA' },

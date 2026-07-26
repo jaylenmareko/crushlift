@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { getWeightClass } from '@/lib/belts'
+import { createClient } from '@/frontend/lib/supabase/client'
+import { getWeightClass } from '@/backend/services/belts'
 
 // Shared bodyweight state — used by /belts and /compete, both of which gate on
 // the user having entered a weight (needed for weight-class placement).

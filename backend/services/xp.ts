@@ -1,4 +1,4 @@
-import type { WorkoutHistoryEntry } from './types'
+import type { WorkoutHistoryEntry } from '../types'
 
 export const RANKS = [
   { name: 'Rookie',  minXP: 0,     color: '#636366', abbr: 'RK' },

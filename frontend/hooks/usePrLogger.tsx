@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, X, Check, Video, ShieldCheck, ShieldAlert, Trophy } from 'lucide-react'
-import PRVerifyModal from '@/components/PRVerifyModal'
-import PlateCheckModal from '@/components/PlateCheckModal'
-import RepsWeightModal from '@/components/RepsWeightModal'
-import AddedWeightPhotoModal from '@/components/AddedWeightPhotoModal'
-import { displayColor, type LiftWithTier } from '@/lib/belts'
+import PRVerifyModal from '@/frontend/components/PRVerifyModal'
+import PlateCheckModal from '@/frontend/components/PlateCheckModal'
+import RepsWeightModal from '@/frontend/components/RepsWeightModal'
+import AddedWeightPhotoModal from '@/frontend/components/AddedWeightPhotoModal'
+import { displayColor, type LiftWithTier } from '@/backend/services/belts'
 
 type PrStep = 'select' | 'plates' | 'reps' | 'weight-photo' | 'record' | 'verify'
 

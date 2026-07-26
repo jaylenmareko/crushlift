@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Swords, UserPlus, UserCheck } from 'lucide-react'
-import { WEIGHT_CLASSES } from '@/lib/belts'
+import { WEIGHT_CLASSES } from '@/backend/services/belts'
 
 // Dummy belt data — replaced by real belt_ranks once migration runs
 const FIGHTER_BELTS: Record<string, Record<string, string>> = {

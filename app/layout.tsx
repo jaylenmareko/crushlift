@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import AppShell from '@/components/AppShell'
+import AppShell from '@/frontend/components/AppShell'
 
 export const metadata: Metadata = {
   title: 'Trainmaxxing — AI Workout Plans',

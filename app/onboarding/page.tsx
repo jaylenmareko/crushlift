@@ -4,8 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronLeft, Check, Eye, EyeOff, Camera, User } from 'lucide-react'
-import type { OnboardingData } from '@/lib/types'
-import { createClient } from '@/lib/supabase/client'
+import type { OnboardingData } from '@/backend/types'
+import { createClient } from '@/frontend/lib/supabase/client'
 
 const GOALS = [
   { value: 'lose_weight', label: 'Lose Weight', emoji: '🔥', desc: 'Burn fat, get lean' },

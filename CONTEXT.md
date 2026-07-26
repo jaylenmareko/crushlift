@@ -23,7 +23,7 @@ Beta — real users, real PRs, iterate on verification accuracy
 - shadcn/ui primitives
 
 ## Repo
-`jaylenmareko/crushlift` — codebase lives at `C:\Users\jdavis\Intern\projects\dev\train-maxxing\` (canonical copy; older standalone clone at `C:\Users\jdavis\train-maxxing\` is retired/stale)
+`jaylenmareko/trainmaxxing` (public since 2026-07-26) — codebase lives at `projects/business/trainmaxxing/` in this ICM tree. Reorganized 2026-07-26 into `frontend/` (UI + client-side data access) and `backend/` (domain logic + server-only data access); `app/` stays at root per Next.js App Router requirements — see `FOLDER-STRUCTURE.md`.
 
 ## File map
 - `reference/AGENT-GUIDE.md` — full build + design system guide (read before any code work)

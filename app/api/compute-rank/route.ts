@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { TIERS, BIG_SIX, getTierIndex } from '@/lib/belts'
+import { createClient } from '@/backend/lib/supabase/server'
+import { TIERS, BIG_SIX, getTierIndex } from '@/backend/services/belts'
 
 // Called fire-and-forget after a verified PR is saved.
 // Reads all verified PRs for the authed user, computes belt tier per lift,
